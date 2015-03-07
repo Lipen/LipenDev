@@ -1,5 +1,8 @@
+__author__ = 'Lipen'
+
 import urllib.request, urllib.parse, re, sys
 
+#List or urls separated by newline
 urls = '''
 
 '''.strip().splitlines()
