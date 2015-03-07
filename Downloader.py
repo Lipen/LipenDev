@@ -11,7 +11,7 @@ urls = '''
 # file_type = (lambda s: '.mp4' if re.sub('[\W_]+', '', s)=='' else '.'+re.sub('[\W_]+', '', s))(input('Specify file format (default is \'mp4\'): '))
 # As is: (not recommended)
 file_type = (lambda s: '' if s=='None' else '.mp4' if s=='' else s if s.startswith('.') else '.'+s)(input('Specify file format (default is \"mp4\") (Enter \"None\" to force no extention): ')).lower()
-print('Selected file type: {}'.format(file_type if file_type!='' else '(None)'))
+print('Selected file type: {}'.format(file_type if file_type != '' else '(None)'))
 
 counter = 0
 counterMax = 10
