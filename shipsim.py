@@ -89,6 +89,10 @@ class Point:
 		self.x += v.x
 		self.y += v.y
 
+	def getDist(p1, p2):
+		return math.hypot(p1.x - p2.x, p1.y-p2.y)
+
+
 class Polygon:
 
 	"""Base 2D polygon class.
@@ -96,6 +100,7 @@ class Polygon:
 	"""
 
 	vel = Vector2(0, 0)
+	angularVel = 0
 	angle = 0
 
 	def __init__(self, p1, p2, p3, p4, fill='#5060BB', activefill='#99dd33'):
@@ -139,6 +144,8 @@ class Polygon:
 
 	def rotate(self):
 		c = self.getCenter()
+		for p in self.points:
+			r = Point.getDist(p, c)
 
 
 	def update(self):
