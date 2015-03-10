@@ -1,6 +1,7 @@
 from tkinter import *
 import random
 import math
+import time
 
 _TITLE = 'shipsim'
 _WIDTH = 800
@@ -13,6 +14,7 @@ print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
 root = Tk()
 root.title(_TITLE)
 canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
+label_fps = Label(root, bg='#cccccc', fg='#000000',font='sans 20')
 
 
 def getRandomColor():
@@ -178,32 +180,41 @@ class Polygon:
 
 # def PressedLeft(event=None):
 # 	mypoly.setRotateSpeed(-0.1)
-
-
 # def PressedRight(event=None):
 # 	mypoly.setRotateSpeed(0.1)
 
+
+def clock_yield():
+	pt = time.time()-_DELAY/1000.
+	while 1:
+		t = time.time()
+		yield time.time() - pt
+		pt = t
+
+
 def tick(event=None):
 	mypoly.update()
+	label_fps['text'] = round(1./next(clock))
 
 
 def timer():
 	tick()
-	# print('timer <3')
 	root.after(_DELAY, timer)  # repeat
 
 
 def QuitDestroy(event=None):
-	print('<Q> pressed.')
+	print('Quitting...')
 	root.destroy()
 	root.quit()
 	print('Destroyed.')
 
 ###
+clock = clock_yield()
 mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 390), fill=getRandomColor())
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)
-root.bind('q', QuitDestroy)
+root.bind('<Escape>', QuitDestroy)
+root.bind('<Control-c>', QuitDestroy, '+')
 root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-0.1))
 root.bind('<Right>', lambda e: mypoly.setRotateSpeed(0.1))
 root.bind('<KeyRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
@@ -212,4 +223,5 @@ root.after(_DELAY, timer)  # start
 ###
 
 canv.pack()
+label_fps.place(x=16, y=16, width=64, height=64)
 root.mainloop()
