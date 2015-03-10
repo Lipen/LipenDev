@@ -4,12 +4,18 @@ import random
 title = 'shipsim'
 w = 800
 h = 600
-_FPS = 60.
-_DELAY = 1. / FPS
-##
+_FPS = 50.
+_DELAY = round(1000. / _FPS)
+_FPS = 1000./_DELAY
+print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
+
 root = Tk()
 root.title(title)
 canv = Canvas(root, width=w, height=h, bg='#505050')
+
+
+# class Vector2:
+# eh
 
 
 class Point:
@@ -53,7 +59,7 @@ class Polygon:
 
 	def move(self):
 		for p in self.points:
-			p.applySpeed(self.vx, self.vy)
+			p.applySpeed(self.vx/_DELAY, self.vy/_DELAY)
 			# p.addVector(self.speedVector)
 
 	def update(self):
@@ -63,18 +69,18 @@ class Polygon:
 	def newRandomPolygon():
 		p1 = Point(random.uniform(0, w), random.uniform(0, h))
 		p2 = Point(random.uniform(0, w), random.uniform(p1.y, h))
-		p3 = Point(random.uniform(max(p1.x, p2.x), w), random.uniform(p1.y, h))
+		p3 = Point(random.uniform(max(p1.x, p2.x), w), random.uniform(0, h))
 		p4 = Point(random.uniform(max(p1.x, p2.x), w), random.uniform(p3.y, h))
-		return Polygon(p1, p2, p3, p4)
+		return Polygon(p1, p2, p3, p4, fill='#{:X}{:X}{:X}'.format(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
 
 
-def tick():
+def tick(event=None):
 	mypoly.update()
 
 
 def timer():
 	tick()
-	print('timer <3')
+	# print('timer <3')
 	#
 	root.after(_DELAY, timer)  # repeat
 
@@ -83,7 +89,7 @@ mypoly = Polygon.newRandomPolygon()
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)
 root.after(_DELAY, timer)  # start
-Polygon.getCoords()
+# Polygon.getCoords()  # eh???
 ###
 
 canv.pack()
