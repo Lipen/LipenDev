@@ -171,14 +171,12 @@ class Polygon:
 		p4 = Point(random.uniform(max(p1.x, p2.x), _WIDTH), random.uniform(p3.y, _HEIGHT))
 		return Polygon(p1, p2, p3, p4, fill=getRandomColor())
 
+# def PressedLeft(event=None):
+# 	mypoly.setRotateSpeed(-0.1)
 
-def PressedLeft(event=None):
-	mypoly.setRotateSpeed(-0.1)
 
-
-def PressedRight(event=None):
-	mypoly.setRotateSpeed(0.1)
-
+# def PressedRight(event=None):
+# 	mypoly.setRotateSpeed(0.1)
 
 def tick(event=None):
 	mypoly.update()
@@ -187,7 +185,6 @@ def tick(event=None):
 def timer():
 	tick()
 	# print('timer <3')
-	#
 	root.after(_DELAY, timer)  # repeat
 
 
@@ -198,7 +195,6 @@ def QuitDestroy(event=None):
 	print('Destroyed.')
 
 ###
-# mypoly = Polygon.newRandomPolygon()
 mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 390), fill=getRandomColor())
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)

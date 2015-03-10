@@ -24,7 +24,7 @@ print('Master\'s path: {}'.format(pathMaster))
 
 pathSlave = input('Enter slave path: ')
 if pathSlave=='' or not os.path.exists(pathSlave):
-	pathSlave = 'E:\\Media\\Music'
+	pathSlave = 'E:\\Music'
 	print('Default ', end='', flush=True)
 print('Slave\'s path: {}'.format(pathSlave))
 
@@ -35,7 +35,7 @@ print('Building slave directory list', end='', flush=True)
 dirlistSlave = [dot(arg=item) for item in os.listdir(pathSlave) if os.path.isdir(os.path.join(pathSlave, item))]
 print(' done!')
 
-copyList = [] #[[from, to] , ...]
+copyList = []  #[[from, to] , ...]
 deleteList = []
 print('Building master absent directory list', end='', flush=True)
 absentDirsMaster = [dot(arg=item) for item in dirlistSlave if item not in dirlistMaster]

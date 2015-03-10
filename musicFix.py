@@ -9,7 +9,7 @@ Usage:
 
 import os
 path = input('Enter path: ')
-if path=='' or not os.path.exists(pathMaster):
+if path=='' or not os.path.exists(path):
 	path = 'C:\\Data\\Media\\Music'
 	print('Default path: {}'.format(path))
 else:
