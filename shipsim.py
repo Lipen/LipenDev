@@ -91,6 +91,9 @@ class Point:
 	def __iter__(self):
 		return iter([self.x, self.y])
 
+	def __str__(self):
+		return '('+', '.join(map(str, [self.x, self.y]))+')'
+
 	def addVector(self, v):
 		self.x += v.x
 		self.y += v.y
@@ -99,7 +102,8 @@ class Point:
 		return math.hypot(p1.x - p2.x, p1.y-p2.y)
 
 	def getAngle(p1, p2):
-		return math.atan2(p1.y-p2.y, p1.x-p2.x)
+		# return math.atan2(p1.y-p2.y, p1.x-p2.x)
+		return math.atan2(p2.y-p1.y, p2.x-p1.x)
 
 
 class Polygon:
@@ -110,7 +114,6 @@ class Polygon:
 
 	vel = Vector2(0, 0)
 	angularVel = 0
-	angle = 0
 
 	def __init__(self, p1, p2, p3, p4, fill='#5060BB', activefill='#99dd33'):
 		self.points = [p1, p2, p3, p4]
@@ -118,13 +121,13 @@ class Polygon:
 		self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
 
 	def getArea(self):
-		return 0.5 * sum(self.points[i].x*self.points[i+1].y-self.points[i+1].x*self.points[i].y for i in range(len(self.points)-1))
+		return 0.5 * abs(sum(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y for i in range(len(self.points))))
 
 	def getCenter(self):
 		A = self.getArea()
 		return Point(
-			1/6/A*sum((self.points[i].x+self.points[i+1].x)*(self.points[i].x*self.points[i+1].y-self.points[i+1].x*self.points[i].y) for i in range(len(self.points)-1)),
-			1/6/A*sum((self.points[i].y+self.points[i+1].y)*(self.points[i].x*self.points[i+1].y-self.points[i+1].x*self.points[i].y) for i in range(len(self.points)-1)))
+			1/6/A*sum((self.points[i-1].x+self.points[i].x)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))),
+			1/6/A*sum((self.points[i-1].y+self.points[i].y)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))))
 
 	def setSpeed(self, vx, vy):
 		"""Pixels per second
@@ -153,11 +156,13 @@ class Polygon:
 
 	def rotate(self):
 		c = self.getCenter()
+		print('A: {}, Center: {}'.format(self.getArea(), c))
 		for p in self.points:
 			r = Point.getDist(c, p)
-			a = Point.getAngle(c, p) + self.angularVel/_DELAY  # Center->Point!
-			p.x = r * math.cos(a)
-			p.y = r * math.sin(a)
+			if self.angularVel != 0.0:
+				a = Point.getAngle(c, p) + self.angularVel/_DELAY
+				p.x = c.x + r * math.cos(a)
+				p.y = c.y + r * math.sin(a)
 
 	def update(self):
 		self.move()
