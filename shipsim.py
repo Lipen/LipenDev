@@ -118,7 +118,7 @@ class Polygon:
 		self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
 
 	def getArea(self):
-		return 0.5 * sum(self.points[i].x*self.points[i+1].y-self.points[i+1]*self.points[i].y for i in range(len(self.points)-1))
+		return 0.5 * sum(self.points[i].x*self.points[i+1].y-self.points[i+1].x*self.points[i].y for i in range(len(self.points)-1))
 
 	def getCenter(self):
 		A = self.getArea()
@@ -175,8 +175,10 @@ class Polygon:
 def PressedLeft(event=None):
 	mypoly.setRotateSpeed(-0.1)
 
+
 def PressedRight(event=None):
 	mypoly.setRotateSpeed(0.1)
+
 
 def tick(event=None):
 	mypoly.update()
@@ -201,8 +203,8 @@ mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 39
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)
 root.bind('q', QuitDestroy)
-root.bind('<Left>', PressedLeft)
-root.bind('<Right>', PressedRight)
+root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-0.1))
+root.bind('<Right>', lambda e: mypoly.setRotateSpeed(0.1))
 root.bind('<KeyRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
 root.bind('<KeyRelease-Right>', lambda e: mypoly.setRotateSpeed(0), '+')
 root.after(_DELAY, timer)  # start
