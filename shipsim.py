@@ -39,12 +39,6 @@ class Vector2:
 	def addVectors(v1, v2):
 		return Vector2(v1.x+v2.x, v1.y+v2.y)
 
-	def __mul__(self, other):
-		if other is Vector2:
-			return self.x*other.x + self.y*other.y
-		else:
-			return Vector2(self.x*other, self.y*other)
-
 	def __add__(self, other):
 		if other is Vector2:
 			return Vector2(self.x+other.x, self.y+other.y)
@@ -56,6 +50,18 @@ class Vector2:
 			return Vector2(self.x-other.x, self.y-other.y)
 		else:
 			return Vector2(self.x-other, self.y-other)
+
+	def __mul__(self, other):
+		if other is Vector2:
+			return self.x*other.x + self.y*other.y
+		else:
+			return Vector2(self.x*other, self.y*other)
+
+	def __truediv__(self, other):
+		if other is Vector2:
+			return Vector2(self.x/other.x, self.y/other.y)
+		else:
+			return Vector2(self.x/other, self.y/other)
 
 	def __pow__(self, other, signed=False):
 		if other is Vector2:
@@ -117,8 +123,8 @@ class Polygon:
 	def getCenter(self):
 		A = self.getArea()
 		return Point(
-			1/6/A*sum((self.points[i].x+self.points[i+1].x)*(self.points[i].x*self.points[i+1].y-self.points[i+1]*self.points[i].y) for i in range(len(self.points)-1)),
-			1/6/A*sum((self.points[i].y+self.points[i+1].y)*(self.points[i].x*self.points[i+1].y-self.points[i+1]*self.points[i].y) for i in range(len(self.points)-1)))
+			1/6/A*sum((self.points[i].x+self.points[i+1].x)*(self.points[i].x*self.points[i+1].y-self.points[i+1].x*self.points[i].y) for i in range(len(self.points)-1)),
+			1/6/A*sum((self.points[i].y+self.points[i+1].y)*(self.points[i].x*self.points[i+1].y-self.points[i+1].x*self.points[i].y) for i in range(len(self.points)-1)))
 
 	def setSpeed(self, vx, vy):
 		"""Pixels per second
@@ -166,6 +172,12 @@ class Polygon:
 		return Polygon(p1, p2, p3, p4, fill=getRandomColor())
 
 
+def PressedLeft(event=None):
+	mypoly.setRotateSpeed(-0.1)
+
+def PressedRight(event=None):
+	mypoly.setRotateSpeed(0.1)
+
 def tick(event=None):
 	mypoly.update()
 
@@ -189,10 +201,10 @@ mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 39
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)
 root.bind('q', QuitDestroy)
-root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-0.1))
-root.bind('<Right>', lambda e: mypoly.setRotateSpeed(0.1))
-root.bind('<ButtonRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
-root.bind('<ButtonRelease-Right>', lambda e: mypoly.setRotateSpeed(0), '+')
+root.bind('<Left>', PressedLeft)
+root.bind('<Right>', PressedRight)
+root.bind('<KeyRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
+root.bind('<KeyRelease-Right>', lambda e: mypoly.setRotateSpeed(0), '+')
 root.after(_DELAY, timer)  # start
 ###
 
