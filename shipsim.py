@@ -92,6 +92,9 @@ class Point:
 	def getDist(p1, p2):
 		return math.hypot(p1.x - p2.x, p1.y-p2.y)
 
+	def getAngle(p1, p2):
+		return math.atan2(p1.y-p2.y, p1.x-p2.x)
+
 
 class Polygon:
 
@@ -145,8 +148,10 @@ class Polygon:
 	def rotate(self):
 		c = self.getCenter()
 		for p in self.points:
-			r = Point.getDist(p, c)
-
+			r = Point.getDist(c, p)
+			a = Point.getAngle(c, p) + self.angularVel/_DELAY  # Center->Point!
+			p.x = r * math.cos(a)
+			p.y = r * math.sin(a)
 
 	def update(self):
 		self.move()
@@ -184,8 +189,8 @@ mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 39
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)
 root.bind('q', QuitDestroy)
-root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-1))
-root.bind('<Right>', lambda e: mypoly.setRotateSpeed(1))
+root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-0.1))
+root.bind('<Right>', lambda e: mypoly.setRotateSpeed(0.1))
 root.bind('<ButtonRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
 root.bind('<ButtonRelease-Right>', lambda e: mypoly.setRotateSpeed(0), '+')
 root.after(_DELAY, timer)  # start
