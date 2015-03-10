@@ -18,14 +18,65 @@ def getRandomColor():
 	return '#{:06X}'.format(random.randint(0, 16777215))
 
 
-# class Vector2:
+def sign(x):
+	return 1 if x > 0 else -1 if x < 0 else 0
+
+
+class Vector2:
+
+	"""Base 2D vector class
+	* Implemented basic arithmetics operation:
+		- Addiction/Subtraction (with vector or with scalar)
+		- Multiplication (simple or scalar product of vectors)
+		- Pow (simple or vector product of vectors)
+		- Abs (modulo)
+	"""
+
+	def __init__(self, x, y):
+		self.x, self.y = x, y
+
+	def addVectors(v1, v2):
+		return Vector2(v1.x+v2.x, v1.y+v2.y)
+
+	def __mul__(self, other):
+		if other is Vector2:
+			return self.x*other.x + self.y*other.y
+		else:
+			return Vector2(self.x*other, self.y*other)
+
+	def __add__(self, other):
+		if other is Vector2:
+			return Vector2(self.x+other.x, self.y+other.y)
+		else:
+			return Vector2(self.x+other, self.y+other)
+
+	def __sub__(self, other):
+		if other is Vector2:
+			return Vector2(self.x-other.x, self.y-other.y)
+		else:
+			return Vector2(self.x-other, self.y-other)
+
+	def __pow__(self, other, signed=False):
+		if other is Vector2:
+			t = self.x*other.y - self.y*other.x
+			return sign(t) if signed else t
+		else:
+			return Vector2(self.x**other, self.y**other)
+
+	def __neg__(self):
+		return Vector2(-self.x, -self.y)
+
+	def __pos__(self):
+		return self
+
+	def __abs__(self):
+		return (self.x**2 + self.y**2) ** 0.5
 
 
 class Point:
 
-	'''
-	Base 2D point class.
-	'''
+	"""Base 2D point class.
+	"""
 
 	def __init__(self, x, y):
 		self.x, self.y = x, y
@@ -37,13 +88,16 @@ class Point:
 		self.x += vx
 		self.y += vy
 
+	def addVector(self, v):
+		self.x += v.x
+		self.y += v.y
+
 
 class Polygon:
 
-	'''
-	Base 2D polygon class.
+	"""Base 2D polygon class.
 	* 4-point for now.
-	'''
+	"""
 
 	vx = 0
 	vy = 0
@@ -54,16 +108,14 @@ class Polygon:
 		self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
 
 	def setSpeed(self, vx, vy):
-		'''
-		pixels per second
-		'''
+		"""Pixels per second
+		"""
 		self.vx, self.vy = vx, vy
 
 	def getCoords(self):
-		'''
-		list of coords of all polygon's points:
-				[ p1.x, p1.y, ..., p4.x, p4.y ] #for 2-dim 4-point polygon
-		'''
+		"""List of coords of all polygon's points:
+			[ p1.x, p1.y, ..., p4.x, p4.y ] #for 2-dim 4-point polygon
+		"""
 		# coords = []
 		# for p in self.points:
 		# 	coords.extend(p)
