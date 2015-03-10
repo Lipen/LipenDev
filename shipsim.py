@@ -1,5 +1,6 @@
 from tkinter import *
 import random
+import math
 
 _TITLE = 'shipsim'
 _WIDTH = 800
@@ -84,14 +85,9 @@ class Point:
 	def __iter__(self):
 		return iter([self.x, self.y])
 
-	def applySpeed(self, vx, vy):
-		self.x += vx
-		self.y += vy
-
 	def addVector(self, v):
 		self.x += v.x
 		self.y += v.y
-
 
 class Polygon:
 
@@ -99,18 +95,33 @@ class Polygon:
 	* 4-point for now.
 	"""
 
-	vx = 0
-	vy = 0
+	vel = Vector2(0, 0)
+	angle = 0
 
 	def __init__(self, p1, p2, p3, p4, fill='#5060BB', activefill='#99dd33'):
 		self.points = [p1, p2, p3, p4]
 		self.p1, self.p2, self.p3, self.p4 = self.points
 		self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
 
+	def getArea(self):
+		return 0.5 * sum(self.points[i].x*self.points[i+1].y-self.points[i+1]*self.points[i].y for i in range(len(self.points)-1))
+
+	def getCenter(self):
+		A = self.getArea()
+		return Point(
+			1/6/A*sum((self.points[i].x+self.points[i+1].x)*(self.points[i].x*self.points[i+1].y-self.points[i+1]*self.points[i].y) for i in range(len(self.points)-1)),
+			1/6/A*sum((self.points[i].y+self.points[i+1].y)*(self.points[i].x*self.points[i+1].y-self.points[i+1]*self.points[i].y) for i in range(len(self.points)-1)))
+
 	def setSpeed(self, vx, vy):
 		"""Pixels per second
 		"""
-		self.vx, self.vy = vx, vy
+		self.vel.x = vx
+		self.vel.y = vy
+
+	def setRotateSpeed(self, av):
+		"""Radians per second
+		"""
+		self.angularVel = av
 
 	def getCoords(self):
 		"""List of coords of all polygon's points:
@@ -124,12 +135,16 @@ class Polygon:
 
 	def move(self):
 		for p in self.points:
-			p.applySpeed(self.vx/_DELAY, self.vy/_DELAY)
-			# p.addVector(self.speedVector)
+			p.addVector(self.vel / _DELAY)
+
+	def rotate(self):
+		c = self.getCenter()
+
 
 	def update(self):
 		self.move()
-		canv.coords(self.poly, self.p1.x, self.p1.y, self.p2.x, self.p2.y, self.p3.x, self.p3.y, self.p4.x, self.p4.y)
+		self.rotate()
+		canv.coords(self.poly, self.p1.x, self.p1.y, self.p2.x, self.p2.y, self.p3.x, self.p3.y, self.p4.x, self.p4.y)  # TODO: reduce this line..
 
 	def newRandomPolygon():
 		p1 = Point(random.uniform(0, _WIDTH), random.uniform(0, _HEIGHT))
@@ -162,6 +177,10 @@ mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 39
 mypoly.setSpeed(1, 1)
 root.bind('z', tick)
 root.bind('q', QuitDestroy)
+root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-1))
+root.bind('<Right>', lambda e: mypoly.setRotateSpeed(1))
+root.bind('<ButtonRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
+root.bind('<ButtonRelease-Right>', lambda e: mypoly.setRotateSpeed(0), '+')
 root.after(_DELAY, timer)  # start
 ###
 
