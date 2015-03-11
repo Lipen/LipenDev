@@ -14,7 +14,7 @@ print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
 root = Tk()
 root.title(_TITLE)
 canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
-label_fps = Label(root, bg='#cccccc', fg='#000000',font='sans 20')
+label_fps = Label(root, bg='#cccccc', fg='#000000', font='sans 20')
 
 
 def getRandomColor():
@@ -38,35 +38,33 @@ class Vector2:
 	def __init__(self, x, y):
 		self.x, self.y = x, y
 
-	def addVectors(v1, v2):
-		return Vector2(v1.x+v2.x, v1.y+v2.y)
-
 	def __add__(self, other):
-		if other is Vector2:
+		if isinstance(other, Vector2):
 			return Vector2(self.x+other.x, self.y+other.y)
 		else:
+			print('type(other) == {}. isinstance(other, Vector2) == {}'.format(type(other), isinstance(other, Vector2)))
 			return Vector2(self.x+other, self.y+other)
 
 	def __sub__(self, other):
-		if other is Vector2:
+		if isinstance(other, Vector2):
 			return Vector2(self.x-other.x, self.y-other.y)
 		else:
 			return Vector2(self.x-other, self.y-other)
 
 	def __mul__(self, other):
-		if other is Vector2:
+		if isinstance(other, Vector2):
 			return self.x*other.x + self.y*other.y
 		else:
 			return Vector2(self.x*other, self.y*other)
 
 	def __truediv__(self, other):
-		if other is Vector2:
+		if isinstance(other, Vector2):
 			return Vector2(self.x/other.x, self.y/other.y)
 		else:
 			return Vector2(self.x/other, self.y/other)
 
 	def __pow__(self, other, signed=False):
-		if other is Vector2:
+		if isinstance(other, Vector2):
 			t = self.x*other.y - self.y*other.x
 			return sign(t) if signed else t
 		else:
@@ -81,6 +79,12 @@ class Vector2:
 	def __abs__(self):
 		return (self.x**2 + self.y**2) ** 0.5
 
+	def __str__(self):
+		return '{'+', '.join(map(lambda q: format(q, '.3f').rstrip('0').rstrip('.'), [self.x, self.y]))+'}'
+
+	def addVectors(v1, v2):
+		return Vector2(v1.x+v2.x, v1.y+v2.y)
+
 
 class Point:
 
@@ -94,7 +98,7 @@ class Point:
 		return iter([self.x, self.y])
 
 	def __str__(self):
-		return '('+', '.join(map(str, [self.x, self.y]))+')'
+		return '('+', '.join(map(lambda q: format(q, '.3f').rstrip('0').rstrip('.'), [self.x, self.y]))+')'
 
 	def addVector(self, v):
 		self.x += v.x
@@ -115,6 +119,7 @@ class Polygon:
 	"""
 
 	vel = Vector2(0, 0)
+	acc = Vector2(0, 0)
 	angularVel = 0
 
 	def __init__(self, p1, p2, p3, p4, fill='#5060BB', activefill='#99dd33'):
@@ -137,6 +142,12 @@ class Polygon:
 		self.vel.x = vx
 		self.vel.y = vy
 
+	def setAccel(self, ax, ay):
+		"""Pixels per second**2
+		"""
+		self.acc.x = ax
+		self.acc.y = ay
+
 	def setRotateSpeed(self, av):
 		"""Radians per second
 		"""
@@ -152,13 +163,16 @@ class Polygon:
 		# return coords
 		return [c for p in self.points for c in p]
 
+	def accel(self):
+		self.vel += self.acc * (_DELAY/1000.)
+
 	def move(self):
 		for p in self.points:
-			p.addVector(self.vel / _DELAY)
+			p.addVector(self.vel * (_DELAY/1000.))
 
 	def rotate(self):
 		c = self.getCenter()
-		print('A: {}, Center: {}'.format(self.getArea(), c))
+		# print('A: {}, Center: {}'.format(self.getArea(), c))
 		for p in self.points:
 			r = Point.getDist(c, p)
 			if self.angularVel != 0.0:
@@ -167,9 +181,11 @@ class Polygon:
 				p.y = c.y + r * math.sin(a)
 
 	def update(self):
+		self.accel()
 		self.move()
 		self.rotate()
 		canv.coords(self.poly, self.p1.x, self.p1.y, self.p2.x, self.p2.y, self.p3.x, self.p3.y, self.p4.x, self.p4.y)  # TODO: reduce this line..
+		print('A={}, vel={}, acc={}, Center={}'.format(round(self.getArea()), self.vel, self.acc, self.getCenter()))
 
 	def newRandomPolygon():
 		p1 = Point(random.uniform(0, _WIDTH), random.uniform(0, _HEIGHT))
@@ -185,7 +201,7 @@ class Polygon:
 
 
 def clock_yield():
-	pt = time.time()-_DELAY/1000.
+	pt = time.time() - (_DELAY/1000.)
 	while 1:
 		t = time.time()
 		yield time.time() - pt
@@ -210,8 +226,9 @@ def QuitDestroy(event=None):
 
 ###
 clock = clock_yield()
-mypoly = Polygon(Point(100, 400), Point(80, 250), Point(400, 270), Point(300, 390), fill=getRandomColor())
-mypoly.setSpeed(1, 1)
+mypoly = Polygon(Point(80, 250), Point(400, 270), Point(300, 390), Point(100, 400)), fill=getRandomColor())
+# mypoly.setSpeed(1, 1)
+mypoly.setAccel(0, 1)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
 root.bind('<Control-c>', QuitDestroy, '+')
