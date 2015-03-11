@@ -11,8 +11,12 @@ _HEIGHT = 600
 _FPS = 25.
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
-_WATERLINE = 400
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
+_WATERLINE = 200
+_SHIPWIDTH = 5
+_MASS = 2000000  # kg
+_DENSITY = 113  # 22.6
+_GRAVACCEL = 9.8
 
 root = Tk()
 root.title(_TITLE)
@@ -221,48 +225,63 @@ def tick(event=None):
 
 	if max(mypoly.getCoords()[1::2]) > _WATERLINE:
 		# print('water!')
-		intersections = []
-		for i in range(len(mypoly.points)):
-			A = mypoly.points[i-1]
-			B = mypoly.points[i]
-			t = crossSegmentWithHorizontalLine(A, B, _WATERLINE)
-			if t is not None:
-				intersections.append([t, A, B])
-		if len(intersections) == 2:
-			A, B, C, D = intersections[0][1:]+intersections[1][1:]
-			if A.y < B.y:
-				b = True
-				W = []
-				for i in range(len(mypoly.points)):
-					X = mypoly.points[i]
-					if X is D:
-						b = False
-						W.append(intersections[1][0])
-					if X is A:
-						b = True
-						W.append(intersections[0][0])
-					if b and X.y > _WATERLINE:
-						W.append(X)
-			else:
-				b = True
-				W = []
-				for i in range(len(mypoly.points)):
-					X = mypoly.points[i]
-					if X is B:
-						b = False
-						W.append(intersections[0][0])
-					if X is C:
-						b = True
-						W.append(intersections[1][0])
-					if b and X.y > _WATERLINE:
-						W.append(X)
+		if min(mypoly.getCoords()[1::2]) > _WATERLINE:
+			print('COMPLETELY UNDER WATER :O')
+			Area = mypoly.getArea()
+			Volume = Area * _SHIPWIDTH
+			acc = _GRAVACCEL/_MASS*(_MASS - _DENSITY*Volume)
+			print('Volume under water == {}, acc = {}'.format(fround(Volume, 1), fround(acc, 1)))
+			mypoly.setAccel(ay=acc)
+		else:
+			intersections = []
+			for i in range(len(mypoly.points)):
+				A = mypoly.points[i-1]
+				B = mypoly.points[i]
+				t = crossSegmentWithHorizontalLine(A, B, _WATERLINE)
+				if t is not None:
+					intersections.append([t, A, B])
+			if len(intersections) == 2:
+				A, B, C, D = intersections[0][1:]+intersections[1][1:]
+				if A.y < B.y:
+					b = True
+					W = []
+					for i in range(len(mypoly.points)):
+						X = mypoly.points[i]
+						if X is D:
+							b = False
+							W.append(intersections[1][0])
+						if X is A:
+							b = True
+							W.append(intersections[0][0])
+						if b and X.y > _WATERLINE:
+							W.append(X)
+				else:
+					b = True
+					W = []
+					for i in range(len(mypoly.points)):
+						X = mypoly.points[i]
+						if X is B:
+							b = False
+							W.append(intersections[0][0])
+						if X is C:
+							b = True
+							W.append(intersections[1][0])
+						if b and X.y > _WATERLINE:
+							W.append(X)
 
-			# print('W: ' + ', '.join(map(str, W)))
-			under = Polygon(W)
-			print('Area under water == {}'.format(fround(under.getArea(), 1)))
+				# print('W: ' + ', '.join(map(str, W)))
+				under = Polygon(W, spawn=False)
+				Area = under.getArea()
+				Volume = Area * _SHIPWIDTH
+				# acc = _GRAVACCEL/_MASS*(_MASS - _DENSITY*Volume)
+				acc = _GRAVACCEL * (1 - _DENSITY*Volume/_MASS)
+				print('Volume under water == {}, acc == {}'.format(fround(Volume, 1), fround(acc, 1)))
+				mypoly.setAccel(ay=acc)
 
-		elif len(intersections) > 2:
-			print('WEIRD')
+			elif len(intersections) > 2:
+				print('WEIRD')
+	else:
+		mypoly.setAccel(ay=_GRAVACCEL)
 
 
 def timer():
@@ -280,7 +299,7 @@ def QuitDestroy(event=None):
 clock = clock_yield()
 mypoly = Polygon([Point(180, 50), Point(500, 70), Point(400, 190), Point(200, 200)], fill=getRandomColor())
 # mypoly.setSpeed(1, 1)
-# mypoly.setAccel(0, 1)
+mypoly.setAccel(0, _GRAVACCEL)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
 root.bind('<Control-c>', QuitDestroy)
@@ -292,8 +311,8 @@ root.bind('<q>', lambda e: mypoly.setAngularAccel(-0.2))
 root.bind('<e>', lambda e: mypoly.setAngularAccel(0.2))
 root.bind('<KeyRelease-a>', lambda e: mypoly.setAccel(ax=0))
 root.bind('<KeyRelease-d>', lambda e: mypoly.setAccel(ax=0))
-root.bind('<KeyRelease-w>', lambda e: mypoly.setAccel(ay=0))
-root.bind('<KeyRelease-s>', lambda e: mypoly.setAccel(ay=0))
+root.bind('<KeyRelease-w>', lambda e: mypoly.setAccel(ay=_GRAVACCEL))
+root.bind('<KeyRelease-s>', lambda e: mypoly.setAccel(ay=_GRAVACCEL))
 root.bind('<KeyRelease-q>', lambda e: mypoly.setAngularAccel(0))
 root.bind('<KeyRelease-e>', lambda e: mypoly.setAngularAccel(0))
 root.after(_DELAY, timer)  # start
