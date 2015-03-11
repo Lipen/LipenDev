@@ -3,10 +3,12 @@ import random
 import math
 import time
 
+# TODO: (_DELAY/1000.) ===> "_dt" from clock
+
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
-_FPS = 100.
+_FPS = 25.
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
@@ -25,6 +27,10 @@ def sign(x):
 	return 1 if x > 0 else -1 if x < 0 else 0
 
 
+def fround(f, precision=3):
+	return format(f, '.{}f'.format(precision)).rstrip('0').rstrip('.')
+
+
 class Vector2:
 
 	"""Base 2D vector class
@@ -32,7 +38,7 @@ class Vector2:
 		- Addiction/Subtraction (with vector or with scalar)
 		- Multiplication (simple or scalar product of vectors)
 		- Pow (simple or vector product of vectors)
-		- Abs (modulo)
+		- Abs (modulo==length)
 	"""
 
 	def __init__(self, x, y):
@@ -80,7 +86,7 @@ class Vector2:
 		return (self.x**2 + self.y**2) ** 0.5
 
 	def __str__(self):
-		return '{'+', '.join(map(lambda q: format(q, '.3f').rstrip('0').rstrip('.'), [self.x, self.y]))+'}'
+		return '{'+', '.join(map(fround, [self.x, self.y]))+'}'
 
 	def addVectors(v1, v2):
 		return Vector2(v1.x+v2.x, v1.y+v2.y)
@@ -98,7 +104,7 @@ class Point:
 		return iter([self.x, self.y])
 
 	def __str__(self):
-		return '('+', '.join(map(lambda q: format(q, '.3f').rstrip('0').rstrip('.'), [self.x, self.y]))+')'
+		return '('+', '.join(map(fround, [self.x, self.y]))+')'
 
 	def addVector(self, v):
 		self.x += v.x
@@ -108,7 +114,6 @@ class Point:
 		return math.hypot(p1.x - p2.x, p1.y-p2.y)
 
 	def getAngle(p1, p2):
-		# return math.atan2(p1.y-p2.y, p1.x-p2.x)
 		return math.atan2(p2.y-p1.y, p2.x-p1.x)
 
 
@@ -121,6 +126,7 @@ class Polygon:
 	vel = Vector2(0, 0)
 	acc = Vector2(0, 0)
 	angularVel = 0
+	angularAcc = 0
 
 	def __init__(self, p1, p2, p3, p4, fill='#5060BB', activefill='#99dd33'):
 		self.points = [p1, p2, p3, p4]
@@ -143,24 +149,24 @@ class Polygon:
 		self.vel.y = vy
 
 	def setAccel(self, ax, ay):
-		"""Pixels per second**2
+		"""Pixels per second^2
 		"""
 		self.acc.x = ax
 		self.acc.y = ay
 
-	def setRotateSpeed(self, av):
+	def setAngularSpeed(self, av):
 		"""Radians per second
 		"""
 		self.angularVel = av
 
-	def getCoords(self):
-		"""List of coords of all polygon's points:
-			[ p1.x, p1.y, ..., p4.x, p4.y ] #for 2-dim 4-point polygon
+	def setAngularAccel(self, aa):
+		"""Radians per second^2
 		"""
-		# coords = []
-		# for p in self.points:
-		# 	coords.extend(p)
-		# return coords
+		self.angularAcc = aa
+
+	def getCoords(self):
+		"""List of coords of all polygon's points
+		"""
 		return [c for p in self.points for c in p]
 
 	def accel(self):
@@ -171,11 +177,11 @@ class Polygon:
 			p.addVector(self.vel * (_DELAY/1000.))
 
 	def rotate(self):
+		self.angularVel += self.angularAcc * (_DELAY/1000.)
 		c = self.getCenter()
-		# print('A: {}, Center: {}'.format(self.getArea(), c))
 		for p in self.points:
 			r = Point.getDist(c, p)
-			if self.angularVel != 0.0:
+			if self.angularVel != 0:
 				a = Point.getAngle(c, p) + self.angularVel/_DELAY
 				p.x = c.x + r * math.cos(a)
 				p.y = c.y + r * math.sin(a)
@@ -185,7 +191,7 @@ class Polygon:
 		self.move()
 		self.rotate()
 		canv.coords(self.poly, self.p1.x, self.p1.y, self.p2.x, self.p2.y, self.p3.x, self.p3.y, self.p4.x, self.p4.y)  # TODO: reduce this line..
-		print('A={}, vel={}, acc={}, Center={}'.format(round(self.getArea()), self.vel, self.acc, self.getCenter()))
+		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 2), fround(abs(self.acc),2), fround(self.angularVel, 3), fround(self.angularAcc, 3), self.getCenter()))
 
 	def newRandomPolygon():
 		p1 = Point(random.uniform(0, _WIDTH), random.uniform(0, _HEIGHT))
@@ -201,7 +207,7 @@ class Polygon:
 
 
 def clock_yield():
-	pt = time.time() - (_DELAY/1000.)
+	pt = 0  # time.time() - (_DELAY/1000.)
 	while 1:
 		t = time.time()
 		yield time.time() - pt
@@ -232,10 +238,10 @@ mypoly.setAccel(0, 1)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
 root.bind('<Control-c>', QuitDestroy, '+')
-root.bind('<Left>', lambda e: mypoly.setRotateSpeed(-0.1))
-root.bind('<Right>', lambda e: mypoly.setRotateSpeed(0.1))
-root.bind('<KeyRelease-Left>', lambda e: mypoly.setRotateSpeed(0),)
-root.bind('<KeyRelease-Right>', lambda e: mypoly.setRotateSpeed(0), '+')
+root.bind('<Left>', lambda e: mypoly.setAngularAccel(-0.1))
+root.bind('<Right>', lambda e: mypoly.setAngularAccel(0.1))
+root.bind('<KeyRelease-Left>', lambda e: mypoly.setAngularAccel(0))
+root.bind('<KeyRelease-Right>', lambda e: mypoly.setAngularAccel(0), '+')
 root.after(_DELAY, timer)  # start
 ###
 
