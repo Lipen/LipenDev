@@ -3,7 +3,8 @@ import random
 import math
 import time
 
-# TODO: (_DELAY/1000.) ===> "_dt" from clock
+## TODO: (_DELAY/1000.) ===> "_dt" from clock
+## TODO: Force -+-> angular momentum
 
 _TITLE = 'shipsim'
 _WIDTH = 800
@@ -12,11 +13,12 @@ _FPS = 25.
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
-_WATERLINE = 200
+_WATERLINE = 250
 _SHIPWIDTH = 5
 _MASS = 2000000  # kg
-_DENSITY = 113  # 22.6
+_DENSITY = 50  # 113; 22.6
 _GRAVACCEL = 9.8
+_FRICTION = 1.0
 
 root = Tk()
 root.title(_TITLE)
@@ -226,11 +228,15 @@ def tick(event=None):
 	if max(mypoly.getCoords()[1::2]) > _WATERLINE:
 		# print('water!')
 		if min(mypoly.getCoords()[1::2]) > _WATERLINE:
-			print('COMPLETELY UNDER WATER :O')
+			# print('COMPLETELY UNDER WATER :O')
 			Area = mypoly.getArea()
 			Volume = Area * _SHIPWIDTH
-			acc = _GRAVACCEL/_MASS*(_MASS - _DENSITY*Volume)
-			print('Volume under water == {}, acc = {}'.format(fround(Volume, 1), fround(acc, 1)))
+			S = (max([p.x for p in mypoly.points])-min([p.x for p in mypoly.points]))*_SHIPWIDTH
+			accArch = -_DENSITY*_GRAVACCEL*Volume/_MASS
+			accFriction = -sign(mypoly.vel.y)*_DENSITY*mypoly.vel.y**2*_FRICTION*S/2/_MASS
+			acc = _GRAVACCEL + accArch + accFriction
+			# acc = _GRAVACCEL - _DENSITY/2/_MASS*(2*_GRAVACCEL*Volume + sign(mypoly.vel.y)*mypoly.vel.y**2*_FRICTION*S)
+			print('VolUnderWater = {}, acc = {}, accArch={}, accFric={}, S = {}'.format(fround(Volume, 1), fround(acc, 1), fround(accArch, 1), fround(accFriction, 1), fround(S, 1)))
 			mypoly.setAccel(ay=acc)
 		else:
 			intersections = []
@@ -273,9 +279,13 @@ def tick(event=None):
 				under = Polygon(W, spawn=False)
 				Area = under.getArea()
 				Volume = Area * _SHIPWIDTH
-				# acc = _GRAVACCEL/_MASS*(_MASS - _DENSITY*Volume)
-				acc = _GRAVACCEL * (1 - _DENSITY*Volume/_MASS)
-				print('Volume under water == {}, acc == {}'.format(fround(Volume, 1), fround(acc, 1)))
+				# S = (max(under.getCoords()[0::2])-min(under.getCoords()[0::2]))*_SHIPWIDTH
+				S = (max([p.x for p in under.points])-min([p.x for p in under.points]))*_SHIPWIDTH
+				accArch = -_DENSITY*_GRAVACCEL*Volume/_MASS
+				accFriction = -sign(mypoly.vel.y)*_DENSITY*mypoly.vel.y**2*_FRICTION*S/2/_MASS
+				acc = _GRAVACCEL + accArch + accFriction
+				# acc = _GRAVACCEL - _DENSITY/2/_MASS*(2*_GRAVACCEL*Volume + sign(mypoly.vel.y)*mypoly.vel.y**2*_FRICTION*S)
+				print('VolUnderWater == {}, acc = {}, accArch={}, accFric={}, S == {}'.format(fround(Volume, 1), fround(acc, 1), fround(accArch, 1), fround(accFriction, 1), fround(S, 1)))
 				mypoly.setAccel(ay=acc)
 
 			elif len(intersections) > 2:
@@ -319,5 +329,6 @@ root.after(_DELAY, timer)  # start
 ###
 
 canv.pack()
+canv.create_line(0, _WATERLINE, _WIDTH, _WATERLINE, width=1., fill='red', dash=(2,2,2))
 label_fps.place(x=16, y=16, width=64, height=64)
 root.mainloop()
