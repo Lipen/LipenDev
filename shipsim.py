@@ -11,6 +11,7 @@ _HEIGHT = 600
 _FPS = 25.
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
+_WATERLINE = 400
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
 
 root = Tk()
@@ -29,6 +30,11 @@ def sign(x):
 
 def fround(f, precision=3):
 	return format(f, '.{}f'.format(precision)).rstrip('0').rstrip('.')
+
+
+def crossSegmentWithHorizontalLine(A, B, c):
+	if B.y != A.y and ((A.y < c and B.y > c) or (A.y > c and B.y < c)):
+		return Point((A.x*(B.y-c) + B.x*(c-A.y))/(B.y-A.y), c)
 
 
 class Vector2:
@@ -120,7 +126,6 @@ class Point:
 class Polygon:
 
 	"""Base 2D polygon class.
-	* 4-point for now.
 	"""
 
 	vel = Vector2(0, 0)
@@ -128,10 +133,10 @@ class Polygon:
 	angularVel = 0
 	angularAcc = 0
 
-	def __init__(self, p1, p2, p3, p4, fill='#5060BB', activefill='#99dd33'):
-		self.points = [p1, p2, p3, p4]
-		self.p1, self.p2, self.p3, self.p4 = self.points
-		self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
+	def __init__(self, points, fill='#5060BB', activefill='#99dd33', spawn=True):
+		self.points = list(points)  # is it necessary?..
+		if spawn:
+			self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
 
 	def getArea(self):
 		return 0.5 * abs(sum(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y for i in range(len(self.points))))
@@ -151,9 +156,9 @@ class Polygon:
 	def setAccel(self, ax=None, ay=None):
 		"""Pixels per second^2
 		"""
-		if ax != None:
+		if ax is not None:
 			self.acc.x = ax
-		if ay != None:
+		if ay is not None:
 			self.acc.y = ay
 
 	def setAngularSpeed(self, av):
@@ -192,15 +197,9 @@ class Polygon:
 		self.accel()
 		self.move()
 		self.rotate()
-		canv.coords(self.poly, self.p1.x, self.p1.y, self.p2.x, self.p2.y, self.p3.x, self.p3.y, self.p4.x, self.p4.y)  # TODO: reduce this line..
-		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 2), fround(abs(self.acc),2), fround(self.angularVel, 3), fround(self.angularAcc, 3), self.getCenter()))
+		canv.coords(self.poly, *self.getCoords())
 
-	def newRandomPolygon():
-		p1 = Point(random.uniform(0, _WIDTH), random.uniform(0, _HEIGHT))
-		p2 = Point(random.uniform(0, _WIDTH), random.uniform(p1.y, _HEIGHT))
-		p3 = Point(random.uniform(max(p1.x, p2.x), _WIDTH), random.uniform(0, _HEIGHT))
-		p4 = Point(random.uniform(max(p1.x, p2.x), _WIDTH), random.uniform(p3.y, _HEIGHT))
-		return Polygon(p1, p2, p3, p4, fill=getRandomColor())
+		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 2), fround(abs(self.acc), 2), fround(self.angularVel, 3), fround(self.angularAcc, 3), self.getCenter()))
 
 # def PressedLeft(event=None):
 # 	mypoly.setRotateSpeed(-0.1)
@@ -220,6 +219,51 @@ def tick(event=None):
 	mypoly.update()
 	label_fps['text'] = round(1./next(clock))
 
+	if max(mypoly.getCoords()[1::2]) > _WATERLINE:
+		# print('water!')
+		intersections = []
+		for i in range(len(mypoly.points)):
+			A = mypoly.points[i-1]
+			B = mypoly.points[i]
+			t = crossSegmentWithHorizontalLine(A, B, _WATERLINE)
+			if t is not None:
+				intersections.append([t, A, B])
+		if len(intersections) == 2:
+			A, B, C, D = intersections[0][1:]+intersections[1][1:]
+			if A.y < B.y:
+				b = True
+				W = []
+				for i in range(len(mypoly.points)):
+					X = mypoly.points[i]
+					if X is D:
+						b = False
+						W.append(intersections[1][0])
+					if X is A:
+						b = True
+						W.append(intersections[0][0])
+					if b and X.y > _WATERLINE:
+						W.append(X)
+			else:
+				b = True
+				W = []
+				for i in range(len(mypoly.points)):
+					X = mypoly.points[i]
+					if X is B:
+						b = False
+						W.append(intersections[0][0])
+					if X is C:
+						b = True
+						W.append(intersections[1][0])
+					if b and X.y > _WATERLINE:
+						W.append(X)
+
+			# print('W: ' + ', '.join(map(str, W)))
+			under = Polygon(W)
+			print('Area under water == {}'.format(fround(under.getArea(), 1)))
+
+		elif len(intersections) > 2:
+			print('WEIRD')
+
 
 def timer():
 	tick()
@@ -234,16 +278,16 @@ def QuitDestroy(event=None):
 
 ###
 clock = clock_yield()
-mypoly = Polygon(Point(80, 250), Point(400, 270), Point(300, 390), Point(100, 400), fill=getRandomColor())
+mypoly = Polygon([Point(180, 50), Point(500, 70), Point(400, 190), Point(200, 200)], fill=getRandomColor())
 # mypoly.setSpeed(1, 1)
 # mypoly.setAccel(0, 1)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
 root.bind('<Control-c>', QuitDestroy)
-root.bind('<a>', lambda e: mypoly.setAccel(ax=-10))
-root.bind('<d>', lambda e: mypoly.setAccel(ax=10))
-root.bind('<w>', lambda e: mypoly.setAccel(ay=-10))
-root.bind('<s>', lambda e: mypoly.setAccel(ay=10))
+root.bind('<a>', lambda e: mypoly.setAccel(ax=-20))
+root.bind('<d>', lambda e: mypoly.setAccel(ax=20))
+root.bind('<w>', lambda e: mypoly.setAccel(ay=-20))
+root.bind('<s>', lambda e: mypoly.setAccel(ay=20))
 root.bind('<q>', lambda e: mypoly.setAngularAccel(-0.2))
 root.bind('<e>', lambda e: mypoly.setAngularAccel(0.2))
 root.bind('<KeyRelease-a>', lambda e: mypoly.setAccel(ax=0))
@@ -252,10 +296,6 @@ root.bind('<KeyRelease-w>', lambda e: mypoly.setAccel(ay=0))
 root.bind('<KeyRelease-s>', lambda e: mypoly.setAccel(ay=0))
 root.bind('<KeyRelease-q>', lambda e: mypoly.setAngularAccel(0))
 root.bind('<KeyRelease-e>', lambda e: mypoly.setAngularAccel(0))
-# root.bind('<Left>', lambda e: mypoly.setAngularAccel(-0.1))
-# root.bind('<Right>', lambda e: mypoly.setAngularAccel(0.1))
-# root.bind('<KeyRelease-Left>', lambda e: mypoly.setAngularAccel(0))
-# root.bind('<KeyRelease-Right>', lambda e: mypoly.setAngularAccel(0))
 root.after(_DELAY, timer)  # start
 ###
 
