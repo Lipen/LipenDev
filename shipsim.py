@@ -148,11 +148,13 @@ class Polygon:
 		self.vel.x = vx
 		self.vel.y = vy
 
-	def setAccel(self, ax, ay):
+	def setAccel(self, ax=None, ay=None):
 		"""Pixels per second^2
 		"""
-		self.acc.x = ax
-		self.acc.y = ay
+		if ax != None:
+			self.acc.x = ax
+		if ay != None:
+			self.acc.y = ay
 
 	def setAngularSpeed(self, av):
 		"""Radians per second
@@ -234,14 +236,26 @@ def QuitDestroy(event=None):
 clock = clock_yield()
 mypoly = Polygon(Point(80, 250), Point(400, 270), Point(300, 390), Point(100, 400), fill=getRandomColor())
 # mypoly.setSpeed(1, 1)
-mypoly.setAccel(0, 1)
+# mypoly.setAccel(0, 1)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
-root.bind('<Control-c>', QuitDestroy, '+')
-root.bind('<Left>', lambda e: mypoly.setAngularAccel(-0.1))
-root.bind('<Right>', lambda e: mypoly.setAngularAccel(0.1))
-root.bind('<KeyRelease-Left>', lambda e: mypoly.setAngularAccel(0))
-root.bind('<KeyRelease-Right>', lambda e: mypoly.setAngularAccel(0), '+')
+root.bind('<Control-c>', QuitDestroy)
+root.bind('<a>', lambda e: mypoly.setAccel(ax=-10))
+root.bind('<d>', lambda e: mypoly.setAccel(ax=10))
+root.bind('<w>', lambda e: mypoly.setAccel(ay=-10))
+root.bind('<s>', lambda e: mypoly.setAccel(ay=10))
+root.bind('<q>', lambda e: mypoly.setAngularAccel(-0.2))
+root.bind('<e>', lambda e: mypoly.setAngularAccel(0.2))
+root.bind('<KeyRelease-a>', lambda e: mypoly.setAccel(ax=0))
+root.bind('<KeyRelease-d>', lambda e: mypoly.setAccel(ax=0))
+root.bind('<KeyRelease-w>', lambda e: mypoly.setAccel(ay=0))
+root.bind('<KeyRelease-s>', lambda e: mypoly.setAccel(ay=0))
+root.bind('<KeyRelease-q>', lambda e: mypoly.setAngularAccel(0))
+root.bind('<KeyRelease-e>', lambda e: mypoly.setAngularAccel(0))
+# root.bind('<Left>', lambda e: mypoly.setAngularAccel(-0.1))
+# root.bind('<Right>', lambda e: mypoly.setAngularAccel(0.1))
+# root.bind('<KeyRelease-Left>', lambda e: mypoly.setAngularAccel(0))
+# root.bind('<KeyRelease-Right>', lambda e: mypoly.setAngularAccel(0))
 root.after(_DELAY, timer)  # start
 ###
 
