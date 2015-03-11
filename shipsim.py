@@ -6,7 +6,7 @@ import time
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
-_FPS = 50.
+_FPS = 100.
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
@@ -226,7 +226,7 @@ def QuitDestroy(event=None):
 
 ###
 clock = clock_yield()
-mypoly = Polygon(Point(80, 250), Point(400, 270), Point(300, 390), Point(100, 400)), fill=getRandomColor())
+mypoly = Polygon(Point(80, 250), Point(400, 270), Point(300, 390), Point(100, 400), fill=getRandomColor())
 # mypoly.setSpeed(1, 1)
 mypoly.setAccel(0, 1)
 root.bind('z', tick)
