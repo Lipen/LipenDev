@@ -60,7 +60,6 @@ class Vector2:
 		if isinstance(other, Vector2):
 			return Vector2(self.x+other.x, self.y+other.y)
 		else:
-			print('type(other) == {}. isinstance(other, Vector2) == {}'.format(type(other), isinstance(other, Vector2)))
 			return Vector2(self.x+other, self.y+other)
 
 	def __sub__(self, other):
@@ -99,6 +98,9 @@ class Vector2:
 
 	def __str__(self):
 		return '{'+', '.join(map(fround, [self.x, self.y]))+'}'
+
+	def newFromPoints(p1, p2):
+		return Vector2(p2.x-p1.x, p2.y-p1.y)
 
 	def addVectors(v1, v2):
 		return Vector2(v1.x+v2.x, v1.y+v2.y)
@@ -153,6 +155,9 @@ class Polygon:
 			1/6/A*sum((self.points[i-1].x+self.points[i].x)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))),
 			1/6/A*sum((self.points[i-1].y+self.points[i].y)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))))
 
+	# def getInertiaMoment():
+	# 	return _MASS*()/12
+
 	def setSpeed(self, vx, vy):
 		"""Pixels per second
 		"""
@@ -205,7 +210,7 @@ class Polygon:
 		self.rotate()
 		canv.coords(self.poly, *self.getCoords())
 
-		print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.1f},C={}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc, self.getCenter()))
+		print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.1f}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc))
 
 
 class World:
@@ -254,7 +259,6 @@ def tick(event=None):
 		if min(mypoly.getCoords()[1::2]) > _WATERLINE:
 			Area = mypoly.getArea()
 			Volume = Area * _SHIPWIDTH
-			# S = (max([p.x for p in mypoly.points])-min([p.x for p in mypoly.points]))*_SHIPWIDTH
 			forceGrav = World.gravForce(_MASS)
 			forceArch = World.archForce(_DENSITY, Volume)
 			forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, mypoly)
@@ -271,6 +275,7 @@ def tick(event=None):
 				if t is not None:
 					intersections.append([t, A, B])
 			if len(intersections) == 2:
+				# TODO: Refactor this mess :c
 				A, B, C, D = intersections[0][1:]+intersections[1][1:]
 				if A.y < B.y:
 					b = True
@@ -298,23 +303,51 @@ def tick(event=None):
 							W.append(intersections[1][0])
 						if b and X.y > _WATERLINE:
 							W.append(X)
-				under = Polygon(W)
+				under = Polygon(W)  # Polygon under water
 				Area = under.getArea()
 				Volume = Area * _SHIPWIDTH
-				# S = (max([p.x for p in under.points])-min([p.x for p in under.points]))*_SHIPWIDTH
+
 				forceGrav = World.gravForce(_MASS)
 				forceArch = World.archForce(_DENSITY, Volume)
 				forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, under)
-				F = forceGrav + forceArch + forceFric
-				acc = F / _MASS
-				print('VolUnderWater={:.1f}, acc.x={:.1f}, acc.y={:.1f}'.format(Volume, acc.x, acc.y))
+				F = forceArch + forceFric
+
+				Cu = under.getCenter()
+				C0 = mypoly.getCenter()
+				s = Vector2.newFromPoints(Cu, C0)  # directing
+
+				Fll = F * s / abs(s)  # projection # ForceLine-Length
+				Flx = Fll / math.sqrt((s.y/s.x)**2+1)  # relative
+				Fly = Flx * s.y/s.x
+//				Fl = Vector2(Flx, Fly)  #ForceLine
+				# Fl = Vector2(Cu.x+Flx, Cu.y+Fly)  #ForceLine
+
+				Fml = math.sqrt(abs(F)**2 - abs(Fl)**2)  # ForceMomentum-Length
+				Fmx = Fml / math.sqrt((s.y/s.x)**2+1)  # relative
+				Fmy = -Fmx * s.y/s.x
+				Fm = Vector2(Fmx, Fmy)  # ForceMomentum
+				# Fm = Vector2(Cu.x+Fmx, Cu.x+Fmy)  # ForceMomentum
+				print('Fll = {}, Fl = {}, Fm = {}, s = {}'.format(Fll, Fl, Fm, s))
+				# M = abs(Fm) * abs(s)  # Momentum
+//				M = F ** s  # == -s x F
+				# J = mypoly.getInertiaMoment()
+				# J = 11656333333
+				J = 48000000000
+
+				Fl += forceGrav
+				acc = Fl / _MASS  # accel
+//				# aa = pow(Fm, s, True) * M / J  # angularAccel
+//				aa = M / J
+				print('VUW={:.1f},ax={:.1f},ay={:.1f},aa={:.2f},Fmx={:.1f},Fmy={:.1f},M={:.0f}'.format(Volume, acc.x, acc.y, aa, Fm.x, Fm.y, M, J))
 				mypoly.setAccel(acc.x, acc.y)
+				mypoly.setAngularAccel(aa)
 			elif len(intersections) > 2:
 				print('WEIRD')
 	else:
 		F = World.gravForce(_MASS)
 		acc = F / _MASS
 		mypoly.setAccel(acc.x, acc.y)
+		mypoly.setAngularAccel(0)
 
 
 def timer():
@@ -329,7 +362,7 @@ def QuitDestroy(event=None):
 	print('Destroyed.')
 
 clock = clock_yield()
-mypoly = Polygon([Point(180, 50), Point(500, 70), Point(400, 190), Point(200, 200)], fill=getRandomColor(), spawn=True)
+mypoly = Polygon([Point(200, 50), Point(560, 30), Point(585, 160), Point(210, 190)], fill=getRandomColor(), spawn=True)
 mypoly.setAccel(0, _GRAVACCEL)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
