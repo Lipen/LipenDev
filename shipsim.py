@@ -205,7 +205,7 @@ class Polygon:
 		self.rotate()
 		canv.coords(self.poly, *self.getCoords())
 
-		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 1), fround(abs(self.acc), 1), fround(self.angularVel, 1), fround(self.angularAcc, 2), self.getCenter()))
+		print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.1f},C={}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc, self.getCenter()))
 
 
 class World:
