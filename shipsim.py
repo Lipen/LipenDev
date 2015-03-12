@@ -219,9 +219,21 @@ class World:
 	def archForce(density, volume):
 		return Vector2(0, -density * _GRAVACCEL * volume)
 
-	def fricForce(density, vel: Vector2, coef, area):
+	def fricForce(density, vel: Vector2, coef, poly: Polygon):
+		VD = 0
+		for i in range(len(mypoly.points)):
+			for j in range(len(mypoly.points)):
+				VA = mypoly.points[i]
+				VC = mypoly.points[j]
+				VV = vel
+				VBy = (VA.x*VV.x+VA.y*VV.y-VC.x*VV.x+VC.y*VV.x**2/VV.y)/(VV.x**2/VV.y+VV.y)
+				VBx = (VBy*VV.x+VC.x*VV.y-VC.y*VV.x)/VV.y
+				VDtmp = math.hypot(VA.x-VBx, VA.y-VBy)
+				if VDtmp > VD:
+					VD = VDtmp
+		VS = VD * _SHIPWIDTH
 		v = abs(vel)
-		f = 0.5*density*v**2*coef*area
+		f = 0.5*density*v**2*coef*VS
 		return -Vector2(f*vel.x/v, f*vel.y/v)
 
 
@@ -242,25 +254,13 @@ def tick(event=None):
 		if min(mypoly.getCoords()[1::2]) > _WATERLINE:
 			Area = mypoly.getArea()
 			Volume = Area * _SHIPWIDTH
-			S = (max([p.x for p in mypoly.points])-min([p.x for p in mypoly.points]))*_SHIPWIDTH
+			# S = (max([p.x for p in mypoly.points])-min([p.x for p in mypoly.points]))*_SHIPWIDTH
 			forceGrav = World.gravForce(_MASS)
 			forceArch = World.archForce(_DENSITY, Volume)
-			forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, S)
+			forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, mypoly)
 			F = forceGrav + forceArch + forceFric
 			acc = F / _MASS
-			VD = 0
-			for i in range(len(mypoly.points)):
-				for j in range(len(mypoly.points)):
-					VA = mypoly.points[i]
-					VC = mypoly.points[j]
-					VV = mypoly.vel
-					VBy = (VA.x*VV.x+VA.y*VV.y-VC.x*VV.x+VC.y*VV.x**2/VV.y)/(VV.x**2/VV.y+VV.y)
-					VBx = (VBy*VV.x+VC.x*VV.y-VC.y*VV.x)/VV.y
-					VDtmp = math.hypot(VA.x-VBx, VA.y-VBy)
-					if VDtmp > VD:
-						VD = VDtmp
-			VS = VD * _SHIPWIDTH
-			print('VolUnderWater={}, acc.x={}, acc.y={}, S={}, VS={}'.format(fround(Volume, 1), fround(acc.x, 1), fround(acc.y, 1), fround(S, 1), fround(VS, 1)))
+			print('VolUnderWater={:.1f}, acc.x={:.1f}, acc.y={:.1f}'.format(Volume, acc.x, acc.y))
 			mypoly.setAccel(acc.x, acc.y)
 		else:
 			intersections = []
@@ -301,25 +301,13 @@ def tick(event=None):
 				under = Polygon(W)
 				Area = under.getArea()
 				Volume = Area * _SHIPWIDTH
-				S = (max([p.x for p in under.points])-min([p.x for p in under.points]))*_SHIPWIDTH
+				# S = (max([p.x for p in under.points])-min([p.x for p in under.points]))*_SHIPWIDTH
 				forceGrav = World.gravForce(_MASS)
 				forceArch = World.archForce(_DENSITY, Volume)
-				forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, S)
+				forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, under)
 				F = forceGrav + forceArch + forceFric
 				acc = F / _MASS
-				VD = 0
-				for i in range(len(under.points)):
-					for j in range(len(under.points)):
-						VA = under.points[i]
-						VC = under.points[j]
-						VV = mypoly.vel
-						VBy = (VA.x*VV.x+VA.y*VV.y-VC.x*VV.x+VC.y*VV.x**2/VV.y)/(VV.x**2/VV.y+VV.y)
-						VBx = (VBy*VV.x+VC.x*VV.y-VC.y*VV.x)/VV.y
-						VDtmp = math.hypot(VA.x-VBx, VA.y-VBy)
-						if VDtmp > VD:
-							VD = VDtmp
-				VS = VD * _SHIPWIDTH
-				print('VolUnderWater={}, acc.x={}, acc.y={}, S={}, VS={}'.format(fround(Volume, 1), fround(acc.x, 1), fround(acc.y, 1), fround(S, 1), fround(VS, 1)))
+				print('VolUnderWater={:.1f}, acc.x={:.1f}, acc.y={:.1f}'.format(Volume, acc.x, acc.y))
 				mypoly.setAccel(acc.x, acc.y)
 			elif len(intersections) > 2:
 				print('WEIRD')
