@@ -139,7 +139,7 @@ class Polygon:
 	angularVel = 0
 	angularAcc = 0
 
-	def __init__(self, points, fill='#5060BB', activefill='#99dd33', spawn=True):
+	def __init__(self, points, fill='#5060BB', activefill='#99dd33', spawn=False):
 		self.points = list(points)  # is it necessary?..
 		if spawn:
 			self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
@@ -205,16 +205,13 @@ class Polygon:
 		self.rotate()
 		canv.coords(self.poly, *self.getCoords())
 
-		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 2), fround(abs(self.acc), 2), fround(self.angularVel, 3), fround(self.angularAcc, 3), self.getCenter()))
+		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 1), fround(abs(self.acc), 1), fround(self.angularVel, 1), fround(self.angularAcc, 2), self.getCenter()))
 
 
 class World:
 
 	"""Physics simulation
 	"""
-
-	# def __init__(self, **kw):
-	# 	pass
 
 	def gravForce(mass):
 		return Vector2(0, mass * _GRAVACCEL)
@@ -227,14 +224,9 @@ class World:
 		f = 0.5*density*v**2*coef*area
 		return -Vector2(f*vel.x/v, f*vel.y/v)
 
-# def PressedLeft(event=None):
-# 	mypoly.setRotateSpeed(-0.1)
-# def PressedRight(event=None):
-# 	mypoly.setRotateSpeed(0.1)
-
 
 def clock_yield():
-	pt = 0  # time.time() - (_DELAY/1000.)
+	pt = 0
 	while 1:
 		t = time.time()
 		yield time.time() - pt
@@ -248,7 +240,6 @@ def tick(event=None):
 	if max(mypoly.getCoords()[1::2]) > _WATERLINE:
 		# print('water!')
 		if min(mypoly.getCoords()[1::2]) > _WATERLINE:
-			# print('COMPLETELY UNDER WATER :O')
 			Area = mypoly.getArea()
 			Volume = Area * _SHIPWIDTH
 			S = (max([p.x for p in mypoly.points])-min([p.x for p in mypoly.points]))*_SHIPWIDTH
@@ -257,7 +248,19 @@ def tick(event=None):
 			forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, S)
 			F = forceGrav + forceArch + forceFric
 			acc = F / _MASS
-			print('VolUnderWater = {}, acc = {}, S = {}'.format(fround(Volume, 1), fround(abs(acc), 1), fround(S, 1)))
+			VD = 0
+			for i in range(len(mypoly.points)):
+				for j in range(len(mypoly.points)):
+					VA = mypoly.points[i]
+					VC = mypoly.points[j]
+					VV = mypoly.vel
+					VBy = (VA.x*VV.x+VA.y*VV.y-VC.x*VV.x+VC.y*VV.x**2/VV.y)/(VV.x**2/VV.y+VV.y)
+					VBx = (VBy*VV.x+VC.x*VV.y-VC.y*VV.x)/VV.y
+					VDtmp = math.hypot(VA.x-VBx, VA.y-VBy)
+					if VDtmp > VD:
+						VD = VDtmp
+			VS = VD * _SHIPWIDTH
+			print('VolUnderWater={}, acc.x={}, acc.y={}, S={}, VS={}'.format(fround(Volume, 1), fround(acc.x, 1), fround(acc.y, 1), fround(S, 1), fround(VS, 1)))
 			mypoly.setAccel(acc.x, acc.y)
 		else:
 			intersections = []
@@ -295,9 +298,7 @@ def tick(event=None):
 							W.append(intersections[1][0])
 						if b and X.y > _WATERLINE:
 							W.append(X)
-
-				# print('W: ' + ', '.join(map(str, W)))
-				under = Polygon(W, spawn=False)
+				under = Polygon(W)
 				Area = under.getArea()
 				Volume = Area * _SHIPWIDTH
 				S = (max([p.x for p in under.points])-min([p.x for p in under.points]))*_SHIPWIDTH
@@ -306,9 +307,20 @@ def tick(event=None):
 				forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, S)
 				F = forceGrav + forceArch + forceFric
 				acc = F / _MASS
-				print('VolUnderWater = {}, acc = {}, S = {}'.format(fround(Volume, 1), fround(abs(acc), 1), fround(S, 1)))
+				VD = 0
+				for i in range(len(under.points)):
+					for j in range(len(under.points)):
+						VA = under.points[i]
+						VC = under.points[j]
+						VV = mypoly.vel
+						VBy = (VA.x*VV.x+VA.y*VV.y-VC.x*VV.x+VC.y*VV.x**2/VV.y)/(VV.x**2/VV.y+VV.y)
+						VBx = (VBy*VV.x+VC.x*VV.y-VC.y*VV.x)/VV.y
+						VDtmp = math.hypot(VA.x-VBx, VA.y-VBy)
+						if VDtmp > VD:
+							VD = VDtmp
+				VS = VD * _SHIPWIDTH
+				print('VolUnderWater={}, acc.x={}, acc.y={}, S={}, VS={}'.format(fround(Volume, 1), fround(acc.x, 1), fround(acc.y, 1), fround(S, 1), fround(VS, 1)))
 				mypoly.setAccel(acc.x, acc.y)
-
 			elif len(intersections) > 2:
 				print('WEIRD')
 	else:
@@ -328,10 +340,8 @@ def QuitDestroy(event=None):
 	root.quit()
 	print('Destroyed.')
 
-###
 clock = clock_yield()
-mypoly = Polygon([Point(180, 50), Point(500, 70), Point(400, 190), Point(200, 200)], fill=getRandomColor())
-# mypoly.setSpeed(1, 1)
+mypoly = Polygon([Point(180, 50), Point(500, 70), Point(400, 190), Point(200, 200)], fill=getRandomColor(), spawn=True)
 mypoly.setAccel(0, _GRAVACCEL)
 root.bind('z', tick)
 root.bind('<Escape>', QuitDestroy)
@@ -349,9 +359,8 @@ root.bind('<KeyRelease-s>', lambda e: mypoly.setAccel(ay=_GRAVACCEL))
 root.bind('<KeyRelease-q>', lambda e: mypoly.setAngularAccel(0))
 root.bind('<KeyRelease-e>', lambda e: mypoly.setAngularAccel(0))
 root.after(_DELAY, timer)  # start
-###
 
 canv.pack()
-canv.create_line(0, _WATERLINE, _WIDTH, _WATERLINE, width=1., fill='red', dash=(2,2,2))
+canv.create_line(0, _WATERLINE, _WIDTH, _WATERLINE, width=1., fill='red', dash=(2, 2, 2))
 label_fps.place(x=16, y=16, width=64, height=64)
 root.mainloop()
