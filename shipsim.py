@@ -3,8 +3,8 @@ import random
 import math
 import time
 
-## TODO: (_DELAY/1000.) ===> "_dt" from clock
-## TODO: Force -+-> angular momentum
+# TODO: (_DELAY/1000.) ===> "_dt" from clock
+# TODO: Force -+-> angular momentum
 
 _TITLE = 'shipsim'
 _WIDTH = 800
@@ -207,6 +207,26 @@ class Polygon:
 
 		print('A={}, vel={}, acc={}, angVel={}, angAcc={}, Center={}'.format(round(self.getArea()), fround(abs(self.vel), 2), fround(abs(self.acc), 2), fround(self.angularVel, 3), fround(self.angularAcc, 3), self.getCenter()))
 
+
+class World:
+
+	"""Physics simulation
+	"""
+
+	# def __init__(self, **kw):
+	# 	pass
+
+	def gravForce(mass):
+		return Vector2(0, mass * _GRAVACCEL)
+
+	def archForce(density, volume):
+		return Vector2(0, -density * _GRAVACCEL * volume)
+
+	def fricForce(density, vel: Vector2, coef, area):
+		v = abs(vel)
+		f = 0.5*density*v**2*coef*area
+		return -Vector2(f*vel.x/v, f*vel.y/v)
+
 # def PressedLeft(event=None):
 # 	mypoly.setRotateSpeed(-0.1)
 # def PressedRight(event=None):
@@ -232,12 +252,13 @@ def tick(event=None):
 			Area = mypoly.getArea()
 			Volume = Area * _SHIPWIDTH
 			S = (max([p.x for p in mypoly.points])-min([p.x for p in mypoly.points]))*_SHIPWIDTH
-			accArch = -_DENSITY*_GRAVACCEL*Volume/_MASS
-			accFriction = -sign(mypoly.vel.y)*_DENSITY*mypoly.vel.y**2*_FRICTION*S/2/_MASS
-			acc = _GRAVACCEL + accArch + accFriction
-			# acc = _GRAVACCEL - _DENSITY/2/_MASS*(2*_GRAVACCEL*Volume + sign(mypoly.vel.y)*mypoly.vel.y**2*_FRICTION*S)
-			print('VolUnderWater = {}, acc = {}, accArch={}, accFric={}, S = {}'.format(fround(Volume, 1), fround(acc, 1), fround(accArch, 1), fround(accFriction, 1), fround(S, 1)))
-			mypoly.setAccel(ay=acc)
+			forceGrav = World.gravForce(_MASS)
+			forceArch = World.archForce(_DENSITY, Volume)
+			forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, S)
+			F = forceGrav + forceArch + forceFric
+			acc = F / _MASS
+			print('VolUnderWater = {}, acc = {}, S = {}'.format(fround(Volume, 1), fround(abs(acc), 1), fround(S, 1)))
+			mypoly.setAccel(acc.x, acc.y)
 		else:
 			intersections = []
 			for i in range(len(mypoly.points)):
@@ -279,19 +300,21 @@ def tick(event=None):
 				under = Polygon(W, spawn=False)
 				Area = under.getArea()
 				Volume = Area * _SHIPWIDTH
-				# S = (max(under.getCoords()[0::2])-min(under.getCoords()[0::2]))*_SHIPWIDTH
 				S = (max([p.x for p in under.points])-min([p.x for p in under.points]))*_SHIPWIDTH
-				accArch = -_DENSITY*_GRAVACCEL*Volume/_MASS
-				accFriction = -sign(mypoly.vel.y)*_DENSITY*mypoly.vel.y**2*_FRICTION*S/2/_MASS
-				acc = _GRAVACCEL + accArch + accFriction
-				# acc = _GRAVACCEL - _DENSITY/2/_MASS*(2*_GRAVACCEL*Volume + sign(mypoly.vel.y)*mypoly.vel.y**2*_FRICTION*S)
-				print('VolUnderWater == {}, acc = {}, accArch={}, accFric={}, S == {}'.format(fround(Volume, 1), fround(acc, 1), fround(accArch, 1), fround(accFriction, 1), fround(S, 1)))
-				mypoly.setAccel(ay=acc)
+				forceGrav = World.gravForce(_MASS)
+				forceArch = World.archForce(_DENSITY, Volume)
+				forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, S)
+				F = forceGrav + forceArch + forceFric
+				acc = F / _MASS
+				print('VolUnderWater = {}, acc = {}, S = {}'.format(fround(Volume, 1), fround(abs(acc), 1), fround(S, 1)))
+				mypoly.setAccel(acc.x, acc.y)
 
 			elif len(intersections) > 2:
 				print('WEIRD')
 	else:
-		mypoly.setAccel(ay=_GRAVACCEL)
+		F = World.gravForce(_MASS)
+		acc = F / _MASS
+		mypoly.setAccel(acc.x, acc.y)
 
 
 def timer():
