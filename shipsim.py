@@ -61,17 +61,26 @@ class Vector2:
 		else:
 			return Vector2(self.x+other, self.y+other)
 
+	def __radd__(self, other):
+		return Vector2(self.x+other, self.y+other)
+
 	def __sub__(self, other):
 		if isinstance(other, Vector2):
 			return Vector2(self.x-other.x, self.y-other.y)
 		else:
 			return Vector2(self.x-other, self.y-other)
 
+	def __rsub__(self, other):
+		return Vector2(self.x-other, self.y-other)
+
 	def __mul__(self, other):
 		if isinstance(other, Vector2):
 			return self.x*other.x + self.y*other.y
 		else:
 			return Vector2(self.x*other, self.y*other)
+
+	def __rmul__(self, other):
+		return Vector2(self.x*other, self.y*other)
 
 	def __truediv__(self, other):
 		if isinstance(other, Vector2):
@@ -315,7 +324,7 @@ def tick(event=None):
 				C0 = mypoly.getCenter()
 				s = Vector2.newFromPoints(Cu, C0)  # directing
 
-				Fl = s*(F*s) / abs(s)**2
+				Fl = F*s*s / abs(s)**2
 
 				# M = abs(Fm) * abs(s)  # Momentum
 				M = F ** s  # == -s x F
