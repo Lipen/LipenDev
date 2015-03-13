@@ -210,7 +210,7 @@ class Polygon:
 		self.rotate()
 		canv.coords(self.poly, *self.getCoords())
 
-		print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.1f}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc))
+		print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.3f}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc))
 
 
 class World:
@@ -317,28 +317,42 @@ def tick(event=None):
 				s = Vector2.newFromPoints(Cu, C0)  # directing
 
 				Fll = F * s / abs(s)  # projection # ForceLine-Length
-				Flx = Fll / math.sqrt((s.y/s.x)**2+1)  # relative
-				Fly = Flx * s.y/s.x
-//				Fl = Vector2(Flx, Fly)  #ForceLine
-				# Fl = Vector2(Cu.x+Flx, Cu.y+Fly)  #ForceLine
+				# Flx = Fll / math.sqrt((s.y/s.x)**2+1)  # relative
+				# Fly = Flx * s.y/s.x
+				k = s.y / s.x
+				Disc = ((Cu.x*(k+1))**2 - (k**2+1)*(Cu.x**2+Cu.y**2-Fll**2))/(k**2+1)
+				Flx1 = Cu.x*(k+1) + math.sqrt(Disc)
+				Flx2 = Cu.x*(k+1) - math.sqrt(Disc)
+				Fly1 = Flx1 * k
+				Fly2 = Flx2 * k
+				Fl1 = Vector2(Flx1, Fly1)
+				Fl2 = Vector2(Flx2, Fly2)
+				if Fl1 ** F < 0:
+					Fl = Fl1
+				else:
+					Fl = Fl2
+# //				Fl2 = Vector2(sign(s.x)*Flx, sign(s.y)*Fly)  # ForceLine
+				# Fl = Vector2(Cu.x+Flx, Cu.y+Fly)  # ForceLine
 
-				Fml = math.sqrt(abs(F)**2 - abs(Fl)**2)  # ForceMomentum-Length
-				Fmx = Fml / math.sqrt((s.y/s.x)**2+1)  # relative
-				Fmy = -Fmx * s.y/s.x
+				# Fml = math.sqrt(abs(F)**2 - abs(Fl)**2)  # ForceMomentum-Length
+				# Fmx = Fml / math.sqrt((s.y/s.x)**2+1)  # relative
+				Fmx = (abs(F)-Fll)/((Fl.x/Fl.y)**2+1)
+				Fmy = -Fmx*Fl.x/Fl.y
+				# Fmy = -Fmx * s.y/s.x
 				Fm = Vector2(Fmx, Fmy)  # ForceMomentum
 				# Fm = Vector2(Cu.x+Fmx, Cu.x+Fmy)  # ForceMomentum
 				print('Fll = {}, Fl = {}, Fm = {}, s = {}'.format(Fll, Fl, Fm, s))
 				# M = abs(Fm) * abs(s)  # Momentum
-//				M = F ** s  # == -s x F
+				M = F ** s  # == -s x F
 				# J = mypoly.getInertiaMoment()
 				# J = 11656333333
-				J = 48000000000
+				J = 24000000000
 
 				Fl += forceGrav
 				acc = Fl / _MASS  # accel
-//				# aa = pow(Fm, s, True) * M / J  # angularAccel
-//				aa = M / J
-				print('VUW={:.1f},ax={:.1f},ay={:.1f},aa={:.2f},Fmx={:.1f},Fmy={:.1f},M={:.0f}'.format(Volume, acc.x, acc.y, aa, Fm.x, Fm.y, M, J))
+				# aa = pow(Fm, s, True) * M / J  # angularAccel
+				aa = M / J
+				print('VUW={:.1f},ax={:.1f},ay={:.1f},aa={:.3f},Fmx={:.1f},Fmy={:.1f},M={:.0f}'.format(Volume, acc.x, acc.y, aa, Fm.x, Fm.y, M, J))
 				mypoly.setAccel(acc.x, acc.y)
 				mypoly.setAngularAccel(aa)
 			elif len(intersections) > 2:
