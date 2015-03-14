@@ -1,3 +1,6 @@
+from common import *
+
+
 class Vector2:
 
 	"""Base 2D vector class
