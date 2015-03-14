@@ -1,4 +1,5 @@
-from common import *
+from common import fround
+import math
 
 
 class Point:
