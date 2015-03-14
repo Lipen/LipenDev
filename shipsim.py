@@ -1,14 +1,14 @@
 from tkinter import *
-import random
-import math
-import time
+from common import *
+from Vector2 import Vector2
+from Point import Point
 
 # TODO: (_DELAY/1000.) ===> "_dt" from clock
 
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
-_FPS = 25.
+_FPS = 25
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
@@ -25,118 +25,9 @@ canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
 label_fps = Label(root, bg='#cccccc', fg='#000000', font='sans 20')
 
 
-def getRandomColor():
-	return '#{:06X}'.format(random.randint(0, 16777215))
-
-
-def sign(x):
-	return 1 if x > 0 else -1 if x < 0 else 0
-
-
-def fround(f, precision=3):
-	return format(f, '.{}f'.format(precision)).rstrip('0').rstrip('.')
-
-
 def crossSegmentWithHorizontalLine(A, B, c):
 	if B.y != A.y and ((A.y < c and B.y > c) or (A.y > c and B.y < c)):
 		return Point((A.x*(B.y-c) + B.x*(c-A.y))/(B.y-A.y), c)
-
-
-class Vector2:
-
-	"""Base 2D vector class
-	* Implemented basic arithmetics operation:
-		- Addiction/Subtraction (with vector or with scalar)
-		- Multiplication (simple or scalar product of vectors)
-		- Pow (simple or vector product of vectors)
-		- Abs (modulo==length)
-	"""
-
-	def __init__(self, x, y):
-		self.x, self.y = x, y
-
-	def __add__(self, other):
-		if isinstance(other, Vector2):
-			return Vector2(self.x+other.x, self.y+other.y)
-		else:
-			return Vector2(self.x+other, self.y+other)
-
-	def __radd__(self, other):
-		return Vector2(self.x+other, self.y+other)
-
-	def __sub__(self, other):
-		if isinstance(other, Vector2):
-			return Vector2(self.x-other.x, self.y-other.y)
-		else:
-			return Vector2(self.x-other, self.y-other)
-
-	def __rsub__(self, other):
-		return Vector2(self.x-other, self.y-other)
-
-	def __mul__(self, other):
-		if isinstance(other, Vector2):
-			return self.x*other.x + self.y*other.y
-		else:
-			return Vector2(self.x*other, self.y*other)
-
-	def __rmul__(self, other):
-		return Vector2(self.x*other, self.y*other)
-
-	def __truediv__(self, other):
-		if isinstance(other, Vector2):
-			return Vector2(self.x/other.x, self.y/other.y)
-		else:
-			return Vector2(self.x/other, self.y/other)
-
-	def __pow__(self, other, signed=False):
-		if isinstance(other, Vector2):
-			t = self.x*other.y - self.y*other.x
-			return sign(t) if signed else t
-		else:
-			return Vector2(self.x**other, self.y**other)
-
-	def __neg__(self):
-		return Vector2(-self.x, -self.y)
-
-	def __pos__(self):
-		return self
-
-	def __abs__(self):
-		return (self.x**2 + self.y**2) ** 0.5
-
-	def __str__(self):
-		return '{'+', '.join(map(fround, [self.x, self.y]))+'}'
-
-	def newFromPoints(p1, p2):
-		return Vector2(p2.x-p1.x, p2.y-p1.y)
-
-	def addVectors(v1, v2):
-		return Vector2(v1.x+v2.x, v1.y+v2.y)
-
-
-class Point:
-
-	"""Base 2D point class.
-	"""
-
-	def __init__(self, x, y):
-		self.x, self.y = x, y
-
-	def __iter__(self):
-		return iter([self.x, self.y])
-
-	def __str__(self):
-		return '('+', '.join(map(fround, [self.x, self.y]))+')'
-
-	def addVector(self, v):
-		self.x += v.x
-		self.y += v.y
-
-	def getDist(p1, p2):
-		return math.hypot(p1.x - p2.x, p1.y-p2.y)
-
-	def getAngle(p1, p2):
-		return math.atan2(p2.y-p1.y, p2.x-p1.x)
 
 
 class Polygon:
@@ -162,9 +53,6 @@ class Polygon:
 		return Point(
 			1/6/A*sum((self.points[i-1].x+self.points[i].x)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))),
 			1/6/A*sum((self.points[i-1].y+self.points[i].y)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))))
-
-	# def getInertiaMoment():
-	# 	return _MASS*()/12
 
 	def setSpeed(self, vx, vy):
 		"""Pixels per second
@@ -206,9 +94,9 @@ class Polygon:
 		self.angularVel += self.angularAcc * (_DELAY/1000.)
 		c = self.getCenter()
 		for p in self.points:
-			r = Point.getDist(c, p)
+			r = Point.getDistanceBetweenPoints(c, p)
 			if self.angularVel != 0:
-				a = Point.getAngle(c, p) + self.angularVel/_DELAY
+				a = Point.getAngleBetweenPoints(c, p) + self.angularVel/_DELAY
 				p.x = c.x + r * math.cos(a)
 				p.y = c.y + r * math.sin(a)
 
