@@ -3,7 +3,10 @@ from common import *
 from Vector2 import Vector2
 from Point import Point
 
-_TITLE = 'nxtsim'
+# TODO: Replace Label inside cell to canvas's polygons (rects to start with)
+# FIXME: Mouse class doesn't need anymore..
+
+_TITLE = 'testField'
 _CELL_WIDTH = 64
 _CELL_HEIGHT = 64
 _CELL_AMOUNT_X = 12
@@ -21,11 +24,27 @@ class Mouse:
 
 	pos = Point(-1, -1)
 
-	def __init__(self):
-		pass
-
 
 class Cell:
+
+	"""Base cell class
+	"""
+
+	@property
+	def x(self):
+		return self.pos.x
+
+	@x.setter
+	def x(self, value):
+		self.pos.x = value
+
+	@property
+	def y(self):
+		return self.pos.y
+
+	@y.setter
+	def y(self, value):
+		self.pos.y = value
 
 	def __init__(self, x, y, width, height, color=None, activecolor='#00FF33'):
 		if color is None:
@@ -36,6 +55,8 @@ class Cell:
 		self.activecolor = activecolor
 		self.label = Label(root, width=width, height=height, background=color)
 		self.label.place(x=x, y=y)
+		self.label.bind('<Enter>', lambda e: self.mouseEnter())
+		self.label.bind('<Leave>', lambda e: self.mouseLeave())
 		self.active = False
 
 	def isContainsPoint(self, p):
@@ -44,15 +65,22 @@ class Cell:
 	def getNumber(self):
 		return '{}:{}'.format(round(self.pos.x/self.width), round(self.pos.y/self.height))
 
-	def update(self):
-		if self.isContainsPoint(mouse.pos):
-			if not self.active:
-				self.label['background'] = self.activecolor
-				self.active = True
+	def mouseEnter(self):
+		if not self.active:
+			self.label['background'] = self.activecolor
+			self.active = True
 		else:
-			if self.active:
-				self.label['background'] = self.color
-				self.active = False
+			print('Double enter.. weird')
+
+	def mouseLeave(self):
+		if self.active:
+			self.label['background'] = self.color
+			self.active = False
+		else:
+			print('Double leave.. weird')
+
+	def update(self):
+		pass
 
 
 class Field:
@@ -82,18 +110,6 @@ def tick():
 	field.update()
 
 
-def MouseClick(event=None):
-	p = Point(event.x_root-_LEFT, event.y_root-_TOP)
-	cell = field.getCellFromPoint(p)
-	print('Clicked at {} inside cell #{} with pos={}'.format(p, cell.getNumber(), cell.pos))
-
-
-def MouseMotion(event=None):
-	p = Point(event.x_root-_LEFT, event.y_root-_TOP)
-	mouse.pos = p
-	# print('Motion at {}'.format(mouse.pos))
-
-
 def timer():
 	tick()
 	root.after((lambda t: t if t > 0 else 1)(round(1000*_DELAY)), timer)
@@ -109,8 +125,8 @@ root.title(_TITLE)
 root.geometry('{}x{}+{}+{}'.format(_WIDTH, _HEIGHT, _LEFT, _TOP))
 root.protocol('WM_DELETE_WINDOW', Quit)
 root.resizable(False, False)
-canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#333333')
-canv.pack()
+canvas = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#333333')
+canvas.pack()
 mouse = Mouse()
 clock = clock_yield()
 next(clock)  # get out initial zero
@@ -120,8 +136,6 @@ label_fps.place(x=16, y=16, width=64, height=64)
 
 root.bind('<Escape>', Quit)
 root.bind('<Control-c>', Quit)
-root.bind('<Button-1>', MouseClick)
-root.bind('<Motion>', MouseMotion)
 
 root.after((lambda t: t if t > 0 else 1)(round(1000*_DELAY)), timer)
 root.mainloop()
