@@ -62,6 +62,9 @@ class Cell:
 	def isContainsPoint(self, p):
 		return (self.pos.x <= p.x <= self.pos.x+self.width) and (self.pos.y <= p.y <= self.pos.y+self.height)
 
+	def getCenter(self):
+		return Point(self.x + self.width/2, self.y + self.height/2)
+
 	def getNumber(self):
 		return '{}:{}'.format(round(self.pos.x/self.width), round(self.pos.y/self.height))
 
