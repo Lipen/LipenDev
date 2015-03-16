@@ -7,10 +7,10 @@ from Point import Point
 # FIXME: Mouse class doesn't need anymore..
 
 _TITLE = 'testField'
-_CELL_WIDTH = 64
-_CELL_HEIGHT = 64
-_CELL_AMOUNT_X = 12
-_CELL_AMOUNT_Y = 9
+_CELL_WIDTH = 64  # 64
+_CELL_HEIGHT = 64  # 64
+_CELL_AMOUNT_X = 12  # 12
+_CELL_AMOUNT_Y = 9  # 9
 _WIDTH = _CELL_WIDTH * _CELL_AMOUNT_X
 _HEIGHT = _CELL_HEIGHT * _CELL_AMOUNT_Y
 _LEFT = 420
@@ -53,11 +53,12 @@ class Cell:
 		self.width, self.height = width, height
 		self.color = color
 		self.activecolor = activecolor
-		self.label = Label(root, width=width, height=height, background=color)
+		self.label = Label(root, width=width, height=height, background='#000000')
 		self.label.place(x=x, y=y)
 		self.label.bind('<Enter>', lambda e: self.mouseEnter())
 		self.label.bind('<Leave>', lambda e: self.mouseLeave())
 		self.active = False
+		self.intensity = 0
 
 	def isContainsPoint(self, p):
 		return (self.pos.x <= p.x <= self.pos.x+self.width) and (self.pos.y <= p.y <= self.pos.y+self.height)
@@ -70,20 +71,31 @@ class Cell:
 
 	def mouseEnter(self):
 		if not self.active:
-			self.label['background'] = self.activecolor
+			# self.label['background'] = self.activecolor
 			self.active = True
+			self.intensity = 1
 		else:
 			print('Double enter.. weird')
 
 	def mouseLeave(self):
 		if self.active:
-			self.label['background'] = self.color
+			# self.label['background'] = self.color
 			self.active = False
 		else:
 			print('Double leave.. weird')
 
+	def getDistanceBetweenCells(c1, c2):
+		return Point.getDistanceBetweenPoints(c1.getCenter(), c2.getCenter())
+
+	def updateColor(self):
+		if self.active:
+			self.label['background'] = self.activecolor
+		else:
+			r, g, b = map(lambda z: min(255, round(int(z, 16)*self.intensity)), parseColor(self.color))
+			self.label['background'] = '#{:02X}{:02X}{:02X}'.format(r, g, b)
+
 	def update(self):
-		pass
+		self.updateColor()
 
 
 class Field:
@@ -93,7 +105,7 @@ class Field:
 
 	def __init__(self, n, m, cellw, cellh):
 		self.n, self.m = n, m
-		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh, '#999999') for j in range(m)] for i in range(n)]
+		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh, '#bbbbbb') for j in range(m)] for i in range(n)]
 		self.cells = [cell for row in self.cellsGrid for cell in row]
 		print(len(self.cells))
 
@@ -105,6 +117,16 @@ class Field:
 	def update(self):
 		for cell in self.cells:
 			cell.update()
+
+		for c1 in self.cells:
+			if not c1.active:
+				I = 0
+				for c2 in self.cells:
+					if c1 is not c2 and c2.active:
+						r = Cell.getDistanceBetweenCells(c1, c2)
+						if r>0:
+							I += 16 / r  # FIXME: r^2?
+				c1.intensity = I
 
 
 def tick():
