@@ -7,10 +7,10 @@ from Point import Point
 # FIXME: Mouse class doesn't need anymore..
 
 _TITLE = 'testField'
-_CELL_WIDTH = 64  # 64
-_CELL_HEIGHT = 64  # 64
-_CELL_AMOUNT_X = 12  # 12
-_CELL_AMOUNT_Y = 9  # 9
+_CELL_WIDTH = 48  # 64
+_CELL_HEIGHT = 48  # 64
+_CELL_AMOUNT_X = 16  # 12
+_CELL_AMOUNT_Y = 12  # 9
 _WIDTH = _CELL_WIDTH * _CELL_AMOUNT_X
 _HEIGHT = _CELL_HEIGHT * _CELL_AMOUNT_Y
 _LEFT = 420
@@ -52,8 +52,9 @@ class Cell:
 		self.pos = Point(x, y)
 		self.width, self.height = width, height
 		self.color = color
+		self.previousColor = color
 		self.activecolor = activecolor
-		self.label = Label(root, width=width, height=height, background='#000000')
+		self.label = Label(root, width=width, height=height, background=color)
 		self.label.place(x=x, y=y)
 		self.label.bind('<Enter>', lambda e: self.mouseEnter())
 		self.label.bind('<Leave>', lambda e: self.mouseLeave())
@@ -74,12 +75,23 @@ class Cell:
 			# self.label['background'] = self.activecolor
 			self.active = True
 			self.intensity = 1
+			for cell in field.cells:
+				if cell is not self:
+					r = Cell.getDistanceBetweenCells(cell, self)
+					if r > 0:
+						cell.intensity += calculateIntensity(r)
 		else:
 			print('Double enter.. weird')
 
 	def mouseLeave(self):
 		if self.active:
 			# self.label['background'] = self.color
+			for cell in field.cells:
+				if cell is not self:
+					r = Cell.getDistanceBetweenCells(cell, self)
+					if r > 0:
+						cell.intensity -= calculateIntensity(r)
+			self.intensity = 0
 			self.active = False
 		else:
 			print('Double leave.. weird')
@@ -90,9 +102,16 @@ class Cell:
 	def updateColor(self):
 		if self.active:
 			self.label['background'] = self.activecolor
+			self.previousColor = self.activecolor
 		else:
+			# t = time.time()
 			r, g, b = map(lambda z: min(255, round(int(z, 16)*self.intensity)), parseColor(self.color))
-			self.label['background'] = '#{:02X}{:02X}{:02X}'.format(r, g, b)
+			color = '#{:02X}{:02X}{:02X}'.format(r, g, b)
+			if color != self.previousColor:
+				self.label['background'] = color
+				self.previousColor = color
+			# self.label['background'] = '#{:02X}{:02X}{:02X}'.format(r, g, b)
+			# print('DBG: DELAY = {:.9f}'.format(time.time() - t))
 
 	def update(self):
 		self.updateColor()
@@ -115,18 +134,20 @@ class Field:
 				return cell
 
 	def update(self):
+		t = time.time()
 		for cell in self.cells:
 			cell.update()
+		print('DBG: DELAY2 = {:.9f}'.format(time.time() - t))
 
-		for c1 in self.cells:
-			if not c1.active:
-				I = 0
-				for c2 in self.cells:
-					if c1 is not c2 and c2.active:
-						r = Cell.getDistanceBetweenCells(c1, c2)
-						if r>0:
-							I += 16 / r  # FIXME: r^2?
-				c1.intensity = I
+		# for c1 in self.cells:
+		# 	if not c1.active:
+		# 		I = 0
+		# 		for c2 in self.cells:
+		# 			if c1 is not c2 and c2.active:
+		# 				r = Cell.getDistanceBetweenCells(c1, c2)
+		# 				if r > 0:
+		# 					I += 16 / r  # FIXME: r^2?
+		# 		c1.intensity = I
 
 
 def tick():
