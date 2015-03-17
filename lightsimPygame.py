@@ -4,6 +4,7 @@ from common import *
 from Point import Point
 from Vector2 import Vector2
 
+# TODO: Inherit Text and other widgets in future from <Entity> class
 
 FPS = 60
 SCREEN_WIDTH = 800
@@ -74,6 +75,27 @@ class LightSim:
 	"""LightSim..
 	"""
 
+	def __init__(self):
+		print('init started')
+
+		pygame.init()
+		# pygame.mouse.set_visible(False)
+		pygame.display.set_caption('lightsimPygame')
+		self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
+		self.clock = pygame.time.Clock()
+		self.RUNNING = True
+
+		self.font_monospace = pygame.font.SysFont("monospace", 16)
+		self.font_main = pygame.font.SysFont("Verdana", 34, True)
+		self.font_fps = pygame.font.SysFont("Verdana", 16, True)
+
+		self.text_fps = Text(pos=Point(16, 16), color=(150, 255, 0), font=self.font_fps)
+
+		for k, v in pygame.color.THECOLORS.items():
+			print('{: >20} : {}'.format(k, v))
+
+		print('init ended succesfully')
+
 	def events(self, Events):
 		for event in Events:
 			type = event.type
@@ -110,28 +132,8 @@ class LightSim:
 				if Mod & KMOD_ALT and Key not in MOD_KEYS:
 					print('Pressed <{}> (#{}) with pressed alt.'.format(Name, Key))
 
-	def init(self):
-		print('init started')
-
-		pygame.init()
-		# pygame.mouse.set_visible(False)
-		pygame.display.set_caption('lightsimPygame')
-		self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-		self.clock = pygame.time.Clock()
-		self.RUNNING = True
-
-		self.font_monospace = pygame.font.SysFont("monospace", 16)
-		self.font_main = pygame.font.SysFont("Verdana", 34, True)
-		self.font_fps = pygame.font.SysFont("Verdana", 16, True)
-
-		self.text_fps = Text(pos=Point(16, 16), color=(150, 255, 0), font=self.font_fps)
-
-		print('init ended succesfully')
-
-	def main(self):
-		print('main start')
-		self.init()
-
+	def loop(self):
+		print('loop start')
 		while self.RUNNING:
 			self.events(pygame.event.get())
 			if not self.RUNNING:
@@ -139,7 +141,7 @@ class LightSim:
 
 			elapsed = self.clock.tick(FPS)
 			fps = 1000. / elapsed
-			seconds = pygame.time.get_ticks() / 1000.
+			# seconds = pygame.time.get_ticks() / 1000.
 
 			# PROCESSING
 			self.text_fps.setText('FPS: {}'.format(round(fps)))
@@ -151,13 +153,12 @@ class LightSim:
 
 			pygame.display.flip()
 
-		print('main end.')
-
 lightsim = LightSim()
-if __name__ == '__main__':
-	try:
-		lightsim.main()
-	except Exception as e:
-		# print('Something gone wrong:\n{}'.format(e))
-		print('Something gone wrong:')
-		raise e
+try:
+	lightsim.loop()
+except Exception as e:
+	# print('Something gone wrong:\n{}'.format(e))
+	print('Something gone wrong:')
+	raise e
+else:
+	print('Succesfully ended.')
