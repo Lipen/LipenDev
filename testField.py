@@ -56,10 +56,10 @@ class Cell:
 		self.activecolor = activecolor
 		self.label = Label(root, width=width, height=height, background=color)
 		self.label.place(x=x, y=y)
-		self.label.bind('<Enter>', lambda e: self.mouseEnter())
-		self.label.bind('<Leave>', lambda e: self.mouseLeave())
 		self.active = False
 		self.intensity = 0
+		# self.label.bind('<Enter>', self.mouseEnter())
+		# self.label.bind('<Leave>', self.mouseLeave())
 
 	def isContainsPoint(self, p):
 		return (self.pos.x <= p.x <= self.pos.x+self.width) and (self.pos.y <= p.y <= self.pos.y+self.height)
@@ -70,7 +70,10 @@ class Cell:
 	def getNumber(self):
 		return '{}:{}'.format(round(self.pos.x/self.width), round(self.pos.y/self.height))
 
-	def mouseEnter(self):
+	def mouseClick(self, event=None):
+		pass
+
+	def mouseEnter(self, event=None):
 		if not self.active:
 			# self.label['background'] = self.activecolor
 			self.active = True
@@ -83,7 +86,7 @@ class Cell:
 		else:
 			print('Double enter.. weird')
 
-	def mouseLeave(self):
+	def mouseLeave(self, event=None):
 		if self.active:
 			# self.label['background'] = self.color
 			for cell in field.cells:
@@ -177,6 +180,9 @@ mouse = Mouse()
 clock = clock_yield()
 next(clock)  # get out initial zero
 field = Field(_CELL_AMOUNT_X, _CELL_AMOUNT_Y, _CELL_WIDTH, _CELL_HEIGHT)
+for cell in field.cells:
+	cell.label.bind('<Enter>', cell.mouseEnter)
+	cell.label.bind('<Leave>', cell.mouseLeave)
 label_fps = Label(root, bg='#dddddd', fg='#000000', font='sans 20')
 label_fps.place(x=16, y=16, width=64, height=64)
 
