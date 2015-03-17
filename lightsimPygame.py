@@ -5,16 +5,32 @@ from Point import Point
 from Vector2 import Vector2
 
 # TODO: Inherit Text and other widgets in future from <Entity> class
+# TODO: <Field> class.
+# TODO: <Cell> class. Init cells in Field.init
 
 FPS = 60
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 768
+SCREEN_HEIGHT = 576
 
 EXIT_KEYS = [K_ESCAPE]
 MOD_KEYS = [K_LSHIFT, K_RSHIFT, K_LALT, K_RALT, K_LCTRL, K_RCTRL]
 
 
-class Text(pygame.sprite.Sprite):
+def getRandomColor():
+	return random.choice(list(pygame.color.THECOLORS.values()))
+
+
+class Entity(pygame.sprite.Sprite):
+
+	def getRect(self):
+		return pygame.rect.Rect(list(self.pos), self.surface.get_size)
+
+	def render(self, screen):
+		# if self.isVisible:
+		screen.blit(self.surface, list(self.pos))
+
+
+class Text(Entity):
 
 	@property
 	def x(self):
@@ -52,6 +68,7 @@ class Text(pygame.sprite.Sprite):
 		self.update()
 
 	def centerTowardsEntity(self, ent, isX=True, isY=True):
+		# FIXME: Move to <Entity> class?
 		R = ent.getRect()
 		r = self.getRect()
 		if isX:
@@ -59,15 +76,84 @@ class Text(pygame.sprite.Sprite):
 		if isY:
 			self.y += R.centery - r.centery
 
-	def getRect(self):
-		return pygame.rect.Rect(self.pos, self.surface.get_size)
-
 	def update(self):
 		self.surface = self.font.render(self.text, True, self.color, self.colorBackground)
 
-	def render(self, screen):
-		# if self.isVisible:
-		screen.blit(self.surface, list(self.pos))
+
+class Cell(Entity):
+
+	"""Base cell class
+	"""
+
+	@property
+	def x(self):
+		return self.pos.x
+
+	@x.setter
+	def x(self, value):
+		self.pos.x = value
+
+	@property
+	def y(self):
+		return self.pos.y
+
+	@y.setter
+	def y(self, value):
+		self.pos.y = value
+
+	def __init__(self, x, y, width, height, color=None, activecolor='#00FF33'):
+		if color is None:
+			self.color = getRandomColor()
+		else:
+			self.color = color
+		self.pos = Point(x, y)
+		print('At {} color = {}'.format(self.pos, self.color))
+		self.width, self.height = width, height
+		self.previousColor = self.color
+		self.activecolor = activecolor
+		self.active = False
+		self.intensity = 0
+		self.surface = pygame.Surface((width, height))
+		self.surface.fill(self.color)
+
+	def isContainsPoint(self, p):
+		return (self.pos.x <= p.x <= self.pos.x+self.width) and (self.pos.y <= p.y <= self.pos.y+self.height)
+
+	def getCenter(self):
+		return Point(self.x + self.width/2, self.y + self.height/2)
+
+	def getNumber(self):
+		return '{}:{}'.format(round(self.x/self.width), round(self.y/self.height))
+
+	def getDistanceBetweenCells(c1, c2):
+		return Point.getDistanceBetweenPoints(c1.getCenter(), c2.getCenter())
+
+	def update(self):
+		if self.color != self.previousColor:
+			self.surface.fill(self.color)
+
+
+class Field:
+
+	"""Field class..
+	"""
+
+	def __init__(self, n, m, cellw, cellh):
+		self.n, self.m = n, m
+		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh) for j in range(m)] for i in range(n)]
+		self.cells = [cell for row in self.cellsGrid for cell in row]
+		print('Total cells: {}'.format(len(self.cells)))
+
+	def getCellFromPoint(self, p):
+		for cell in self.cells:
+			if cell.isContainsPoint(p):
+				return cell
+
+	def update(self):
+		# t = time.time()
+		for cell in self.cells:
+			cell.update()
+		# print('TimeIt: Field.update() - {:.3f} ms.'.format(1000*(time.time() - t)))
 
 
 class LightSim:
@@ -90,9 +176,7 @@ class LightSim:
 		self.font_fps = pygame.font.SysFont("Verdana", 16, True)
 
 		self.text_fps = Text(pos=Point(16, 16), color=(150, 255, 0), font=self.font_fps)
-
-		for k, v in pygame.color.THECOLORS.items():
-			print('{: >20} : {}'.format(k, v))
+		self.field = Field(12, 9, 64, 64)
 
 		print('init ended succesfully')
 
@@ -145,13 +229,16 @@ class LightSim:
 
 			# PROCESSING
 			self.text_fps.setText('FPS: {}'.format(round(fps)))
+			self.field.update()
 
 			# RENDERING
 			self.screen.fill(pygame.Color('black'))
-			# self.screen.fill((0, 0, 0))
+			for cell in self.field.cells:
+				cell.render(self.screen)
 			self.text_fps.render(self.screen)
 
 			pygame.display.flip()
+
 
 lightsim = LightSim()
 try:
