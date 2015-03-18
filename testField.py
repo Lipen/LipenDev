@@ -20,6 +20,10 @@ _DELAY = 1/_FPS  # seconds
 _STARTTIME = time.time()
 
 
+def calculateIntensity(r):
+	return 16 / r
+
+
 class Mouse:
 
 	pos = Point(-1, -1)
