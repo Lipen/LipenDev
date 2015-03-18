@@ -7,19 +7,34 @@ from Point import Point
 # TODO: more +deltaI -> more changeI, BUT more -deltaI -> less changeI
 # TODO: ^^ isn't it SO now?..
 
-FPS = 100
+FPS = 60
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-CELL_WIDTH = 16
+CELL_WIDTH = 15
 CELL_HEIGHT = CELL_WIDTH
 CELL_AMOUNT_X = SCREEN_WIDTH // CELL_WIDTH
 CELL_AMOUNT_Y = SCREEN_HEIGHT // CELL_HEIGHT
 SCREEN_WIDTH = CELL_WIDTH * CELL_AMOUNT_X
 SCREEN_HEIGHT = CELL_HEIGHT * CELL_AMOUNT_Y
-CHANGE_INTENSITY_CAP = 0.001
+CHANGE_INTENSITY_CAP = 0.007
 
 EXIT_KEYS = [K_ESCAPE]
 MOD_KEYS = [K_LSHIFT, K_RSHIFT, K_LALT, K_RALT, K_LCTRL, K_RCTRL]
+
+
+def blurSurf(surface, amt):
+	"""
+	Blur the given surface by the given 'amount'.  Only values 1 and greater
+	are valid.  Value 1 = no blur.
+	"""
+	if amt < 1.0:
+		raise ValueError("Arg 'amt' must be greater than 1.0, passed in value is %s" % amt)
+	scale = 1.0/float(amt)
+	surf_size = surface.get_size()
+	scale_size = (int(surf_size[0]*scale), int(surf_size[1]*scale))
+	surf = pygame.transform.smoothscale(surface, scale_size)
+	surf = pygame.transform.smoothscale(surf, surf_size)
+	return surf
 
 
 # Override
@@ -188,7 +203,8 @@ class Cell(Entity):
 	def update(self):
 		# self.recalculate()
 		self.changeIntensity(self.__intensity)
-		if self.active:
+		# if self.active:
+		if False:
 			if self.activecolor != self.previousColor:
 				self.surface.fill(self.activecolor)
 				self.previousColor = self.activecolor
@@ -206,7 +222,7 @@ class Field:
 
 	def __init__(self, n, m, cellw, cellh):
 		self.n, self.m = n, m
-		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh, (random.randint(238, 255), random.randint(238, 255), random.randint(238, 255), 255)) for j in range(m)] for i in range(n)]
+		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh, (random.randint(221, 255), random.randint(221, 255), random.randint(221, 255), 255)) for j in range(m)] for i in range(n)]
 		self.cells = [cell for row in self.cellsGrid for cell in row]
 		print('Total cells: {}'.format(len(self.cells)))
 
@@ -268,38 +284,15 @@ class LightSim:
 				if source.active:
 					source.active = False
 					source.recalculate()
-					# source.intensity -= 1
 					for cell in self.field.cells:
 						if cell is not source:
 							cell.unlinkSource(source)
 				else:
 					source.active = True
 					source.recalculate()
-					# source.intensity = 1
-					# source.intensity += 1
 					for cell in self.field.cells:
 						if cell is not source:
 							cell.linkSource(source)
-
-				# for source in self.field.cells:
-				# 	if source.isContainsPoint(pos):
-				# 		if source.active:
-				# 			source.active = False
-				# 			source.intensity -= 1
-				# 			for cell in self.field.cells:
-				# 				if cell is not source:
-				# 					r = Cell.getDistanceBetweenCells(cell, source)
-				# 					if r > 0:
-				# 						cell.intensity -= calculateIntensity(r)
-				# 		else:
-				# 			source.active = True
-				# 			source.intensity += 1
-				# 			for cell in self.field.cells:
-				# 				if cell is not source:
-				# 					r = Cell.getDistanceBetweenCells(cell, source)
-				# 					if r > 0:
-				# 						cell.intensity += calculateIntensity(r)
-				# 		break
 
 			elif type == KEYDOWN:
 				Key = event.key  # Just Integer
@@ -339,9 +332,10 @@ class LightSim:
 			self.field.update()
 
 			# RENDERING
-			self.screen.fill(pygame.Color('black'))  # FIXME: Isn't neccessary
+			# self.screen.fill(pygame.Color('black'))  # FIXME: Isn't neccessary
 			for cell in self.field.cells:
 				cell.render(self.screen)
+			self.screen.blit(blurSurf(self.screen, 5), (0, 0))
 			self.text_fps.render(self.screen)
 
 			pygame.display.flip()
