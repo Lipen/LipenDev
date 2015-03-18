@@ -2,22 +2,34 @@ import pygame
 from pygame.locals import *
 from common import *
 from Point import Point
-from Vector2 import Vector2
 
-# TODO: Inherit Text and other widgets in future from <Entity> class
-# TODO: <Field> class.
-# TODO: <Cell> class. Init cells in Field.init
+# TODO: <Mouse> class.
+# TODO: Inside Cell.update: check if mouse inside cell and .. light..
 
 FPS = 60
-SCREEN_WIDTH = 768
-SCREEN_HEIGHT = 576
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+CELL_WIDTH = 10
+CELL_HEIGHT = CELL_WIDTH
+CELL_AMOUNT_X = SCREEN_WIDTH // CELL_WIDTH
+CELL_AMOUNT_Y = SCREEN_HEIGHT // CELL_HEIGHT
+SCREEN_WIDTH = CELL_WIDTH * CELL_AMOUNT_X
+SCREEN_HEIGHT = CELL_HEIGHT * CELL_AMOUNT_Y
 
 EXIT_KEYS = [K_ESCAPE]
 MOD_KEYS = [K_LSHIFT, K_RSHIFT, K_LALT, K_RALT, K_LCTRL, K_RCTRL]
 
 
-def getRandomColor():
-	return random.choice(list(pygame.color.THECOLORS.values()))
+# Override
+def getRandomColor(name=None):
+	if name:
+		return random.choice([Color(c) for c in pygame.color.THECOLORS if name in c])
+	else:
+		return random.choice(list(pygame.color.THECOLORS.values()))
+
+
+def calculateIntensity(r):
+	return (8*CELL_WIDTH) / r**(1.85)
 
 
 class Entity(pygame.sprite.Sprite):
@@ -101,23 +113,22 @@ class Cell(Entity):
 	def y(self, value):
 		self.pos.y = value
 
-	def __init__(self, x, y, width, height, color=None, activecolor='#00FF33'):
+	def __init__(self, x, y, width, height, color=None, activecolor=(255, 255, 255, 255)):
 		if color is None:
 			self.color = getRandomColor()
 		else:
 			self.color = color
 		self.pos = Point(x, y)
-		print('At {} color = {}'.format(self.pos, self.color))
 		self.width, self.height = width, height
 		self.previousColor = self.color
 		self.activecolor = activecolor
 		self.active = False
 		self.intensity = 0
 		self.surface = pygame.Surface((width, height))
-		self.surface.fill(self.color)
+		self.surface.fill(Color('black'))  # is this line neccessary?..
 
 	def isContainsPoint(self, p):
-		return (self.pos.x <= p.x <= self.pos.x+self.width) and (self.pos.y <= p.y <= self.pos.y+self.height)
+		return (self.x < p.x <= self.x+self.width) and (self.y < p.y <= self.y+self.height)
 
 	def getCenter(self):
 		return Point(self.x + self.width/2, self.y + self.height/2)
@@ -129,8 +140,15 @@ class Cell(Entity):
 		return Point.getDistanceBetweenPoints(c1.getCenter(), c2.getCenter())
 
 	def update(self):
-		if self.color != self.previousColor:
-			self.surface.fill(self.color)
+		if self.active:
+			if self.activecolor != self.previousColor:
+				self.surface.fill(self.activecolor)
+				self.previousColor = self.activecolor
+		else:
+			newcolor = tuple(map(lambda z: min(255, z*self.intensity), self.color[:3])) + (255, )
+			if newcolor != self.previousColor:
+				self.surface.fill(newcolor)
+				self.previousColor = newcolor
 
 
 class Field:
@@ -140,7 +158,7 @@ class Field:
 
 	def __init__(self, n, m, cellw, cellh):
 		self.n, self.m = n, m
-		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh) for j in range(m)] for i in range(n)]
+		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh, (153, 153, 153, 255)) for j in range(m)] for i in range(n)]
 		self.cells = [cell for row in self.cellsGrid for cell in row]
 		print('Total cells: {}'.format(len(self.cells)))
 
@@ -176,7 +194,7 @@ class LightSim:
 		self.font_fps = pygame.font.SysFont("Verdana", 16, True)
 
 		self.text_fps = Text(pos=Point(16, 16), color=(150, 255, 0), font=self.font_fps)
-		self.field = Field(12, 9, 64, 64)
+		self.field = Field(CELL_AMOUNT_X, CELL_AMOUNT_Y, CELL_WIDTH, CELL_HEIGHT)
 
 		print('init ended succesfully')
 
@@ -189,18 +207,38 @@ class LightSim:
 				return
 
 			elif type == MOUSEMOTION:
-				pos = event.pos
+				pos = Point(*event.pos)
 
 				# print('Motion at <{}>'.format(pos))
 
 			elif type == MOUSEBUTTONDOWN and event.button == 1:
-				pos = event.pos
+				pos = Point(*event.pos)
 
-				print('MouseLeftClick at <{}>'.format(pos))
+				print('MouseLeftClick at {}'.format(pos))
+
+				for source in self.field.cells:
+					if source.isContainsPoint(pos):
+						if source.active:
+							source.active = False
+							source.intensity -= 1
+							for cell in self.field.cells:
+								if cell is not source:
+									r = Cell.getDistanceBetweenCells(cell, source)
+									if r > 0:
+										cell.intensity -= calculateIntensity(r)
+						else:
+							source.active = True
+							source.intensity += 1
+							for cell in self.field.cells:
+								if cell is not source:
+									r = Cell.getDistanceBetweenCells(cell, source)
+									if r > 0:
+										cell.intensity += calculateIntensity(r)
+						break
 
 			elif type == KEYDOWN:
 				Key = event.key  # Just Integer
-				Pressed = pygame.key.get_pressed()  # list of pressed (bits) ([0,1,0,1,0,0] - #1 and #3 are pressed)
+				Pressed = pygame.key.get_pressed()  # list of pressed (bits) ([0,1,0,1,0,0...] - #1 and #3 are pressed)
 				Mod = pygame.key.get_mods()  # Mod list
 				Name = pygame.key.name(Key)  # Name <- Int(Key)
 
@@ -232,7 +270,7 @@ class LightSim:
 			self.field.update()
 
 			# RENDERING
-			self.screen.fill(pygame.Color('black'))
+			# self.screen.fill(pygame.Color('black'))
 			for cell in self.field.cells:
 				cell.render(self.screen)
 			self.text_fps.render(self.screen)
