@@ -3,6 +3,8 @@ from Entity import Entity
 from Point import Point
 import pygame
 
+CHANGE_INTENSITY_CAP = 0.009
+
 
 class Cell(Entity):
 
@@ -34,11 +36,12 @@ class Cell(Entity):
 		# self.changeIntensity(value)
 		self.__intensity = value
 
-	def __init__(self, x, y, width, height, color=None, activecolor=(255, 255, 221, 255)):
+	def __init__(self, field, x, y, width, height, color=None, activecolor=(255, 255, 221, 255)):
 		if color is None:
 			self.color = getRandomColor()
 		else:
 			self.color = color
+		self.field = field
 		self.pos = Point(x, y)
 		self.width, self.height = width, height
 		self.previousColor = self.color
@@ -57,7 +60,7 @@ class Cell(Entity):
 		return Point(self.x + self.width/2, self.y + self.height/2)
 
 	def getNumber(self):
-		return '{}:{}'.format(round(self.x/self.width), round(self.y/self.height))
+		return (round(self.x/self.width), round(self.y/self.height))
 
 	def getDistanceBetweenCells(c1, c2):
 		return Point.getDistanceBetweenPoints(c1.getCenter(), c2.getCenter())
@@ -65,10 +68,13 @@ class Cell(Entity):
 	def changeIntensity(self, value):
 		if self._intensity != self.__intensity:
 			dI = value - self.intensity
+			t = dI
 			dI = sign(dI)*min(CHANGE_INTENSITY_CAP, abs(dI))
 			# Exponential:
 			COEF = math.log(CHANGE_INTENSITY_CAP+1)/CHANGE_INTENSITY_CAP
-			self._intensity += sign(dI) * abs(math.exp(COEF*dI) - 1)
+			tt = sign(dI) * abs(math.exp(COEF*dI) - 1)
+			self._intensity += tt
+			# print('DBG changeIntensity(): {:.2f} -> {:.2f}'.format(t, tt))
 			# Linear:
 			# self._intensity += sign(dI)*dI**4 * CHANGE_INTENSITY_CAP**(1-4)
 
@@ -82,7 +88,7 @@ class Cell(Entity):
 				for source in self.sources:
 					r = Cell.getDistanceBetweenCells(self, source)
 					if r > 0:
-						I += calculateIntensity(r)
+						I += Cell.calculateIntensity(r)
 				self.intensity = I
 			else:
 				self.intensity = 0
@@ -95,9 +101,24 @@ class Cell(Entity):
 		self.sources.remove(source)
 		self.recalculate()
 
+	def click(self):
+		if self.active:
+			self.active = False
+			self.recalculate()
+			for cell in self.field.cells:
+				if cell is not self:
+					cell.unlinkSource(self)
+		else:
+			self.active = True
+			self.recalculate()
+			for cell in self.field.cells:
+				if cell is not self:
+					cell.linkSource(self)
+
 	def update(self):
 		# self.recalculate()
 		self.changeIntensity(self.__intensity)
+
 		# if self.active:
 		if False:
 			if self.activecolor != self.previousColor:
