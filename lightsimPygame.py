@@ -12,7 +12,7 @@ from Field import Field
 FPS = 60
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-CELL_WIDTH = 15
+CELL_WIDTH = 20
 CELL_HEIGHT = CELL_WIDTH
 CELL_AMOUNT_X = SCREEN_WIDTH // CELL_WIDTH
 CELL_AMOUNT_Y = SCREEN_HEIGHT // CELL_HEIGHT
@@ -95,19 +95,23 @@ class LightSim:
 
 				print('MouseLeftClick at {}'.format(pos))
 
+				# Left click switches cell to be source or not
 				source = self.field.getCellFromPoint(pos)
-				if source.active:
-					source.active = False
-					source.recalculate()
-					for cell in self.field.cells:
-						if cell is not source:
-							cell.unlinkSource(source)
-				else:
-					source.active = True
-					source.recalculate()
-					for cell in self.field.cells:
-						if cell is not source:
-							cell.linkSource(source)
+				source.click()
+
+			elif type == MOUSEBUTTONDOWN and event.button == 3:
+				pos = Point(*event.pos)
+
+				print('MouseRightClick at {}'.format(pos))
+
+				# Right click turns off nearest sources
+				n, m = pos.x//CELL_WIDTH, pos.y//CELL_HEIGHT
+				for i in range(n-3, n+4):
+					for j in range(m-3, m+4):
+						cell = self.field.getCellFromNumber(i, j)
+						if cell is not None:
+							if cell.active:
+								cell.click()
 
 			elif type == KEYDOWN:
 				Key = event.key  # Just Integer
@@ -151,7 +155,7 @@ class LightSim:
 			# self.screen.fill(pygame.Color('black'))  # FIXME: Isn't neccessary
 			for cell in self.field.cells:
 				cell.render(self.screen)
-			self.screen.blit(blurSurf(self.screen, 3), (0, 0))
+			self.screen.blit(blurSurf(self.screen, 4), (0, 0))
 			self.text_fps.render(self.screen)
 
 			pygame.display.flip()
