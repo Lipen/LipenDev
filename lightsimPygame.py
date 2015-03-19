@@ -2,6 +2,10 @@ import pygame
 from pygame.locals import *
 from common import *
 from Point import Point
+from Vector2 import Vector2
+from Cell import Cell
+from Text import Text
+from Field import Field
 
 # TODO: <Mouse> class.
 # TODO: more +deltaI -> more changeI, BUT more -deltaI -> less changeI
@@ -37,7 +41,7 @@ def blurSurf(surface, amt):
 	return surf
 
 
-# Override
+# @Override
 def getRandomColor(name=None):
 	if name:
 		return random.choice([Color(c) for c in pygame.color.THECOLORS if name in c])
@@ -47,195 +51,6 @@ def getRandomColor(name=None):
 
 def calculateIntensity(r):
 	return (8*CELL_WIDTH) / r**(1.8)
-
-
-class Entity(pygame.sprite.Sprite):
-
-	def getRect(self):
-		return pygame.rect.Rect(list(self.pos), self.surface.get_size)
-
-	def render(self, screen):
-		# if self.isVisible:
-		screen.blit(self.surface, list(self.pos))
-
-
-class Text(Entity):
-
-	@property
-	def x(self):
-		return self.pos.x
-
-	@x.setter
-	def x(self, value):
-		self.pos.x = value
-
-	@property
-	def y(self):
-		return self.pos.y
-
-	@y.setter
-	def y(self, value):
-		self.pos.y = value
-
-	def __init__(self, pos=None, text='<DefaultString>', color=(255, 255, 255), colorBackground=None, font=None):
-		# TODO: <Text class> Implement isVisible
-		if pos is None:
-			self.pos = Point(0, 0)
-		else:
-			self.pos = pos
-		if font is None:
-			self.font = LightSim.font_monospace
-		else:
-			self.font = font
-		self.text = str(text)
-		self.color = color
-		self.colorBackground = colorBackground
-		self.update()
-
-	def setText(self, text):
-		self.text = str(text)
-		self.update()
-
-	def centerTowardsEntity(self, ent, isX=True, isY=True):
-		# FIXME: Move to <Entity> class?
-		R = ent.getRect()
-		r = self.getRect()
-		if isX:
-			self.x += R.centerx - r.centerx
-		if isY:
-			self.y += R.centery - r.centery
-
-	def update(self):
-		self.surface = self.font.render(self.text, True, self.color, self.colorBackground)
-
-
-class Cell(Entity):
-
-	"""Base cell class
-	"""
-
-	@property
-	def x(self):
-		return self.pos.x
-
-	@x.setter
-	def x(self, value):
-		self.pos.x = value
-
-	@property
-	def y(self):
-		return self.pos.y
-
-	@y.setter
-	def y(self, value):
-		self.pos.y = value
-
-	@property
-	def intensity(self):
-		return self._intensity
-
-	@intensity.setter
-	def intensity(self, value):
-		# self.changeIntensity(value)
-		self.__intensity = value
-
-	def __init__(self, x, y, width, height, color=None, activecolor=(255, 255, 221, 255)):
-		if color is None:
-			self.color = getRandomColor()
-		else:
-			self.color = color
-		self.pos = Point(x, y)
-		self.width, self.height = width, height
-		self.previousColor = self.color
-		self.activecolor = activecolor
-		self.active = False
-		self._intensity = 0  # Current real intensity
-		self.__intensity = 0  # Final intensity
-		self.sources = []
-		self.surface = pygame.Surface((width, height))
-		# self.surface.fill(Color('black'))  # is this line neccessary?..
-
-	def isContainsPoint(self, p):
-		return (self.x < p.x <= self.x+self.width) and (self.y < p.y <= self.y+self.height)
-
-	def getCenter(self):
-		return Point(self.x + self.width/2, self.y + self.height/2)
-
-	def getNumber(self):
-		return '{}:{}'.format(round(self.x/self.width), round(self.y/self.height))
-
-	def getDistanceBetweenCells(c1, c2):
-		return Point.getDistanceBetweenPoints(c1.getCenter(), c2.getCenter())
-
-	def changeIntensity(self, value):
-		if self._intensity != self.__intensity:
-			dI = value - self.intensity
-			dI = sign(dI)*min(CHANGE_INTENSITY_CAP, abs(dI))
-			# Exponential:
-			COEF = math.log(CHANGE_INTENSITY_CAP+1)/CHANGE_INTENSITY_CAP
-			self._intensity += sign(dI) * abs(math.exp(COEF*dI) - 1)
-			# Linear:
-			# self._intensity += sign(dI)*dI**4 * CHANGE_INTENSITY_CAP**(1-4)
-
-	def recalculate(self):
-		if self.active:
-			# pass
-			self.intensity = 1
-		else:
-			if len(self.sources) > 0:
-				I = 0
-				for source in self.sources:
-					r = Cell.getDistanceBetweenCells(self, source)
-					if r > 0:
-						I += calculateIntensity(r)
-				self.intensity = I
-			else:
-				self.intensity = 0
-
-	def linkSource(self, source):
-		self.sources.append(source)
-		self.recalculate()
-
-	def unlinkSource(self, source):
-		self.sources.remove(source)
-		self.recalculate()
-
-	def update(self):
-		# self.recalculate()
-		self.changeIntensity(self.__intensity)
-		# if self.active:
-		if False:
-			if self.activecolor != self.previousColor:
-				self.surface.fill(self.activecolor)
-				self.previousColor = self.activecolor
-		else:
-			newcolor = tuple(map(lambda z: max(0, min(255, z*self.intensity)), self.color[:3])) + (255, )
-			if newcolor != self.previousColor:
-				self.surface.fill(newcolor)
-				self.previousColor = newcolor
-
-
-class Field:
-
-	"""Field class..
-	"""
-
-	def __init__(self, n, m, cellw, cellh):
-		self.n, self.m = n, m
-		self.cellsGrid = [[Cell(i*cellw, j*cellh, cellw, cellh, (random.randint(221, 255), random.randint(221, 255), random.randint(221, 255), 255)) for j in range(m)] for i in range(n)]
-		self.cells = [cell for row in self.cellsGrid for cell in row]
-		print('Total cells: {}'.format(len(self.cells)))
-
-	def getCellFromPoint(self, p):
-		for cell in self.cells:
-			if cell.isContainsPoint(p):
-				return cell
-
-	def update(self):
-		# t = time.time()
-		for cell in self.cells:
-			cell.update()
-		# print('TimeIt: Field.update() - {:.3f} ms.'.format(1000*(time.time() - t)))
 
 
 class LightSim:
