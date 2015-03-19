@@ -8,8 +8,6 @@ from Text import Text
 from Field import Field
 
 # TODO: <Mouse> class.
-# TODO: more +deltaI -> more changeI, BUT more -deltaI -> less changeI
-# TODO: ^^ isn't it SO now?..
 
 FPS = 60
 SCREEN_WIDTH = 800
@@ -20,7 +18,6 @@ CELL_AMOUNT_X = SCREEN_WIDTH // CELL_WIDTH
 CELL_AMOUNT_Y = SCREEN_HEIGHT // CELL_HEIGHT
 SCREEN_WIDTH = CELL_WIDTH * CELL_AMOUNT_X
 SCREEN_HEIGHT = CELL_HEIGHT * CELL_AMOUNT_Y
-CHANGE_INTENSITY_CAP = 0.007
 
 EXIT_KEYS = [K_ESCAPE]
 MOD_KEYS = [K_LSHIFT, K_RSHIFT, K_LALT, K_RALT, K_LCTRL, K_RCTRL]
@@ -33,12 +30,19 @@ def blurSurf(surface, amt):
 	"""
 	if amt < 1.0:
 		raise ValueError("Arg 'amt' must be greater than 1.0, passed in value is %s" % amt)
-	scale = 1.0/float(amt)
-	surf_size = surface.get_size()
-	scale_size = (int(surf_size[0]*scale), int(surf_size[1]*scale))
-	surf = pygame.transform.smoothscale(surface, scale_size)
-	surf = pygame.transform.smoothscale(surf, surf_size)
+	# scale = 1.0/float(amt)
+	# surf_size = surface.get_size()
+	# scale_size = (int(surf_size[0]*scale), int(surf_size[1]*scale))
+	# surf = pygame.transform.smoothscale(surface, scale_size)
+	# surf = pygame.transform.smoothscale(surf, surf_size)
+	surf = pygame.transform.rotozoom(surface, 0, 1./amt)
+	surf = pygame.transform.rotozoom(surf, 0, amt)
 	return surf
+
+
+def calculateIntensity(r):
+	return (8*CELL_WIDTH) / r**(1.8)
+Cell.calculateIntensity = calculateIntensity
 
 
 # @Override
@@ -47,10 +51,6 @@ def getRandomColor(name=None):
 		return random.choice([Color(c) for c in pygame.color.THECOLORS if name in c])
 	else:
 		return random.choice(list(pygame.color.THECOLORS.values()))
-
-
-def calculateIntensity(r):
-	return (8*CELL_WIDTH) / r**(1.8)
 
 
 class LightSim:
@@ -120,9 +120,10 @@ class LightSim:
 					self.RUNNING = False
 					return
 
-				if Key == K_SPACE:
-					for c in [cell.color for cell in self.field.cells]:
-						print(c)
+				# DEBUG:
+				# if Key == K_SPACE:
+				# 	for c in [cell.color for cell in self.field.cells]:
+				# 		print(c)
 
 				if Mod & KMOD_CTRL and Key not in MOD_KEYS:
 					print('Pressed <{}> (#{}) with pressed ctrl.'.format(Name, Key))
@@ -150,7 +151,7 @@ class LightSim:
 			# self.screen.fill(pygame.Color('black'))  # FIXME: Isn't neccessary
 			for cell in self.field.cells:
 				cell.render(self.screen)
-			self.screen.blit(blurSurf(self.screen, 5), (0, 0))
+			self.screen.blit(blurSurf(self.screen, 3), (0, 0))
 			self.text_fps.render(self.screen)
 
 			pygame.display.flip()
