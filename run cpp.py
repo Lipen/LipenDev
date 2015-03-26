@@ -6,7 +6,7 @@ def main():
     files = []
     counter = 0
     for file in os.listdir():
-        if file[-4:] == '.c++':
+        if file[-4:] == '.cpp':
             counter += 1
             files.append(file[:-4])
             print('{:->3d}) {}'.format(counter, file[:-4]))
@@ -24,9 +24,9 @@ def main():
             except:
                 pass
 
-    err = sys('g++ {0}.c++ -o {0}.exe'.format(name))
+    err = sys('g++ {0}.cpp -o {0}.exe'.format(name))
     if err:
-        print('Error during compiling. <{}>'.format(err))    
+        print('Error during compiling. <{}>'.format(err))
         input('\nType enter to exit: ')
     else:
         print('Compiled succesfully. Starting:\n'+'-'*30)
