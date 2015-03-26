@@ -1,22 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <set>
 #include <map>
-#include <algorithm>
 #include <string>
 
-#define VI vector<int>
-#define VVI vector<VI>
-#define FOR(i, n) for(int i = 0; i < (n); i++)
-#define FORS(i, si, n) for(int i = (si); i < (n); i++)
-#define FORE(i, n) for(int i = 0; i <= (n); i++)
-#define FORES(i, si, n) for(int i = (si); i <= (n); i++)
 #define pb push_back
 
 using namespace std;
-
-int n,m,x,a,b,c,d;
 
 int main()
 {
@@ -41,13 +31,11 @@ int main()
 				newstack = c;
 			}
 			stack = newstack;
-			// cout << "Stack: " << stack << endl;
 		}
 		flow.pb(stack); // BEWARE! :O
 
 		ofstream fo("LZW_Encoded.txt");
 		if (fo.is_open()) {
-			//
 			for (auto item : flow) {
 				fo << d[item] << endl;
 			}
