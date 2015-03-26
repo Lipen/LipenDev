@@ -4,7 +4,6 @@ s = f.read().splitlines()
 f.close()
 print('File contains:\n-----\n{}\n-----'.format(s))
 d = [chr(i) for i in range(256)]
-q = 256
 
 stack = ''
 flow = []
@@ -18,7 +17,6 @@ for i in range(len(s)):
 		flow.append(c)
 		d.append(stack)
 		stack = c
-		q += 1
 
 with open('LZW_Decoded.txt', 'w') as F:
 	F.write(''.join(flow))
