@@ -36,8 +36,14 @@ int main()
 
 		ofstream fo("LZW_Encoded.txt");
 		if (fo.is_open()) {
-			for (auto item : flow) {
-				fo << d[item] << endl;
+			//C++11:
+			// for (auto item : flow) {
+			// 	fo << d[item] << endl;
+			// }
+			//C++98:
+			vector<string>::iterator item = flow.begin();
+			for (; item != flow.end(); ++item) {
+				fo << d[*item] << endl;
 			}
 		} else {
 			cout << "Unable to open output file :C" << endl;
