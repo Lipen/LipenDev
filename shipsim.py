@@ -8,7 +8,7 @@ from Point import Point
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
-_FPS = 25
+_FPS = 60
 _DELAY = round(1000. / _FPS)
 _FPS = 1000./_DELAY
 print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
@@ -206,13 +206,13 @@ def tick(event=None):
 				forceGrav = World.gravForce(_MASS)
 				forceArch = World.archForce(_DENSITY, Volume)
 				forceFric = World.fricForce(_DENSITY, mypoly.vel, _FRICTION, under)
-				F = forceArch + forceFric
+				F = forceGrav + forceArch + forceFric
 
 				Cu = under.getCenter()
 				C0 = mypoly.getCenter()
 				s = Vector2.newFromPoints(Cu, C0)  # directing
 
-				Fl = F*s*s / abs(s)**2
+				# Fl = F*s*s / abs(s)**2
 
 				# M = abs(Fm) * abs(s)  # Momentum
 				M = F ** s  # == -s x F
@@ -220,8 +220,8 @@ def tick(event=None):
 				J = 11656333333
 				# J = 24000000000
 
-				Fl += forceGrav
-				acc = Fl / _MASS  # accel
+				# Fl += forceGrav
+				acc = F / _MASS  # accel
 				# aa = pow(Fm, s, True) * M / J  # angularAccel
 				aa = M / J
 				print('F={}, s={}, M={}'.format(F, s, M))
