@@ -3,7 +3,6 @@ with open('LZW_toEncode.txt', 'r') as f:
 	s = f.read()
 # print('File contains:\n-----\n{}\n-----'.format(s))
 d = [chr(i) for i in range(256)]
-q = 256
 
 stack = ''
 flow = []
@@ -14,7 +13,6 @@ for c in s:
 		flow.append(d.index(stack[:-1]))
 		d.append(stack)
 		stack = c
-		q += 1
 
 if stack:
 	flow.append(d.index(stack))
