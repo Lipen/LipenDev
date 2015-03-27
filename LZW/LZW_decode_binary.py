@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import math
-f = open('LZW_Encoded.txt', 'r')
-s = f.read()
-f.close()
-print('File contains:\n-----\n{}\n-----'.format(s))
+with open('LZW_Encoded.txt', 'r') as f:
+	s = f.read()
 d = [chr(i) for i in range(256)]
 
 i = 0
