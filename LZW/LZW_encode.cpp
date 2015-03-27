@@ -2,11 +2,13 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <ctime>
 
 using namespace std;
 
 int main()
 {
+	clock_t timeStart = clock();
 	ifstream fi("LZW_toEncode.txt");
 
 	if (fi.is_open()) {
@@ -39,5 +41,6 @@ int main()
 	} else {
 		cout << "Unable to open input file :c" << endl;
 	}
+	cout << "Done.\nTime: " << (double)(clock() - timeStart)/CLOCKS_PER_SEC*1000. << " ms" << endl;
 	return 0;
 }
