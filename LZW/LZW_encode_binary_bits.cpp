@@ -43,6 +43,13 @@ int main()
 		int last = 256;
 
 		while (fi.get(c)) {
+			newstack = stack + c;
+			if (d.find(newstack) == d.end()) {
+				flow += convert2bits(d[stack], (int)log2(last)+1);
+				d[newstack] = last++;
+				newstack = c;
+			}
+			stack = newstack;
 		}
 		flow += convert2bits(d[stack], (int)log2(last)+1);
 
