@@ -18,4 +18,4 @@ if stack:
 	flow.append(d.index(stack))
 
 with open('LZW_Encoded.txt', 'w') as F:
-	F.write('\n'.join(map(str, flow)))
+	F.write(' '.join(map(str, flow)))
