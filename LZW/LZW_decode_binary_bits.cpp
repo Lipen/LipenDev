@@ -11,13 +11,13 @@ using namespace std;
 
 string convert2bits(unsigned char c) {
 	string s;
-	cout << "convert2bits("<<c;
+	// cout << "convert2bits("<<c;
 	for (int i=0; i<8; ++i) {
 		int p = pow(2, 7-i);
 		s += (c / p)?"1":"0";
 		c %= p;
 	}
-	cout << "): Returning " << s << endl;
+	// cout << "): Returning " << s << endl;
 	return s;
 }
 
@@ -51,6 +51,7 @@ int main()
 			d[string(1, i)] = i;
 		}
 		int last = 256;
+		int len = 9; //(int)log2(last+1)+1
 
 		char t;
 		string data;
@@ -58,13 +59,13 @@ int main()
 		while (fi.get(t)) {
 			data += convert2bits(t);
 		}
-		//cout << data << endl;
+		// cout << data << endl;
+		// cout << "data.len = " << data.length() << endl;
 
-		for (int i=0; i<data.length(); i+=(int)log2(last+1)+1) {
-			//(int)log2(last+1)+1
-			// cout << "substr = " << buf.substr(i, (int)log2(last+1)+1) << endl;
-			// k = convert(string(buf+i, (int)log2(last+1)+1));
-			k = convert2int(data.substr(i, (int)log2(last+1)+1));
+		for (int i=0; i<fileSize*8; i+=len) {
+			string z = data.substr(i, len);
+			if (z.length() < len) break;
+			k = convert2int(z);
 			// cout << "substr = "<<data.substr(i, (int)log2(last+1)+1)<<"   k = " << k << " last="<<last<< endl;
 			map<string, int>::iterator it = d.begin();
 			for (; it != d.end(); ++it) {
@@ -81,12 +82,13 @@ int main()
 				d[stack] = last++;
 				stack = c;
 			}
+			len = (int)log2(last+1)+1;
 		}
 
 		ofstream fo("LZW_Decoded.txt");
 
 		if (fo) {
-			//C++11:
+			// C++11:
 			// for (auto item : flow) {
 			// 	fo << item;
 			// }
