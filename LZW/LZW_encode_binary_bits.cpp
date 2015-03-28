@@ -9,10 +9,10 @@
 
 using namespace std;
 
-string convert2bits(long long n, long long size) {
+string convert2bits(int n, int size) {
 	string s;
 	for (int i=size-1; i>=0; --i) {
-		long long p = pow(2, i);
+		int p = pow(2, i);
 		s += (n / p)?"1":"0";
 		n %= p;
 	}
@@ -43,15 +43,8 @@ int main()
 		int last = 256;
 
 		while (fi.get(c)) {
-			newstack = stack + c;
-			if (d.find(newstack) == d.end()) {
-				flow += convert2bits(d[stack], (long long)log2(last)+1);
-				d[newstack] = last++;
-				newstack = c;
-			}
-			stack = newstack;
 		}
-		flow += convert2bits(d[stack], (long long)log2(last)+1);
+		flow += convert2bits(d[stack], (int)log2(last)+1);
 
 		ofstream fo("LZW_Encoded.txt", ios::binary);
 
