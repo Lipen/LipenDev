@@ -21,17 +21,25 @@ int main() {
 
 	for (int i=0; i<2*n-1; ++i) {
 		vector<Branch> newtree;
-		for (Branch b : tree) {
-			if (n - b.left)
-				newtree.pb(*(new Branch(b.leafe+'(', b.left+1, b.right)));
-			if (b.right < b.left)
-				newtree.pb(*(new Branch(b.leafe+')', b.left, b.right+1)));
+		//C++11:
+		// for (Branch b : tree) {
+		//C++03:
+		vector<Branch>::iterator b = tree.begin();
+		for (; b != tree.end(); ++b) {
+			if (n - (*b).left)
+				newtree.pb(*(new Branch((*b).leafe+'(', (*b).left+1, (*b).right)));
+			if ((*b).right < (*b).left)
+				newtree.pb(*(new Branch((*b).leafe+')', (*b).left, (*b).right+1)));
 		}
 		tree = newtree;
 	}
 
-	for (Branch b : tree) {
-		cout << b.leafe << endl;
+	//C++11:
+	// for (Branch b : tree) {
+	//C++03:
+	vector<Branch>::iterator b = tree.begin();
+	for (; b != tree.end(); ++b) {
+		cout << (*b).leafe << endl;
 	}
 	cout << tree.size() << endl;
 }
