@@ -160,8 +160,8 @@ bool decompress(string nameIn, string nameOut) {
 }
 
 int main(int argc, char * argv[]) {
-	string nameIn("input.txt");
-	string nameOut("output.txt");
+	string nameIn("LZW_toEncode.txt");
+	string nameOut("LZW_Encoded.txt");
 	int amount = 1;
 	bool isCompress = true;
 
@@ -186,11 +186,11 @@ int main(int argc, char * argv[]) {
 
 	int n = 0;
 	if (isCompress) {
-		compress(nameIn, nameOut);
-		while (++n<amount && compress(nameOut, nameOut));
+		if (compress(nameIn, nameOut))
+			while (++n<amount && compress(nameOut, nameOut));
 	} else {
-		decompress(nameIn, nameOut);
-		while (++n<amount && decompress(nameOut, nameOut));
+		if (decompress(nameIn, nameOut))
+			while (++n<amount && decompress(nameOut, nameOut));
 	}
 
 	cout << "Done. Total " << (isCompress?"c":"dec") << "ompressed " << n << " times." << endl;
