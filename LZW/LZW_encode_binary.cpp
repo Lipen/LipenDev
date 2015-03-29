@@ -1,29 +1,36 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <map>
-#include <cstring>
+#include <string>
 #include <cmath>
 
 #define pb push_back
 
 using namespace std;
 
-string convert(long long n, long long size) {
+string convert2bits(int n, int size) {
 	string s;
 	for (int i=size-1; i>=0; --i) {
-		long long p = pow(2, i);
+		int p = pow(2, i);
 		s += (n / p)?"1":"0";
 		n %= p;
 	}
 	return s;
 }
 
+unsigned char convert2byte(string s) {
+	unsigned char b = 0;
+	for (int i=0; i<8; ++i) {
+		if (s[i]=='1') b += (int)pow(2, 7-i);
+	}
+	return b;
+}
+
 int main()
 {
-	ifstream fi("LZW_toEncode.txt");
+	ifstream fi("LZW_toEncode.txt", ios::binary);
 
-	if (fi.is_open()) {
+	if (fi) {
 		string flow;
 		char c;
 		string stack;
@@ -33,22 +40,27 @@ int main()
 			d[string(1, i)] = i;
 		}
 		int last = 256;
+		int len = 9;
 
 		while (fi.get(c)) {
 			newstack = stack + c;
 			if (d.find(newstack) == d.end()) {
-				flow += convert(d[stack], (long long)log2(last)+1);
+				flow += convert2bits(d[stack], len);
 				d[newstack] = last++;
 				newstack = c;
 			}
 			stack = newstack;
+			len = (int)log2(last)+1;
 		}
-		flow += convert(d[stack], (long long)log2(last)+1);
+		flow += convert2bits(d[stack], len);
 
 		ofstream fo("LZW_Encoded.txt", ios::binary);
 
-		if (fo.is_open()) {
-			fo << flow;
+		if (fo) {
+			flow.resize(ceil(flow.length()/8.)*8, '0');
+			for (int i=0; i<flow.length(); i+=8) {
+				fo.put(convert2byte(flow.substr(i, 8)));
+			}
 			fo.close();
 		} else {
 			cout << "Unable to open output file :C" << endl;
