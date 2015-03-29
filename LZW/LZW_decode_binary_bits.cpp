@@ -79,7 +79,7 @@ int main()
 			stack = c;
 		}
 
-		ofstream fo("LZW_Decoded.txt");
+		ofstream fo("LZW_Decoded.txt", ios::binary);
 
 		if (fo) {
 			fo << flow;
