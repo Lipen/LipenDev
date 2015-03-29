@@ -31,7 +31,7 @@ int main()
 {
 	ifstream fi("LZW_toEncode.txt");
 
-	if (fi.is_open()) {
+	if (fi) {
 		string flow;
 		char c;
 		string stack;
@@ -41,29 +41,27 @@ int main()
 			d[string(1, i)] = i;
 		}
 		int last = 256;
+		int len = 9;
 
 		while (fi.get(c)) {
 			newstack = stack + c;
 			if (d.find(newstack) == d.end()) {
-				flow += convert2bits(d[stack], (int)log2(last)+1);
+				flow += convert2bits(d[stack], len);
 				d[newstack] = last++;
 				newstack = c;
 			}
 			stack = newstack;
+			len = (int)log2(last)+1;
 		}
-		flow += convert2bits(d[stack], (int)log2(last)+1);
+		flow += convert2bits(d[stack], len);
 
 		ofstream fo("LZW_Encoded.txt", ios::binary);
 
-		if (fo.is_open()) {
+		if (fo) {
 			flow.resize(ceil(flow.length()/8.)*8, '0');
 			for (int i=0; i<flow.length(); i+=8) {
-				char* buf = new char[1];
-				buf[0] = convert2byte(flow.substr(i, 8));
-				fo.write(buf, 1);
-				delete[] buf;
+				fo.put(convert2byte(flow.substr(i, 8)));
 			}
-
 			fo.close();
 		} else {
 			cout << "Unable to open output file :C" << endl;
