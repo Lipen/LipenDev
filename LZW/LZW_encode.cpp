@@ -8,13 +8,12 @@ using namespace std;
 
 int main()
 {
-	clock_t timeStart = clock();
 	ifstream fi("LZW_toEncode.txt");
 
-	if (fi.is_open()) {
+	if (fi) {
 		ofstream fo("LZW_Encoded.txt");
 
-		if (fo.is_open()) {
+		if (fo) {
 			char c;
 			string stack;
 			string newstack;
@@ -34,6 +33,7 @@ int main()
 				stack = newstack;
 			}
 			fo << d[stack]; // BEWARE! :O
+			fo.close();
 		} else {
 			cout << "Unable to open output file :C" << endl;
 		}
@@ -41,6 +41,5 @@ int main()
 	} else {
 		cout << "Unable to open input file :c" << endl;
 	}
-	cout << "Done.\nTime: " << (double)(clock() - timeStart)/CLOCKS_PER_SEC*1000. << " ms" << endl;
 	return 0;
 }
