@@ -134,6 +134,7 @@ bool decompress(string nameIn, string nameOut) {
 				c = stack + stack[0];
 			} else {
 				cout << "Bad encoded k = " << k << " at " << i << "!" <<endl;
+				return false;
 			}
 			flow += c;
 			d[last++] = stack+c[0];
@@ -163,6 +164,7 @@ int main(int argc, char * argv[]) {
 	string nameOut("output.txt");
 	int amount = 1;
 	bool isCompress = true;
+
 	for (int i=1; i<argc; ++i) {
 		string arg(argv[i]);
 		if (arg=="encode" || arg=="compress") {
@@ -179,6 +181,9 @@ int main(int argc, char * argv[]) {
 			cout << "Weird argument \"" << arg << "\"" << endl;
 		}
 	}
+
+	cout<<(isCompress?"C":"Dec")<<"ompression mode. At most "<<amount<<" times"<<endl<<nameIn<<"  -->  "<<nameOut<<endl;
+
 	int n = 0;
 	if (isCompress) {
 		compress(nameIn, nameOut);
@@ -187,6 +192,8 @@ int main(int argc, char * argv[]) {
 		decompress(nameIn, nameOut);
 		while (++n<amount && decompress(nameOut, nameOut));
 	}
+
 	cout << "Done. Total " << (isCompress?"c":"dec") << "ompressed " << n << " times." << endl;
+
 	return 0;
 }
