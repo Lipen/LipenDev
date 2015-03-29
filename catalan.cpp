@@ -24,8 +24,7 @@ int main() {
 		//C++11:
 		// for (Branch b : tree) {
 		//C++03:
-		vector<Branch>::iterator b = tree.begin();
-		for (; b != tree.end(); ++b) {
+		for (vector<Branch>::iterator b = tree.begin(); b != tree.end(); ++b) {
 			if (n - (*b).left)
 				newtree.pb(*(new Branch((*b).leafe+'(', (*b).left+1, (*b).right)));
 			if ((*b).right < (*b).left)
@@ -37,8 +36,7 @@ int main() {
 	//C++11:
 	// for (Branch b : tree) {
 	//C++03:
-	vector<Branch>::iterator b = tree.begin();
-	for (; b != tree.end(); ++b) {
+	for (vector<Branch>::iterator b = tree.begin(); b != tree.end(); ++b) {
 		cout << (*b).leafe << endl;
 	}
 	cout << tree.size() << endl;
