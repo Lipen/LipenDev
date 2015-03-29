@@ -12,53 +12,36 @@ int main()
 {
 	ifstream fi("LZW_Encoded.txt");
 
-	if (fi.is_open()) {
-		vector<string> flow;
-		long k;
-		string c;
-		string stack;
-		string newstack;
-		map<string, int> d;
+	if (fi) {
+		map<int, string> d;
 		for (int i=0; i<256; ++i) {
-			d[string(1, i)] = i;
+			d[i] = string(1, i);
 		}
 		int last = 256;
+		int k;
+		fi >> k;
+		string stack(1, k); //char group builder
+		string flow = stack; //result
+		string c; //current char/chargroup
 
 		while (fi >> k) {
-			//C++11:
-			// for (auto it : d)
-			// 	if (it.second == k) {
-			// 		c = it.first;
-			// 		break;
-			// 	}
-			//C++98:
-			map<string, int>::iterator it = d.begin();
-			for (; it != d.end(); ++it )
-				if (it->second == k) {
-					c = it->first;
-					break;
-				}
-			stack += c;
-			if (d.find(stack) != d.end()) {
-				flow.pb(stack);
+			if (d.count(k)) {
+				c = d[k];
+			} else if (k==last) {
+				c = stack + stack[0];
 			} else {
-				flow.pb(c);
-				d[stack] = last++;
-				stack = c;
+				cout << "Bad encoded k = " << k << endl;
 			}
+			flow += c;
+			d[last++] = stack+c[0];
+			stack = c;
 		}
 
 		ofstream fo("LZW_Decoded.txt");
-		if (fo.is_open()) {
-			//C++11:
-			// for (auto item : flow) {
-			// 	fo << item;
-			// }
-			//C++98:
-			vector<string>::iterator item = flow.begin();
-			for (; item != flow.end(); ++item) {
-				fo << *item;
-			}
+
+		if (fo) {
+			fo << flow;
+			fo.close();
 		} else {
 			cout << "Unable to open output file :C" << endl;
 		}
