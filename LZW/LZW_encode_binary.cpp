@@ -8,7 +8,7 @@
 
 using namespace std;
 
-string convert2bits(int n, int size) {
+string convertNumberToBits(int n, int size) {
 	string s;
 	for (int i=size-1; i>=0; --i) {
 		int p = pow(2, i);
@@ -18,7 +18,7 @@ string convert2bits(int n, int size) {
 	return s;
 }
 
-unsigned char convert2byte(string s) {
+unsigned char convertBitsToByte(string s) {
 	unsigned char b = 0;
 	for (int i=0; i<8; ++i) {
 		if (s[i]=='1') b += (int)pow(2, 7-i);
@@ -45,27 +45,28 @@ int main()
 		while (fi.get(c)) {
 			newstack = stack + c;
 			if (d.find(newstack) == d.end()) {
-				flow += convert2bits(d[stack], len);
+				flow += convertNumberToBits(d[stack], len);
 				d[newstack] = last++;
 				newstack = c;
 			}
 			stack = newstack;
 			len = (int)log2(last)+1;
 		}
-		flow += convert2bits(d[stack], len);
+		flow += convertNumberToBits(d[stack], len);
+
+		fi.close();
 
 		ofstream fo("LZW_Encoded.txt", ios::binary);
 
 		if (fo) {
 			flow.resize(ceil(flow.length()/8.)*8, '0');
 			for (int i=0; i<flow.length(); i+=8) {
-				fo.put(convert2byte(flow.substr(i, 8)));
+				fo.put(convertBitsToByte(flow.substr(i, 8)));
 			}
 			fo.close();
 		} else {
 			cout << "Unable to open output file :C" << endl;
 		}
-		fi.close();
 	} else {
 		cout << "Unable to open input file :c" << endl;
 	}

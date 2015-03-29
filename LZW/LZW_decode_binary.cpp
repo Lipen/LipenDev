@@ -8,7 +8,7 @@
 
 using namespace std;
 
-string convert2bits(unsigned char c) {
+string convertByteToBits(unsigned char c) {
 	string s;
 	for (int i=0; i<8; ++i) {
 		int p = pow(2, 7-i);
@@ -18,7 +18,7 @@ string convert2bits(unsigned char c) {
 	return s;
 }
 
-int convert2int(string buf) {
+int convertBitsToNumber(string buf) {
 	int size = buf.length();
 	int x = 0;
 	for (int i=0; i<size; ++i) {
@@ -29,7 +29,7 @@ int convert2int(string buf) {
 	return x;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	ifstream fi("LZW_Encoded.txt", ios::binary);
 
@@ -46,12 +46,11 @@ int main()
 
 		char t;
 		string data;
-		data.reserve(fileSize);
 		while (fi.get(t)) {
-			data += convert2bits(t);
+			data += convertByteToBits(t);
 		}
 
-		int k = convert2int(data.substr(0, len));
+		int k = convertBitsToNumber(data.substr(0, len));
 		string stack(1, k); //char group builder
 		string flow = stack; //result
 		string c; //current char/chargroup
@@ -65,7 +64,7 @@ int main()
 				cout << "Ignoring trailing " << z << endl;
 				break;
 			}
-			k = convert2int(z);
+			k = convertBitsToNumber(z);
 
 			if (d.count(k)) {
 				c = d[k];
@@ -79,6 +78,8 @@ int main()
 			stack = c;
 		}
 
+		fi.close();
+
 		ofstream fo("LZW_Decoded.txt", ios::binary);
 
 		if (fo) {
@@ -87,7 +88,6 @@ int main()
 		} else {
 			cout << "Unable to open output file :C" << endl;
 		}
-		fi.close();
 	} else {
 		cout << "Unable to open input file :c" << endl;
 	}
