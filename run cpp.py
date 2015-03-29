@@ -1,6 +1,7 @@
 import os
 sys = os.system
 
+
 def main():
     print('List of existing avaliable files:')
     files = []
@@ -12,7 +13,7 @@ def main():
             print('{:->3d}) {}'.format(counter, file[:-4]))
 
     name = ''
-    while len(name)==0:
+    while len(name) == 0:
         name = input('Enter file <name> or <number> or #<number>: ')
     try:
         name = files[int(name)-1]
@@ -24,7 +25,7 @@ def main():
             except:
                 pass
 
-    err = sys('g++ {0}.cpp -o {0}.exe'.format(name))
+    err = sys('g++ {0}.cpp -std=c++0x -o {0}.exe'.format(name))
     if err:
         print('Error during compiling. <{}>'.format(err))
         input('\nType enter to exit: ')
