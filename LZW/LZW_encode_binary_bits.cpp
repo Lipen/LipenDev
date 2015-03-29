@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <map>
 #include <string>
 #include <cmath>
@@ -29,7 +28,7 @@ unsigned char convert2byte(string s) {
 
 int main()
 {
-	ifstream fi("LZW_toEncode.txt");
+	ifstream fi("LZW_toEncode.txt", ios::binary);
 
 	if (fi) {
 		string flow;
