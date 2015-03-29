@@ -1,8 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <map>
-#include <cstring>
+#include <string>
 #include <cmath>
 
 #define pb push_back
