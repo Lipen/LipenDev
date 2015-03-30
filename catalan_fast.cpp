@@ -1,6 +1,4 @@
 #include <iostream>
-#include <algorithm>
-#include <vector>
 #include <ctime>
 #include <cstring>
 
@@ -9,26 +7,27 @@
 using namespace std;
 
 int n;
-vector<string> answer;
+long int amount;
 char* builder;
 
 void gen(int left, int right) {
 	if (left + right == 2*n) {
-		answer.pb(string(builder));
+		// cout << builder << endl;
+		++amount;
 		return;
 	}
 	if (left < n) {
-		char* t = new char[2*n];
+		char* t = new char[n*2+1];
 		strcpy(t, builder);
-		builder[left+right] = '(';
+		builder[left + right] = '(';
 		gen(left+1, right);
 		strcpy(builder, t);
 		delete[] t;
 	}
 	if (right < n && right < left) {
-		char* t = new char[2*n];
+		char* t = new char[n*2+1];
 		strcpy(t, builder);
-		builder[left+right] = ')';
+		builder[left + right] = ')';
 		gen(left, right+1);
 		strcpy(builder, t);
 		delete[] t;
@@ -37,15 +36,13 @@ void gen(int left, int right) {
 
 int main() {
 	cin >> n;
+	cout << "Processing n = " << n << "..." << endl;
 	clock_t timeStart = clock();
 
-	builder = new char[2*n];
+	builder = new char[n*2+1];
 	builder[0] = '(';
 	gen(1, 0);
-	// for (vector<string>::iterator item = answer.begin(); item != answer.end(); ++item) {
-	// 	cout << *item << endl;
-	// }
-	cout << "Total: " << answer.size() << endl;
+	cout << "Total: " << amount << endl;
 
 	cout << "Time: " << (double)(clock() - timeStart)/CLOCKS_PER_SEC << " seconds" << endl;
 }
