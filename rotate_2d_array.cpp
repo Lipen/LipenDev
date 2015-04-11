@@ -7,13 +7,10 @@
 using namespace std;
 
 void getWidthHeight(char * data, long int &width, long int &height) {
-	int i = 0;
-	for (; i<4; ++i) {
+	for (int i=0; i<4; ++i) {
 		width += data[i] << 8*(3-i);
+		height += data[i+4] << 8*(7-i);
 		// cout << "dbg width(after): " <<  width << endl;
-	}
-	for (; i<8; ++i) {
-		height += data[i] << 8*(7-i);
 	}
 }
 
@@ -28,29 +25,32 @@ bool rotate_clockwise(string nameIn, string nameOut) {
 		fi.read(data, fileSize);
 
 		// Weird debug stuff
-		if (fi)
-			std::cout << "successfully" << endl;
-		else
-			std::cout <<"error: only "<<fi.gcount()<<" could be read"<< endl;
+		// if (fi)
+		// 	cout << "Read: success." << endl;
+		// else
+		// 	cout << "Read: error. Only "<<fi.gcount()<<" could be read"<< endl;
+		//
 
 		fi.close();
 
 		long int width = 0, height = 0;
 		getWidthHeight(data, width, height);
 
-		cout << "WIDTH: " << width << "   HEIGHT: " << height << endl;
-		if (width*height < fileSize-8) {
-			cout << "Broken file" << endl;
-			return false;
-		}
-		cout << "DATA:" << endl;
-		for (int i=8; i<fileSize; ++i) {
-			cout << (int)(unsigned char)data[i] << " ";
-			if ((i-7)%width == 0) {
-				cout << endl;
-			}
-		}
-		cout << "END OF DATA" << endl;
+		// DEBUG
+		// cout << "WIDTH: " << width << "   HEIGHT: " << height << endl;
+		// if (width*height < fileSize-8) {
+		// 	cout << "Broken file" << endl;
+		// 	return false;
+		// }
+		// cout << "DATA:" << endl;
+		// for (int i=8; i<fileSize; ++i) {
+		// 	cout << (int)(unsigned char)data[i] << " ";
+		// 	if ((i-7)%width == 0) {
+		// 		cout << endl;
+		// 	}
+		// }
+		// cout << "END OF DATA" << endl;
+		//
 
 		char * meta = new char[fileSize+1];
 		for (int i=0; i<4; ++i) {
@@ -61,19 +61,21 @@ bool rotate_clockwise(string nameIn, string nameOut) {
 		int p = 8;
 		for (int i=0; i<width; ++i) {
 			for (int j=height-1; j>=0; --j) {
-				cout << "p = " << p << endl;
+				// cout << "p = " << p << endl;
 				meta[p++] = data[8+j*width+i];
 			}
 		}
 
-		cout << "META" << endl;
-		for (int i=8; i<fileSize; ++i) {
-			cout << (int)(unsigned char)meta[i] << " ";
-			if ((i-7)%height == 0) {
-				cout << endl;
-			}
-		}
-		cout << "END OF META" << endl;
+		// DEBUG
+		// cout << "META" << endl;
+		// for (int i=8; i<fileSize; ++i) {
+		// 	cout << (int)(unsigned char)meta[i] << " ";
+		// 	if ((i-7)%height == 0) {
+		// 		cout << endl;
+		// 	}
+		// }
+		// cout << "END OF META" << endl;
+		//
 
 		ofstream fo(nameOut, ios::binary);
 
@@ -117,8 +119,11 @@ int main(int argc, char * argv[]) {
 
 	clock_t timeStart = clock();
 
-	rotate_clockwise(nameIn, nameOut);
+	if (rotate_clockwise(nameIn, nameOut)) {
+		cout << "Successfully rotated." << endl;
+	} else {
+		cout << "Not rotated." << endl;
+	}
 
-	cout << "---------------\nDone." << endl;
 	cout << "\nTime: " << (double)(clock() - timeStart)/CLOCKS_PER_SEC << " seconds" << endl;
 }
