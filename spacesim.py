@@ -2,6 +2,12 @@ from tkinter import *
 from common import *
 from Vector2 import Vector2
 from Point import Point
+from Events import *
+from EventManager import EventManager
+from Game import Game  # from Model import Model
+from View import View
+from Controller import Controller
+from threading import Thread
 
 # TODO: MVC
 # TODO: (_DELAY/1000.) ===> "_dt" from clock
@@ -10,16 +16,11 @@ from Point import Point
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
-_FPS = 60
+_FPS = 50
 _DELAY = round(1000. / _FPS)
-_FPS = 1000./_DELAY
-print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
+# _FPS = 1000./_DELAY
+# print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
 _MASS = 3000000  # kg
-
-root = Tk()
-root.title(_TITLE)
-canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
-label_fps = Label(root, bg='#cccccc', fg='#000000', font='sans 20')
 
 
 class Polygon:
@@ -106,7 +107,7 @@ class Polygon:
 		# print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.3f}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc))
 
 
-class Ship():
+class Ship:
 
 	"""Spaceship base class
 	"""
@@ -197,55 +198,83 @@ class Ship():
 		self.polygon.update()
 
 
-def clock_yield():
-	pt = 0
-	while 1:
-		t = time.time()
-		yield time.time() - pt
-		pt = t
+def main():
+	eventManager = EventManager()
 
+	game = Game(eventManager)
+	view = View(eventManager)
+	controller = Controller(eventManager)
 
-def tick(event=None):
-	ship.update()
-	label_fps['text'] = round(1./next(clock))
+	# //STUFF INIT
+	root = Tk()
+	root.title(_TITLE)
+	canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
+	label_fps = Label(root, bg='#cccccc', fg='#000000', font='sans 20')
 
+	clock = clock_yield()
+	# ship = Ship([Point(50, 0), Point(75, 0), Point(75, 25), Point(125, 25), Point(125, 0), Point(150, 0), Point(200, 100), Point(175, 150), Point(125, 150), Point(125, 125), Point(100, 100), Point(75, 125), Point(75, 150), Point(25, 150), Point(0, 100)], Point(300, 200))
+	# ship.addEngine(Point(100, 100), 0, 5000000)  # Main
+	# Wird signs... Should be vise-versa (left+35, right-35)..
+	# ship.addEngine(Point(50, 150), -35, 1000000)  # Left (-->)
+	# ship.addEngine(Point(150, 150), 35, 1000000)  # Right (<--)
 
-def timer():
-	tick()
-	root.after(_DELAY, timer)  # repeat
+	# -------
 
+	# def QuitDestroy(event=None):
+	# 	print('Quitting...')
+	# 	eventManager.Post(QuitEvent(root))
+	# 	# root.destroy()
+	# 	# root.quit()
 
-def QuitDestroy(event=None):
-	print('Quitting...')
-	root.destroy()
-	root.quit()
-	print('Destroyed.')
+	# keyboardController = KeyboardController(eventManager)
+	# root.bind('z', tick)
+	# root.bind('<Escape>', QuitDestroy)
+	# root.bind('<w>', lambda e: ship.toggleEngine(0))
+	# root.bind('<s>', lambda e: ship.stopEngine(0))
+	# root.bind('<a>', lambda e: ship.toggleEngine(2))
+	# root.bind('<d>', lambda e: ship.toggleEngine(1))
+	# root.bind('<space>', lambda e: ship.stopEngine((0, 1, 2)))
+	# # root.bind('<q>', lambda e: ship.setAngularAccel(-0.2))
+	# # root.bind('<e>', lambda e: ship.setAngularAccel(0.2))
+	# # root.bind('<KeyRelease-a>', lambda e: ship.setAccel(ax=0))
+	root.bind('<w>', lambda e: eventManager.Post(KeyPressedEvent('w')))
+	root.bind('<Escape>', lambda e: eventManager.Post(QuitEvent(root)))
+	root.bind('<Control-c>', lambda e: eventManager.Post(QuitEvent(root)))
 
-clock = clock_yield()
-ship = Ship([Point(50, 0), Point(75, 0), Point(75, 25), Point(125, 25), Point(125, 0), Point(150, 0), Point(200, 100), Point(175, 150), Point(125, 150), Point(125, 125), Point(100, 100), Point(75, 125), Point(75, 150), Point(25, 150), Point(0, 100)], Point(300, 200))
-ship.addEngine(Point(100, 100), 0, 5000000)  # Main
-# Wird signs... Should be vise-versa (left+35, right-35)..
-ship.addEngine(Point(50, 150), -35, 1000000)  # Left (-->)
-ship.addEngine(Point(150, 150), 35, 1000000)  # Right (<--)
+	# -------
+	# timeController = TimeController(eventManager)
 
-root.bind('z', tick)
-root.bind('<Escape>', QuitDestroy)
-root.bind('<Control-c>', QuitDestroy)
-root.bind('<w>', lambda e: ship.toggleEngine(0))
-root.bind('<s>', lambda e: ship.stopEngine(0))
-root.bind('<a>', lambda e: ship.toggleEngine(2))
-root.bind('<d>', lambda e: ship.toggleEngine(1))
-root.bind('<space>', lambda e: ship.stopEngine((0, 1, 2)))
-# root.bind('<q>', lambda e: ship.setAngularAccel(-0.2))
-# root.bind('<e>', lambda e: ship.setAngularAccel(0.2))
-# root.bind('<KeyRelease-a>', lambda e: ship.setAccel(ax=0))
-# root.bind('<KeyRelease-d>', lambda e: ship.setAccel(ax=0))
-# root.bind('<KeyRelease-w>', lambda e: ship.setAccel(ay=_GRAVACCEL))
-# root.bind('<KeyRelease-s>', lambda e: ship.setAccel(ay=_GRAVACCEL))
-# root.bind('<KeyRelease-q>', lambda e: ship.setAngularAccel(0))
-# root.bind('<KeyRelease-e>', lambda e: ship.setAngularAccel(0))
-root.after(_DELAY, timer)  # start
+	def tick(event=None):
+		# # ship.update()
+		# ev = TickUp
+		# eventManager.Post()
+		label_fps['text'] = round(1./next(clock))
 
-canv.pack()
-label_fps.place(x=16, y=16, width=64, height=64)
-root.mainloop()
+	def timer():
+		tick()
+		root.after(_DELAY, timer)  # repeat
+
+	root.after(_DELAY, timer)  # start
+	# timeController.Run(_FPS)
+
+	# controller.Run(_FPS)
+	# root.after(_DELAY, lambda: controller.Run(_FPS))
+	# thread = Thread(target=controller.Run, args=(_FPS,))
+	# thread.start()
+	Thread(target=controller.Run, args=(_FPS,)).start()
+
+	# -------
+	canv.pack()
+	label_fps.place(x=16, y=16, width=64, height=64)
+	print('Going tk.mainloop...')
+	root.mainloop()
+	eventManager.Post(QuitEvent(None))
+
+main()
+
+# try:
+# 	main()
+# except Exception as ex:
+# 	print('Quit with exception:\n\t{}'.format(ex))
+# else:
+# 	print('Successfully quit.')
