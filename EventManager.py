@@ -1,4 +1,4 @@
-from Events import TickUpdateEvent, TickDisplayEvent
+from Events import TickUpdateEvent, TickDisplayEvent, CharactorDisplayEvent, CharactorUpdateEvent
 
 
 class EventManager:
@@ -20,7 +20,7 @@ class EventManager:
 
 	def Post(self, event):
 		# if not isinstance(event, TickDisplayEvent):
-		if not isinstance(event, TickUpdateEvent) and not isinstance(event, TickDisplayEvent):
+		if not isinstance(event, TickUpdateEvent) and not isinstance(event, TickDisplayEvent) and not isinstance(event, CharactorDisplayEvent) and not isinstance(event, CharactorUpdateEvent):
 			print(event.name)
 
 		for listener in self.listeners.keys():

@@ -16,95 +16,11 @@ from threading import Thread
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
-_FPS = 50
+_FPS = 60
 _DELAY = round(1000. / _FPS)
 # _FPS = 1000./_DELAY
 # print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
 _MASS = 3000000  # kg
-
-
-class Polygon:
-
-	"""Base 2D polygon class.
-	"""
-
-	angle = 0
-	vel = Vector2(0, 0)
-	acc = Vector2(0, 0)
-	angularVel = 0
-	angularAcc = 0
-
-	def __init__(self, points, fill='#5060BB', activefill='#99dd33', spawn=False):
-		self.points = list(points)  # is it necessary?..
-		if spawn:
-			self.poly = canv.create_polygon(self.getCoords(), fill=fill, activefill=activefill)
-
-	def getArea(self):
-		return 0.5 * abs(sum(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y for i in range(len(self.points))))
-
-	def getCenter(self):
-		A = self.getArea()
-		return Point(
-			1/6/A*sum((self.points[i-1].x+self.points[i].x)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))),
-			1/6/A*sum((self.points[i-1].y+self.points[i].y)*(self.points[i-1].x*self.points[i].y-self.points[i].x*self.points[i-1].y) for i in range(len(self.points))))
-
-	def setSpeed(self, vx, vy):
-		"""Pixels per second
-		"""
-		self.vel.x = vx
-		self.vel.y = vy
-
-	def setAccel(self, ax=None, ay=None):
-		"""Pixels per second^2
-		"""
-		if ax is not None:
-			self.acc.x = ax
-		if ay is not None:
-			self.acc.y = ay
-
-	def setAngularSpeed(self, av):
-		"""Radians per second
-		"""
-		self.angularVel = av
-
-	def setAngularAccel(self, aa):
-		"""Radians per second^2
-		"""
-		self.angularAcc = aa
-
-	def getCoords(self):
-		"""List of coords of all polygon's points
-		"""
-		return [c for p in self.points for c in p]
-
-	def accel(self):
-		self.vel += self.acc * (_DELAY/1000.)
-
-	def move(self):
-		for p in self.points:
-			p.addVector(self.vel * (_DELAY/1000.))
-
-	def rotate(self):
-		self.angularVel += self.angularAcc * (_DELAY/1000.)
-		# da = self.angularVel/_DELAY
-		da = self.angularVel * (_DELAY/1000.)
-		if da != 0:
-			self.angle += math.degrees(da)
-			c = self.getCenter()
-			for p in self.points:
-				r = Point.getDistanceBetweenPoints(c, p)
-				a = Point.getAngleBetweenPoints(c, p) + da
-				p.x = c.x + r * math.cos(a)
-				p.y = c.y + r * math.sin(a)
-
-	def update(self):
-		self.accel()
-		self.move()
-		self.rotate()
-		canv.coords(self.poly, *self.getCoords())
-
-		print('Angle={}'.format(self.angle))
-		# print('v.x={:.1f},v.y={:.1f},a.x={:.1f},a.y={:.1f},aV={:.1f},aA={:.3f}'.format(self.vel.x, self.vel.y, self.acc.x, self.acc.y, self.angularVel, self.angularAcc))
 
 
 class Ship:
@@ -192,26 +108,26 @@ class Ship:
 			aa += M / J
 
 			print('#{}: F={}, r={}, M={}, Acc={}, aa={}'.format(id, F, r, round(M), acc, aa))
+
 		self.polygon.setAccel(acc.x, acc.y)
 		self.polygon.setAngularAccel(aa)
-
 		self.polygon.update()
 
 
 def main():
 	eventManager = EventManager()
 
-	game = Game(eventManager)
-	view = View(eventManager)
-	controller = Controller(eventManager)
-
 	# //STUFF INIT
 	root = Tk()
 	root.title(_TITLE)
 	canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
 	label_fps = Label(root, bg='#cccccc', fg='#000000', font='sans 20')
-
 	clock = clock_yield()
+
+	controller = Controller(eventManager)
+	view = View(eventManager, canv)
+	game = Game(eventManager)  # bypass <root> inside?
+
 	# ship = Ship([Point(50, 0), Point(75, 0), Point(75, 25), Point(125, 25), Point(125, 0), Point(150, 0), Point(200, 100), Point(175, 150), Point(125, 150), Point(125, 125), Point(100, 100), Point(75, 125), Point(75, 150), Point(25, 150), Point(0, 100)], Point(300, 200))
 	# ship.addEngine(Point(100, 100), 0, 5000000)  # Main
 	# Wird signs... Should be vise-versa (left+35, right-35)..
@@ -237,7 +153,8 @@ def main():
 	# # root.bind('<q>', lambda e: ship.setAngularAccel(-0.2))
 	# # root.bind('<e>', lambda e: ship.setAngularAccel(0.2))
 	# # root.bind('<KeyRelease-a>', lambda e: ship.setAccel(ax=0))
-	root.bind('<w>', lambda e: eventManager.Post(KeyPressedEvent('w')))
+	for c in 'qwertyuiopasdfghjklzxcvbnm':
+		root.bind('<{}>'.format(c), lambda e, c=c: eventManager.Post(KeyPressedEvent(c)))  # c=c IS IMPORTANT
 	root.bind('<Escape>', lambda e: eventManager.Post(QuitEvent(root)))
 	root.bind('<Control-c>', lambda e: eventManager.Post(QuitEvent(root)))
 
@@ -259,9 +176,9 @@ def main():
 
 	# controller.Run(_FPS)
 	# root.after(_DELAY, lambda: controller.Run(_FPS))
-	# thread = Thread(target=controller.Run, args=(_FPS,))
-	# thread.start()
-	Thread(target=controller.Run, args=(_FPS,)).start()
+	thread = Thread(target=controller.Run, args=(_FPS,))
+	thread.daemon = True
+	thread.start()
 
 	# -------
 	canv.pack()

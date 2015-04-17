@@ -1,6 +1,6 @@
 import time
 from common import clock_yield
-from Events import TickUpdateEvent, TickDisplayEvent, KeyPressedEvent, QuitEvent
+from Events import TickUpdateEvent, TickDisplayEvent, KeyPressedEvent, QuitEvent, CharactorUpdateEvent
 
 
 class Controller:
@@ -23,24 +23,24 @@ class Controller:
 
 		dt = 0
 		nt = time.time()  # "next tick"
+		clock = clock_yield()
 
 		while self.flowing:
 			loops = 0
 
 			while time.time() > nt and loops < max_skip:
-				dt = clock_yield()
-				ev = TickUpdateEvent(dt)
-				self.eventManager.Post(ev)
+				dt = next(clock)
+				self.eventManager.Post(TickUpdateEvent(dt))
 				nt += skip
 				loops += 1
-				# print('dbg: Controller>> loops={}, nt={}, skip={}'.format(loops, nt, skip))
+				# print('dbg: timeController>> loops={}, nt={}, skip={}'.format(loops, nt, skip))
 
-			ev = TickDisplayEvent(dt)
-			self.eventManager.Post(ev)
+			self.eventManager.Post(TickDisplayEvent(dt))
 
 	def Notify(self, event):
 		if isinstance(event, TickUpdateEvent):
-			pass  # TODO: some kind of update call?..
+			dt = event.dt
+			self.eventManager.Post(CharactorUpdateEvent(dt))
 		elif isinstance(event, QuitEvent):
 			self.flowing = False
 			if event.root:  # is not None
