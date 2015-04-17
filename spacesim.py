@@ -9,18 +9,11 @@ from View import View
 from Controller import Controller
 from threading import Thread
 
-# TODO: MVC
-# TODO: (_DELAY/1000.) ===> "_dt" from clock
-# TODO: <Link> class for linking some immutable objects with bases
-
 _TITLE = 'shipsim'
 _WIDTH = 800
 _HEIGHT = 600
 _FPS = 60
 _DELAY = round(1000. / _FPS)
-# _FPS = 1000./_DELAY
-# print('FPS = {}, DELAY = {}'.format(_FPS, _DELAY))
-_MASS = 3000000  # kg
 
 
 class Ship:
@@ -121,68 +114,21 @@ def main():
 	root = Tk()
 	root.title(_TITLE)
 	canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
-	label_fps = Label(root, bg='#cccccc', fg='#000000', font='sans 20')
-	clock = clock_yield()
+	canv.pack()
 
 	controller = Controller(eventManager)
 	view = View(eventManager, canv)
-	game = Game(eventManager)  # bypass <root> inside?
+	game = Game(eventManager)
 
-	# ship = Ship([Point(50, 0), Point(75, 0), Point(75, 25), Point(125, 25), Point(125, 0), Point(150, 0), Point(200, 100), Point(175, 150), Point(125, 150), Point(125, 125), Point(100, 100), Point(75, 125), Point(75, 150), Point(25, 150), Point(0, 100)], Point(300, 200))
-	# ship.addEngine(Point(100, 100), 0, 5000000)  # Main
-	# Wird signs... Should be vise-versa (left+35, right-35)..
-	# ship.addEngine(Point(50, 150), -35, 1000000)  # Left (-->)
-	# ship.addEngine(Point(150, 150), 35, 1000000)  # Right (<--)
-
-	# -------
-
-	# def QuitDestroy(event=None):
-	# 	print('Quitting...')
-	# 	eventManager.Post(QuitEvent(root))
-	# 	# root.destroy()
-	# 	# root.quit()
-
-	# keyboardController = KeyboardController(eventManager)
-	# root.bind('z', tick)
-	# root.bind('<Escape>', QuitDestroy)
-	# root.bind('<w>', lambda e: ship.toggleEngine(0))
-	# root.bind('<s>', lambda e: ship.stopEngine(0))
-	# root.bind('<a>', lambda e: ship.toggleEngine(2))
-	# root.bind('<d>', lambda e: ship.toggleEngine(1))
-	# root.bind('<space>', lambda e: ship.stopEngine((0, 1, 2)))
-	# # root.bind('<q>', lambda e: ship.setAngularAccel(-0.2))
-	# # root.bind('<e>', lambda e: ship.setAngularAccel(0.2))
-	# # root.bind('<KeyRelease-a>', lambda e: ship.setAccel(ax=0))
 	for c in 'qwertyuiopasdfghjklzxcvbnm':
-		root.bind('<{}>'.format(c), lambda e, c=c: eventManager.Post(KeyPressedEvent(c)))  # c=c IS IMPORTANT
+		root.bind('<{}>'.format(c), lambda e, c=c: eventManager.Post(KeyPressedEvent(c)))  # c=c IS IMPORTANT!
 	root.bind('<Escape>', lambda e: eventManager.Post(QuitEvent(root)))
 	root.bind('<Control-c>', lambda e: eventManager.Post(QuitEvent(root)))
 
-	# -------
-	# timeController = TimeController(eventManager)
-
-	def tick(event=None):
-		# # ship.update()
-		# ev = TickUp
-		# eventManager.Post()
-		label_fps['text'] = round(1./next(clock))
-
-	def timer():
-		tick()
-		root.after(_DELAY, timer)  # repeat
-
-	root.after(_DELAY, timer)  # start
-	# timeController.Run(_FPS)
-
-	# controller.Run(_FPS)
-	# root.after(_DELAY, lambda: controller.Run(_FPS))
 	thread = Thread(target=controller.Run, args=(_FPS,))
 	thread.daemon = True
 	thread.start()
 
-	# -------
-	canv.pack()
-	label_fps.place(x=16, y=16, width=64, height=64)
 	print('Going tk.mainloop...')
 	root.mainloop()
 	eventManager.Post(QuitEvent(None))

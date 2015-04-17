@@ -17,16 +17,9 @@ class Game:
 		self.state = self.STATE.PREPARING
 		self.players = [Player(eventManager)]
 
-		# ship -> init
-		# NO
-		# map, etc -> init
-		# MAYBE
-
 	def Start(self):
-		# self.map.build() # // :O
 		self.state = self.STATE.RUNNING
-		ev = GameStartedEvent(self)
-		self.eventManager.Post(ev)
+		self.eventManager.Post(GameStartedEvent(self))
 
 	def Notify(self, event):
 		# weird and non-optimal.. :O
