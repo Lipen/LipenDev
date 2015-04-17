@@ -2,6 +2,7 @@ import math
 from Point import Point
 from Vector2 import Vector2
 from Polygon import Polygon
+from Engine import Engine
 from common import getRandomColor
 
 
@@ -36,21 +37,12 @@ class Ship:
 		self.polygon = Polygon(points, pos, angle, fill=color)
 
 	def addEngine(self, pos, direction=0, force=0, btn_start='', btn_stop='', btn_toggle=''):
-		# pos - offset from the ship postion
-		# direction - angle, relative to ship.angle (forward -> 0)
-			# TODO: //Vector in future?
-		# force - float
-
 		ID = self.engines_count
-		if self.angle != 0:
-			c = self.polygon.getCenter(self.polygon._points)
-			r = Point.getDistanceBetweenPoints(c, pos)
-			offsetAngle = Point.getAngleBetweenPoints(c, pos) - math.radians(self.angle)
-			# print('{}: c={}, r={}, a_new={}'.format(ID, c, r, a))
-			# pos = Point(r*math.cos(a), r*math.sin(a))
-		self.engines[ID] = (ID, (r, offsetAngle), direction, force, (btn_start, btn_stop, btn_toggle))  # TODO: new Engine(..)
+		c = self.polygon.getCenter(self.polygon._points)
+		r = Point.getDistanceBetweenPoints(c, pos)
+		offsetAngle = Point.getAngleBetweenPoints(c, pos) - math.radians(self.angle)
+		self.engines[ID] = Engine(id=ID, offsetDist=r, offsetAngle=offsetAngle, direction=direction, maxforce=force, btns=(btn_start, btn_stop, btn_toggle))
 		print('Dbg: Created engine ID#{}'.format(ID))
-		print('AT: {}. With: {}'.format(pos, self.engines[ID][1]))
 		self.engines_count += 1
 
 	def startEngine(self, id):
@@ -78,10 +70,8 @@ class Ship:
 			print('DBG: toggleEngine #{}'.format(id))
 			if id in self.engines_working:
 				self.stopEngine(id)
-				# self.engines_working.remove(id)
 			else:
 				self.startEngine(id)
-				# self.engines_working.add(id)
 
 	def update(self, dt):
 		acc = Vector2(0, 0)
@@ -89,13 +79,17 @@ class Ship:
 
 		for id in list(self.engines_working):  # make sure to copy
 			engine = self.engines[id]
-			engine_r, engine_oa = engine[1]
+			engine_f = engine.maxforce
+			engine_r = engine.offsetDist
+			engine_oa = engine.offsetAngle
 
 			F = Vector2(
-				engine[3]*math.cos(math.radians(engine[2]+self.angle)),
-				engine[3]*math.sin(math.radians(engine[2]+self.angle)))
+				engine_f*math.cos(math.radians(engine.direction+self.angle)),
+				engine_f*math.sin(math.radians(engine.direction+self.angle)))
 			c = self.polygon.getCenter()
-			r = Vector2.newFromPoints(c, Point(c.x + engine_r * math.cos(engine_oa+math.radians(self.angle)), c.y + engine_r * math.sin(engine_oa+math.radians(self.angle))))
+			r = Vector2.newFromPoints(c, Point(
+				c.x + engine_r * math.cos(engine_oa+math.radians(self.angle)),
+				c.y + engine_r * math.sin(engine_oa+math.radians(self.angle))))
 			M = r ** F
 			J = 2E9  # 11656333333
 

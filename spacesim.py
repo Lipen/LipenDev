@@ -17,7 +17,6 @@ _DELAY = round(1000. / _FPS)
 def main():
 	eventManager = EventManager()
 
-	# //STUFF INIT
 	root = Tk()
 	root.title(_TITLE)
 	canv = Canvas(root, width=_WIDTH, height=_HEIGHT, bg='#505050')
@@ -27,7 +26,7 @@ def main():
 	view = View(eventManager, canv)
 	game = Game(eventManager)
 
-	for c in 'qwertyuiopasdfghjklzxcvbnm':
+	for c in 'wasd':
 		root.bind('<{}>'.format(c), lambda e, c=c: eventManager.Post(KeyPressedEvent(c)))  # c=c IS IMPORTANT!
 	root.bind('<Escape>', lambda e: eventManager.Post(QuitEvent(root)))
 	root.bind('<Control-c>', lambda e: eventManager.Post(QuitEvent(root)))

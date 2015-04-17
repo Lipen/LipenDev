@@ -17,7 +17,6 @@ class View:
 	def Notify(self, event):
 		if isinstance(event, TickDisplayEvent):
 			dt = event.dt
-			# print('dt =', dt)
 			if dt > 0:
 				# print('FPS: {}'.format(1./dt))
 				self.label_fps['text'] = round(1./dt)

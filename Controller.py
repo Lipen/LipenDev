@@ -31,31 +31,6 @@ class Controller:
 			dt = next(clockDisplay)
 			self.eventManager.Post(TickDisplayEvent(dt))
 
-		# skip = 1. / fps
-		# max_skip = 5
-
-		# clock = clock_yield()
-		# # next(clock)
-		# # dt = next(clock)
-		# # print('Initial dt={}'.format(dt))
-		# nt = time.time()  # "next tick"
-
-		# while self.flowing:
-		# 	# print('::while. time.time()=={}, nt=={}'.format(time.time(), nt))
-		# 	loops = 0
-
-		# 	while time.time() > nt and loops < max_skip:
-		# 		print('::inside')
-		# 		dt = next(clock)
-		# 		self.eventManager.Post(TickUpdateEvent(dt))
-		# 		nt += skip
-		# 		loops += 1
-
-		# 	print('::post')
-		# 	dt = next(clock)
-		# 	# print('Posting dt = {}.'.format(dt))
-		# 	self.eventManager.Post(TickDisplayEvent(dt))
-
 	def Notify(self, event):
 		if isinstance(event, TickUpdateEvent):
 			dt = event.dt
@@ -68,4 +43,4 @@ class Controller:
 				event.root.quit()
 				print('Root destroyed.')
 		elif isinstance(event, KeyPressedEvent):
-			print('Pressed <{}>.'.format(event.keyname))
+			print('Controller::Pressed <{}>.'.format(event.keyname))
