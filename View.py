@@ -19,7 +19,7 @@ class View:
 			dt = event.dt
 			# print('dt =', dt)
 			if dt > 0:
-				print('FPS: {}'.format(1./dt))
+				# print('FPS: {}'.format(1./dt))
 				self.label_fps['text'] = round(1./dt)
 			else:
 				print('FPS: XX')
