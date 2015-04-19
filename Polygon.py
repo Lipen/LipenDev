@@ -8,21 +8,17 @@ class Polygon:
 	"""Base 2D polygon class.
 	"""
 
-	vel = Vector2(0, 0)
-	acc = Vector2(0, 0)
-	angularVel = 0
-	angularAcc = 0
-
 	def __init__(self, points, pos, angle, fill, activefill='#99dd33'):
 		# _points = Base points (not rotated, "pos"=0,0)
 		# points = Real points ("on canvas")
 		self.pos = pos
 		self.angle = angle
-
 		self.points = [Point(p.x+pos.x, p.y+pos.y) for p in points]
-		# //Same:
-		# for p in list(points):
-		# 	self.points.append(Point(p.x+pos.x, p.y+pos.y))
+
+		self.vel = Vector2(0, 0)
+		self.acc = Vector2(0, 0)
+		self.angularVel = 0
+		self.angularAcc = 0
 
 		c = self.getCenter(points)
 		self._points = []
@@ -30,7 +26,6 @@ class Polygon:
 			r = Point.getDistanceBetweenPoints(c, p)
 			a = Point.getAngleBetweenPoints(c, p) + math.radians(-angle)
 			self._points.append(Point(c.x + r * math.cos(a), c.y + r * math.sin(a)))
-		# self.updatePoints()  # init <points>
 
 		self.color = fill
 		self.activecolor = activefill
@@ -43,7 +38,7 @@ class Polygon:
 	def getCenter(self, points=None):
 		if points is None:
 			points = self.points
-		A = self.getArea()
+		A = self.getArea(points)
 		return Point(
 			1/6/A*sum((points[i-1].x+points[i].x)*(points[i-1].x*points[i].y-points[i].x*points[i-1].y) for i in range(len(points))),
 			1/6/A*sum((points[i-1].y+points[i].y)*(points[i-1].x*points[i].y-points[i].x*points[i-1].y) for i in range(len(points))))
@@ -92,13 +87,9 @@ class Polygon:
 
 	def move(self, dt):
 		self.pos.addVector(self.vel * dt)
-		# //Same:
-		# for p in self.points:
-		# 	p.addVector(self.vel * dt)
 
 	def rotate(self, dt):
 		self.angularVel += self.angularAcc * dt
-		# da = self.angularVel * dt
 		self.angle += math.degrees(self.angularVel * dt)
 
 	def update(self, dt):

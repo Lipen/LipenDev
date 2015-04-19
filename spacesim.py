@@ -26,7 +26,7 @@ def main():
 	view = View(eventManager, canv)
 	game = Game(eventManager)
 
-	for c in 'wasd':
+	for c in 'wasdzxuhjknm':
 		root.bind('<{}>'.format(c), lambda e, c=c: eventManager.Post(KeyPressedEvent(c)))  # c=c IS IMPORTANT!
 	root.bind('<Escape>', lambda e: eventManager.Post(QuitEvent(root)))
 	root.bind('<Control-c>', lambda e: eventManager.Post(QuitEvent(root)))

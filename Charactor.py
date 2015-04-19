@@ -10,16 +10,12 @@ class Charactor:
 	"""<Ship with engines> adapter
 	"""
 
-	throws = []
-
-	def __init__(self, eventManager):
+	def __init__(self, eventManager, points, pos=None, angle=-90, color=None):
 		self.eventManager = eventManager
 		self.eventManager.RegisterListener(self)
 
-		self.ship = Ship([Point(50, 0), Point(75, 0), Point(75, 25), Point(125, 25), Point(125, 0), Point(150, 0), Point(200, 100), Point(175, 150), Point(125, 150), Point(125, 125), Point(100, 100), Point(75, 125), Point(75, 150), Point(25, 150), Point(0, 100)], Point(300, 200), -90)
-		self.ship.addEngine(Point(100, 100), 0, 5000000, btn_toggle='w', btn_stop='s')  # Main
-		self.ship.addEngine(Point(50, 150), 5, 1000000, btn_toggle='d', btn_stop='s')  # Left (-->)
-		self.ship.addEngine(Point(150, 150), -5, 1000000, btn_toggle='a', btn_stop='s')  # Right (<--)
+		self.ship = Ship(points, pos, angle, color)
+		self.throws = []
 
 		self.eventManager.Post(CharactorSpawnEvent(self))
 
@@ -41,15 +37,17 @@ class Charactor:
 			engine = self.ship.engines[id]
 			engine_r = engine.offsetDist
 			engine_oa = engine.offsetAngle
-			L = 30
+			engine_dir = engine.direction
+			engine_f = engine.maxforce
+			L = 15*engine_f/1E6
 			c = self.ship.polygon.getCenter()
 
 			engine_pos = Point(
 				c.x + engine_r * math.cos(engine_oa+math.radians(self.ship.angle)),
 				c.y + engine_r * math.sin(engine_oa+math.radians(self.ship.angle)))
 			throw_pos = Point(
-				c.x + (engine_r+L) * math.cos(engine_oa+math.radians(self.ship.angle)),
-				c.y + (engine_r+L) * math.sin(engine_oa+math.radians(self.ship.angle)))
+				engine_pos.x - L * math.cos(math.radians(engine_dir + self.ship.angle)),
+				engine_pos.y - L * math.sin(math.radians(engine_dir + self.ship.angle)))
 
 			throw = canv.create_line(throw_pos.x, throw_pos.y, engine_pos.x, engine_pos.y, fill='red', width=2, arrow=LAST)
 			self.throws.append(throw)
@@ -65,7 +63,7 @@ class Charactor:
 			self.render(event.canv)
 		elif isinstance(event, KeyPressedEvent):
 			keyname = event.keyname
-			print('Charactor::Caught <{}> keypress.'.format(keyname))
+			# print('Charactor::Caught <{}> keypress.'.format(keyname))
 			for id in list(self.ship.engines.keys()):  # make sure to copy
 				engine = self.ship.engines[id]
 				if engine.btns[0] == keyname:

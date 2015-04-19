@@ -11,10 +11,6 @@ class Ship:
 	"""Spaceship base class
 	"""
 
-	engines = {}
-	engines_count = 0
-	engines_working = set()
-
 	@property
 	def angle(self):
 		return self.polygon.angle
@@ -25,7 +21,9 @@ class Ship:
 
 	def __init__(self, points, pos=None, angle=-90, color=None):
 		self.points = points
-		# self.angle = angle
+		self.engines = {}
+		self.engines_count = 0
+		self.engines_working = set()
 
 		if pos is None:
 			pos = Point(0, 0)
@@ -97,7 +95,7 @@ class Ship:
 			acc += F*abs((F*r)/abs(F)/abs(r)) / _MASS
 			aa += M / J
 
-			print('#{}: F={}, r={}, M={}, Acc={}, aa={}'.format(id, F, r, round(M), acc, aa))
+			# print('#{}: F={}, r={}, M={}, Acc={}, aa={}'.format(id, F, r, round(M), acc, aa))
 
 		self.polygon.setAccel(acc.x, acc.y)
 		self.polygon.setAngularAccel(aa)
