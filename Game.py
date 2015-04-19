@@ -24,7 +24,7 @@ class Game:
 		char1.ship.addEngine(Point(25, 50), 140, 2E6, btn_toggle='x', btn_stop='s')  # Left-front (-ccw-V>)
 		char1.ship.addEngine(Point(175, 50), -140, 2E6, btn_toggle='z', btn_stop='s')  # Right-front (<V-cw--)
 
-		char2 = Charactor(eventManager, points=[Point(0, 75), Point(75, 50), Point(75, 0), Point(100, 25), Point(100, 50), Point(150, 75), Point(175, 75), Point(175, 100), Point(150, 125), Point(125, 125), Point(125, 150), Point(150, 150), Point(175, 175), Point(175, 200), Point(150, 200), Point(100, 225), Point(100, 250), Point(75, 275), Point(75, 225), Point(0, 200), Point(0, 175), Point(50, 150), Point(50, 125), Point(0, 100)], pos=Point(400, 100), angle=-180)
+		char2 = Charactor(eventManager, points=[Point(0, 75), Point(75, 50), Point(75, 0), Point(100, 25), Point(100, 50), Point(150, 75), Point(175, 75), Point(175, 100), Point(150, 125), Point(125, 125), Point(125, 150), Point(150, 150), Point(175, 175), Point(175, 200), Point(150, 200), Point(100, 225), Point(100, 250), Point(75, 275), Point(75, 225), Point(0, 200), Point(0, 175), Point(50, 150), Point(50, 125), Point(0, 100)], pos=Point(500, 100), angle=-180)
 		char2.ship.addEngine(Point(125, 137.5), 0, 4E6, btn_toggle='u', btn_stop='j')  # Main
 		char2.ship.addEngine(Point(175, 187.5), 5, 3E6, btn_toggle='k', btn_stop='j')  # Left (-->)
 		char2.ship.addEngine(Point(175, 87.5), -5, 3E6, btn_toggle='h', btn_stop='j')  # Right (<--)

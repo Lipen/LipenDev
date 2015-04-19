@@ -21,7 +21,7 @@ class EventManager:
 
 	def Post(self, event):
 		# if not isinstance(event, TickDisplayEvent):
-		if not isinstance(event, TickUpdateEvent) and not isinstance(event, TickDisplayEvent) and not isinstance(event, CharactorDisplayEvent) and not isinstance(event, CharactorUpdateEvent) and not isinstance(event, KeyPressedEvent):
+		if not isinstance(event, TickUpdateEvent) and not isinstance(event, TickDisplayEvent) and not isinstance(event, CharactorDisplayEvent) and not isinstance(event, CharactorUpdateEvent) and not isinstance(event, KeyPressedEvent) and not isinstance(event, CharactorCollisionEvent):
 			print(event.name)
 
 		for listener in self.listeners.keys():

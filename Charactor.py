@@ -1,7 +1,7 @@
 import math
 from Point import Point
 from Ship import Ship
-from Events import CharactorSpawnEvent, CharactorUpdateEvent, CharactorDisplayEvent, KeyPressedEvent
+from Events import CharactorSpawnEvent, CharactorUpdateEvent, CharactorDisplayEvent, KeyPressedEvent, CharactorCollisionEvent
 from tkinter import LAST
 
 
@@ -16,22 +16,30 @@ class Charactor:
 
 		self.ship = Ship(points, pos, angle, color)
 		self.throws = []
+		self.field = 0
+		self.field_color = 'blue'
 
 		self.eventManager.Post(CharactorSpawnEvent(self))
 
 	def render(self, canv):
 		polygon = self.ship.polygon
-		try:
-			polygon.poly
-		except:
-			print('Exception::Charactor.render>>No defined poly yet.')
-		else:
-			canv.coords(polygon.poly, *polygon.getCoords())
+		canv.coords(polygon.poly, *polygon.getCoords())
+
+		# try:
+		# 	polygon.poly
+		# except:
+		# 	print('Exception::Charactor.render>>No defined poly yet.')
+		# else:
+		# 	canv.coords(polygon.poly, *polygon.getCoords())
 
 		for throw in self.throws:
 			canv.delete(throw)
-
 		self.throws = []
+
+		c = self.ship.polygon.getCenter()
+
+		canv.delete(self.field)
+		self.field = canv.create_oval(c.x-self.ship.radius, c.y-self.ship.radius, c.x+self.ship.radius, c.y+self.ship.radius, outline=self.field_color, width=1.5)
 
 		for id in list(self.ship.engines_working):  # make sure to copy
 			engine = self.ship.engines[id]
@@ -40,7 +48,6 @@ class Charactor:
 			engine_dir = engine.direction
 			engine_f = engine.maxforce
 			L = 15*engine_f/1E6
-			c = self.ship.polygon.getCenter()
 
 			engine_pos = Point(
 				c.x + engine_r * math.cos(engine_oa+math.radians(self.ship.angle)),
@@ -52,8 +59,21 @@ class Charactor:
 			throw = canv.create_line(throw_pos.x, throw_pos.y, engine_pos.x, engine_pos.y, fill='red', width=2, arrow=LAST)
 			self.throws.append(throw)
 
+	def collision(self, charactor):
+		d = Point.getDistanceBetweenPoints(self.ship.polygon.getCenter(), charactor.ship.polygon.getCenter())
+
+		if d <= self.ship.radius+charactor.ship.radius:
+			# print('Collision! d={}'.format(d))
+			charactor.collision_list.append(self)
+
 	def update(self, dt):
 		self.ship.update(dt)
+		self.collision_list = []
+		self.eventManager.Post(CharactorCollisionEvent(self))
+		if self.collision_list:
+			self.field_color = 'red'
+		else:
+			self.field_color = 'blue'
 
 	def Notify(self, event):
 		if isinstance(event, CharactorUpdateEvent):
@@ -72,3 +92,6 @@ class Charactor:
 					self.ship.stopEngine(id)
 				if engine.btns[2] == keyname:
 					self.ship.toggleEngine(id)
+		elif isinstance(event, CharactorCollisionEvent):
+			if event.charactor is not self:
+				self.collision(event.charactor)

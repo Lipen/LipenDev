@@ -34,6 +34,9 @@ class Ship:
 
 		self.polygon = Polygon(points, pos, angle, fill=color)
 
+		c = self.polygon.getCenter()
+		self.radius = max(Point.getDistanceBetweenPoints(c, p) for p in self.polygon.points) + 5
+
 	def addEngine(self, pos, direction=0, force=0, btn_start='', btn_stop='', btn_toggle=''):
 		ID = self.engines_count
 		c = self.polygon.getCenter(self.polygon._points)

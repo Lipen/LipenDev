@@ -35,6 +35,16 @@ class CharactorSpawnEvent(Event):
 		self.charactor = charactor
 
 
+class CharactorCollisionEvent(Event):
+
+	"""Sent by charactor to detect collision with other chars
+	"""
+
+	def __init__(self, charactor):
+		self.name = 'Charactor Collision Event'
+		self.charactor = charactor
+
+
 class TickUpdateEvent(Event):
 
 	def __init__(self, dt):
