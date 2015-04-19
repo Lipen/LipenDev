@@ -1,5 +1,6 @@
 import math
 from Point import Point
+from Vector2 import Vector2
 from Ship import Ship
 from Events import CharactorSpawnEvent, CharactorUpdateEvent, CharactorDisplayEvent, KeyPressedEvent, CharactorCollisionEvent
 from tkinter import LAST
@@ -65,6 +66,15 @@ class Charactor:
 		if d <= self.ship.radius+charactor.ship.radius:
 			# print('Collision! d={}'.format(d))
 			charactor.collision_list.append(self)
+			vc = charactor.ship.polygon.vel
+			if abs(vc) > 0:
+				r = Vector2.newFromPoints(charactor.ship.polygon.getCenter(), self.ship.polygon.getCenter())
+				a = math.acos(vc*r/abs(vc)/abs(r))
+				# vcy = vc*r/abs(r)
+				vcx = vc*math.cos(a)
+				vcy = vc*math.sin(a)
+				vf = -vcx + vcy
+				charactor.ship.polygon.vel = vf
 
 	def update(self, dt):
 		self.ship.update(dt)
