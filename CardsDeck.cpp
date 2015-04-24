@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <cstdlib>
 
 #define pb push_back
 
@@ -71,8 +72,12 @@ public:
 		return s;
 	}
 
-	Card popCard() {
-		Card back = deck.back();
+	bool hasCards() {
+		return !deck.empty();
+	}
+
+	Card & popCard() {
+		Card &back = deck.back();
 		deck.pop_back();
 		return back;
 	}
@@ -83,6 +88,8 @@ class Player {
 	std::string name;
 	std::vector<Card> hand;
 
+	Player() {}
+
 public:
 	Player(std::string name) : name(name) {}
 
@@ -90,14 +97,25 @@ public:
 		return name;
 	}
 
-	void addCard(Card card) {
+	void addCard(Card &card) {
 		hand.pb(card);
 	}
 
-	Card popCard() {
-		Card back = hand.back();
+	bool hasCards() {
+		return !hand.empty();
+	}
+
+	Card & popCard() {
+		Card &back = hand.back();
 		hand.pop_back();
 		return back;
+	}
+
+	Card & popRandomCard() {
+		int i = std::rand() % hand.size();
+		Card &randomCard = hand[i];
+		hand.erase(hand.begin() + i);
+		return randomCard;
 	}
 
 	std::string getCards() {
@@ -117,10 +135,20 @@ public:
 
 		return s;
 	}
+
+	bool getCard(Deck &deck) {
+		if (deck.hasCards()) {
+			Card &card = deck.popCard();
+			this -> addCard(card);
+			return true;
+		}
+		return false;
+	}
 };
 
 
 int main() {
+	std::srand(42);
 	std::ifstream fi("input.txt");
 	std::ofstream fo("output.txt");
 
@@ -130,16 +158,46 @@ int main() {
 
 		std::cout << "Initial shuffled deck:\n" << deck.getCards() << std::endl;
 
-		Player player1("Lipen");
-		Player player2("AI");
+		Player players[] = { Player("Lipen"), Player("AI"), Player("Qwerty") };
+		int playersAmount = (int)(sizeof(players)/sizeof(*players));
 
-		for (int i=0; i<6; ++i) {
-			player1.addCard(deck.popCard());
-			player2.addCard(deck.popCard());
+		for (int i=0; i<35; ++i) {
+			deck.popCard();
 		}
 
-		std::cout << player1.getName() << "`s cards:\n\t" << player1.getCards() << '\n';
-		std::cout << player2.getName() << "`s cards:\n\t" << player2.getCards() << '\n';
+		for (int i=0; i<6; ++i) {
+			bool breaked = false;
+			for (int j=0; j<playersAmount; ++j) {
+				if (!players[j].getCard(deck)) {
+					std::cout << "No more cards.\n";
+					breaked = true;
+					break;
+				}
+			}
+			if (breaked) break;
+		}
+
+		std::cout << players[0].getName() << "`s cards:\n\t" << players[0].getCards() << '\n';
+		std::cout << players[1].getName() << "`s cards:\n\t" << players[1].getCards() << '\n';
+		std::cout << players[2].getName() << "`s cards:\n\t" << players[1].getCards() << '\n';
+
+		int playerTurn = 0;
+
+		while (true) {
+			if (!players[playerTurn].hasCards()) {
+				std::cout << players[playerTurn].getName() << " has no more cards left\n";
+				break;
+			}
+
+			Card &tableCard = players[playerTurn].popRandomCard();
+			std::cout << players[playerTurn].getName() << " puts " << tableCard.toString() << " on table\n";
+
+			// if (!players[playerTurn].getCard(deck)) {
+			// 	std::cout << "No more cards in the deck.\n";
+			// }
+
+			playerTurn = (playerTurn + 1) % playersAmount;
+		}
 
 		fi.close();
 		fo.close();
