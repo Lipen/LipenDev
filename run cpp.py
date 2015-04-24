@@ -25,7 +25,7 @@ def main():
             except:
                 pass
 
-    err = sys('g++ {0}.cpp -std=c++0x -o {0}.exe'.format(name))
+    err = sys('g++ {0}.cpp -std=gnu++0x -o {0}.exe'.format(name))
     if err:
         print('Error during compiling. <{}>'.format(err))
         input('\nType enter to exit: ')
