@@ -8,13 +8,12 @@
 
 #define pb push_back
 
-// #include "Card.hpp"
-
 enum class Rank { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace };
 static const std::string RankStr[] = { "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A" };
 
 enum class Suit { Hearts, Diamonds, Clubs, Spades };
 static const std::string SuitStr[] = { "H", "D", "C", "S" };
+
 
 class Card {
 	Rank rank;
@@ -38,13 +37,14 @@ public:
 	}
 };
 
+
 class Deck {
 	std::vector<Card> deck;
 
 public:
 	Deck() {
-		for (int i=0; i<(sizeof(RankStr)/sizeof(*RankStr)); ++i) {
-			for (int j=0; j<(sizeof(SuitStr)/sizeof(*SuitStr)); ++j) {
+		for (int i=0; i<(int)(sizeof(RankStr)/sizeof(*RankStr)); ++i) {
+			for (int j=0; j<(int)(sizeof(SuitStr)/sizeof(*SuitStr)); ++j) {
 				deck.pb(Card(static_cast<Rank>(i), static_cast<Suit>(j)));
 			}
 		}
@@ -65,24 +65,29 @@ public:
 	}
 };
 
+
 int main() {
 	std::ifstream fi("input.txt");
 	std::ofstream fo("output.txt");
 
 	if (fi && fo) {
+		// Example:
 		std::cout << "Jack of Spades: " << Card(Rank::Jack, Suit::Spades).card2str() << '\n';
 		std::cout << "Seven Hearts: " << Card(Rank::Seven, Suit::Hearts).card2str() << '\n';
 
 		Deck deck;
 
-		for (Card card : deck.getDeck()) std::cout << card.card2str() << " ";
+		// Initial deck:
+		for (Card card : deck.getDeck()) std::cout << card.card2str() << ' ';
 		std::cout << '\n';
 
 		deck.shuffle();
 
-		for (Card card : deck.getDeck()) std::cout << card.card2str() << " ";
+		// Shuffled deck:
+		for (Card card : deck.getDeck()) std::cout << card.card2str() << ' ';
 		std::cout << '\n';
 
+		// test pop:
 		std::cout << "Last card: " << deck.popCard().card2str() << '\n';
 
 		fi.close();
