@@ -24,7 +24,7 @@ class Card {
 public:
 	Card(Rank rank, Suit suit) : rank(rank), suit(suit) {}
 
-	std::string card2str() {
+	std::string toString() {
 		return RankStr[(int)rank] + SuitStr[(int)suit];
 	}
 
@@ -54,8 +54,21 @@ public:
 		std::shuffle(begin(deck), end(deck), std::default_random_engine(time(0)));
 	}
 
-	std::vector<Card> getDeck() {
-		return deck;
+	std::string getCards() {
+		std::string s;
+		std::vector<Card>::iterator iter = deck.begin();
+
+		while (true) {
+			s += (*iter).toString();
+			++iter;
+			if (iter != deck.end()) {
+				s += ' ';
+			} else {
+				break;
+			}
+		}
+
+		return s;
 	}
 
 	Card popCard() {
@@ -66,29 +79,67 @@ public:
 };
 
 
+class Player {
+	std::string name;
+	std::vector<Card> hand;
+
+public:
+	Player(std::string name) : name(name) {}
+
+	std::string getName() {
+		return name;
+	}
+
+	void addCard(Card card) {
+		hand.pb(card);
+	}
+
+	Card popCard() {
+		Card back = hand.back();
+		hand.pop_back();
+		return back;
+	}
+
+	std::string getCards() {
+		std::string s;
+
+		std::vector<Card>::iterator iter = hand.begin();
+
+		while (true) {
+			s += (*iter).toString();
+			++iter;
+			if (iter != hand.end()) {
+				s += ' ';
+			} else {
+				break;
+			}
+		}
+
+		return s;
+	}
+};
+
+
 int main() {
 	std::ifstream fi("input.txt");
 	std::ofstream fo("output.txt");
 
 	if (fi && fo) {
-		// Example:
-		std::cout << "Jack of Spades: " << Card(Rank::Jack, Suit::Spades).card2str() << '\n';
-		std::cout << "Seven Hearts: " << Card(Rank::Seven, Suit::Hearts).card2str() << '\n';
-
 		Deck deck;
-
-		// Initial deck:
-		for (Card card : deck.getDeck()) std::cout << card.card2str() << ' ';
-		std::cout << '\n';
-
 		deck.shuffle();
 
-		// Shuffled deck:
-		for (Card card : deck.getDeck()) std::cout << card.card2str() << ' ';
-		std::cout << '\n';
+		std::cout << "Initial shuffled deck:\n" << deck.getCards() << std::endl;
 
-		// test pop:
-		std::cout << "Last card: " << deck.popCard().card2str() << '\n';
+		Player player1("Lipen");
+		Player player2("AI");
+
+		for (int i=0; i<6; ++i) {
+			player1.addCard(deck.popCard());
+			player2.addCard(deck.popCard());
+		}
+
+		std::cout << player1.getName() << "`s cards:\n\t" << player1.getCards() << '\n';
+		std::cout << player2.getName() << "`s cards:\n\t" << player2.getCards() << '\n';
 
 		fi.close();
 		fo.close();
