@@ -9,7 +9,7 @@ using namespace std;
 // Predeclare
 class Matrix3;
 class Matrix2;
-class Vector;
+class Vector3;
 
 
 class Matrix3 {
@@ -77,11 +77,11 @@ public:
 };
 
 
-class Vector {
+class Vector3 {
 	int x, y, z;
 
 public:
-	Vector(int x, int y, int z): x(x), y(y), z(z) {};
+	Vector3(int x, int y, int z): x(x), y(y), z(z) {};
 
 	int getX() { return x; }
 	int getY() { return y; }
@@ -105,7 +105,7 @@ public:
 };
 
 
-Matrix2 MultiplyMatrix3byVector(Matrix3 M, Vector V) {
+Matrix2 MultiplyMatrix3byVector(Matrix3 M, Vector3 V) {
 	int A[3][3];
 
 	FOR(j, 3)
@@ -121,10 +121,10 @@ Matrix2 MultiplyMatrix3byVector(Matrix3 M, Vector V) {
 
 int main()
 {
-	ifstream fi("input.txt");
+	ifstream fi("../input.txt");
 
 	if (fi) {
-		ofstream fo("output.txt");
+		ofstream fo("../output.txt");
 
 		if (fo) {
 			int matrix[3][3][3];
@@ -141,7 +141,7 @@ int main()
 			FOR(i, 3)
 				fi >> vec[i];
 
-			Vector V(vec[0], vec[1], vec[2]);
+			Vector3 V(vec[0], vec[1], vec[2]);
 			cout << "Vector: " << V.toString() << '\n';
 
 			Matrix2 result = MultiplyMatrix3byVector(M, V);
