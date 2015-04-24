@@ -27,41 +27,37 @@ Matrix2 MultiplyMatrix3byVector(Matrix3 M, Vector3 V) {
 
 int main()
 {
-	ifstream fi("../input.txt");
+	ifstream fi("input.txt");
+	ofstream fo("output.txt");
 
-	if (fi) {
-		ofstream fo("../output.txt");
+	if (fi && fo) {
+		int matrix[3][3][3];
+		int vec[3];
 
-		if (fo) {
-			int matrix[3][3][3];
-			int vec[3];
+		FOR(i, 3)
+			FOR(j, 3)
+				FOR(k, 3)
+					fi >> matrix[i][j][k];
 
-			FOR(i, 3)
-				FOR(j, 3)
-					FOR(k, 3)
-						fi >> matrix[i][j][k];
+		Matrix3 M(&matrix);
+		cout << "Matrix:\n" << M.toString() << '\n';
 
-			Matrix3 M(&matrix);
-			cout << "Matrix:\n" << M.toString() << '\n';
+		FOR(i, 3)
+			fi >> vec[i];
 
-			FOR(i, 3)
-				fi >> vec[i];
+		Vector3 V(vec[0], vec[1], vec[2]);
+		cout << "Vector: " << V.toString() << '\n';
 
-			Vector3 V(vec[0], vec[1], vec[2]);
-			cout << "Vector: " << V.toString() << '\n';
+		Matrix2 result = MultiplyMatrix3byVector(M, V);
+		string ans = result.toString();
+		cout << "Answer:\n" << ans << '\n';
 
-			Matrix2 result = MultiplyMatrix3byVector(M, V);
-			string ans = result.toString();
-			cout << "Answer:\n" << ans << '\n';
+		fo << ans;
 
-			fo << ans;
-			fo.close();
-		} else {
-			cout << "Unable to open output file :C" << endl;
-		}
 		fi.close();
+		fo.close();
 	} else {
-		cout << "Unable to open input file :c" << endl;
+		cout << "Unable to open input or output file :c" << endl;
 	}
 	return 0;
 }
