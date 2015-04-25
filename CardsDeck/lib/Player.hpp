@@ -12,6 +12,7 @@ class Player {
 
 public:
 	Player(std::string name);
+
 	std::string getName();
 	void addCard(Card &card);
 	bool hasCards();
@@ -19,6 +20,8 @@ public:
 	Card & popRandomCard();
 	std::string getCards();
 	bool getCard(Deck &deck);
+	std::vector<Card> getCounterCards(Card &card);
+	bool eraseCard(Card &card);
 };
 
 #endif

@@ -9,6 +9,7 @@ class Deck {
 
 public:
 	Deck();
+
 	void shuffle();
 	std::string getCards();
 	bool hasCards();

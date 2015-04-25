@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <cstdlib>
 
 #include "CardsDeck.hpp"
 #include "Card.hpp"
@@ -43,22 +44,59 @@ int main() {
 		FOR(i, playersAmount)
 			std::cout << players[i].getName() << "`s cards:\n\t" << players[i].getCards() << '\n';
 
-		int playerTurn = 0;
+		int turn = 0;
 
 		while (true) {
-			if (!players[playerTurn].hasCards()) {
-				std::cout << players[playerTurn].getName() << " has no more cards left\n";
+			Player &playerTurn = players[turn];
+			Player &playerNext = players[(turn+1)%playersAmount];
+
+			if (!playerTurn.hasCards()) {
+				std::cout << playerTurn.getName() << " has no more cards left\n";
 				break;
 			}
 
-			Card &tableCard = players[playerTurn].popRandomCard();
-			std::cout << players[playerTurn].getName() << " puts " << tableCard.toString() << " on table\n";
+			// Player`s turn
+			Card &tableCard = playerTurn.popRandomCard();
+			std::cout << playerTurn.getName() << " puts " << tableCard.toString() << " on table\n";
 
-			// if (!players[playerTurn].getCard(deck)) {
-			// 	std::cout << "No more cards in the deck.\n";
-			// }
+			// Next player`s counter cards
+			std::vector<Card> counterCards = playerNext.getCounterCards(tableCard);
 
-			playerTurn = (playerTurn + 1) % playersAmount;
+			std::cout << playerNext.getName() << " has " << counterCards.size() << " couter card for " << tableCard.toString() << '\n';
+
+			if (counterCards.size() == 0) {
+				std::cout << playerNext.getName() << " takes " << tableCard.toString() << " and skipping its turn\n";
+				playerNext.addCard(tableCard);
+				++turn;
+			} else {
+				int i = std::rand() % counterCards.size();
+				Card &counterCard = counterCards[i];
+				// erase picked card:
+				bool succ = playerNext.eraseCard(counterCard);
+
+				if (succ) {
+					std::cout << "Succ\n";
+				} else {
+					std::cout << "Nope :c\n";
+				}
+
+				std::cout << playerNext.getName() << " beats " << tableCard.toString() << " with " << counterCard.toString() << "!\n";
+			}
+
+			if (!playerTurn.getCard(deck)) {
+				bool breaked = false;
+				FOR(i, playersAmount) {
+					if (!players[i].hasCards()) {
+						std::cout << players[i].getName() << " won!\n";
+						breaked = true;
+						break;
+					}
+				}
+				if (breaked) break;
+				std::cout << "No more cards in the deck.\n";
+			}
+
+			turn = (turn + 1) % playersAmount;
 		}
 
 		fi.close();

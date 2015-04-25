@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <iostream>
 
 #include "Card.hpp"
 #include "Deck.hpp"
@@ -31,7 +32,11 @@ Card & Player::popCard() {
 Card & Player::popRandomCard() {
 	int i = std::rand() % hand.size();
 	Card &randomCard = hand[i];
+	size_t xx = hand.size();
 	hand.erase(hand.begin() + i);
+	if (hand.size() == xx) {
+		std::cout << "WEIRD\n";
+	}
 	return randomCard;
 }
 
@@ -58,6 +63,29 @@ bool Player::getCard(Deck &deck) {
 		Card &card = deck.popCard();
 		this -> addCard(card);
 		return true;
+	}
+	return false;
+}
+
+std::vector<Card> Player::getCounterCards(Card &card) {
+	std::vector<Card> counterCards;
+
+	for (Card &handCard : hand) {
+		if (handCard.isBeats(card)) {
+			counterCards.pb(handCard);
+		}
+	}
+
+	return counterCards;
+}
+
+bool Player::eraseCard(Card &card) {
+	for (std::vector<Card>::iterator iter = hand.begin(); iter != hand.end(); ++iter) {
+		if (*iter == card) {
+			size_t xx = hand.size();
+			hand.erase(iter);
+			return (hand.size() != xx);
+		}
 	}
 	return false;
 }

@@ -17,3 +17,11 @@ Rank Card::getRank() {
 Suit Card::getSuit() {
 	return suit;
 }
+
+bool Card::isBeats(Card &card) {
+	return (rank > card.rank && suit == card.suit);
+}
+
+bool Card::operator==(Card compCard) {
+	return (compCard.rank == rank && compCard.suit == suit);
+}
