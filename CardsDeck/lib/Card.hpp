@@ -10,12 +10,13 @@ class Card {
 	Card() {}
 
 public:
+	Card(const Card &other);
 	Card(Rank rank, Suit suit);
 
 	std::string toString();
 	Rank getRank();
 	Suit getSuit();
-	bool isBeats(Card &card);
+	bool isBeats(Card &other);
 
 	bool operator==(Card compCard);
 };

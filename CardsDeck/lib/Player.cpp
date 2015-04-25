@@ -29,15 +29,11 @@ Card & Player::popCard() {
 	return back;
 }
 
-Card & Player::popRandomCard() {
+Card& Player::popRandomCard() {
 	int i = std::rand() % hand.size();
-	Card &randomCard = hand[i];
-	size_t xx = hand.size();
+	Card * randomCard = new Card(hand[i]);
 	hand.erase(hand.begin() + i);
-	if (hand.size() == xx) {
-		std::cout << "WEIRD\n";
-	}
-	return randomCard;
+	return *randomCard;
 }
 
 std::string Player::getCards() {

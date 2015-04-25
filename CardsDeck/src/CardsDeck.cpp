@@ -27,7 +27,7 @@ int main() {
 		int playersAmount = (int)(sizeof(players)/sizeof(*players));
 
 		// pre-exhaust deck:
-		FOR(i, 42) deck.popCard();
+		// FOR(i, 42) deck.popCard();
 
 		FOR(i, 6) {
 			bool breaked = false;
@@ -50,6 +50,9 @@ int main() {
 			Player &playerTurn = players[turn];
 			Player &playerNext = players[(turn+1)%playersAmount];
 
+			std::cout << "Turn of the " << playerTurn.getName() << ":\n";
+			FOR(i, playersAmount) std::cout << "\t" << players[i].getName() << "`s cards:\t" << players[i].getCards() << '\n';
+
 			if (!playerTurn.hasCards()) {
 				std::cout << playerTurn.getName() << " has no more cards left\n";
 				break;
@@ -71,7 +74,6 @@ int main() {
 			} else {
 				int i = std::rand() % counterCards.size();
 				Card &counterCard = counterCards[i];
-				// erase picked card:
 				bool succ = playerNext.eraseCard(counterCard);
 
 				if (succ) {
@@ -83,6 +85,7 @@ int main() {
 				std::cout << playerNext.getName() << " beats " << tableCard.toString() << " with " << counterCard.toString() << "!\n";
 			}
 
+			// Get cards after turn
 			if (!playerTurn.getCard(deck)) {
 				bool breaked = false;
 				FOR(i, playersAmount) {

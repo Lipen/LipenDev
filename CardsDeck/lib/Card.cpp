@@ -4,6 +4,8 @@
 #include "Card.hpp"
 
 
+Card::Card(const Card &other) : rank(other.rank), suit(other.suit) {}
+
 Card::Card(Rank rank, Suit suit) : rank(rank), suit(suit) {}
 
 std::string Card::toString() {
