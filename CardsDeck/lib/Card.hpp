@@ -16,9 +16,9 @@ public:
 	std::string toString();
 	Rank getRank();
 	Suit getSuit();
-	bool isBeats(Card &other);
+	bool isBeats(const Card &other);
 
-	bool operator==(Card compCard);
+	bool operator==(const Card compCard);
 };
 
 #endif

@@ -20,10 +20,10 @@ Suit Card::getSuit() {
 	return suit;
 }
 
-bool Card::isBeats(Card &card) {
+bool Card::isBeats(const Card &card) {
 	return (rank > card.rank && suit == card.suit);
 }
 
-bool Card::operator==(Card compCard) {
+bool Card::operator==(const Card compCard) {
 	return (compCard.rank == rank && compCard.suit == suit);
 }

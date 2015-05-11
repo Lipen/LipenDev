@@ -16,6 +16,25 @@
 using std::cout;
 using std::string;
 
+/*
+class Game {
+	std::vector<Player> players;
+	int turn = 0;
+	Game() {}
+
+public:
+	Game(std::vector<string> &playersNames) {
+		for (string playerName : playersNames) {
+			players.pb(Player(playerName));
+		}
+	}
+
+	Player& getTurnPlayer() {
+		return players[turn];
+	}
+};
+*/
+
 
 int main() {
 	std::srand(time(0));
@@ -53,17 +72,20 @@ int main() {
 		cout << computer.getName() << "`s cards:\n\t" << computer.getCardsString() << '\n';
 
 		int turn = 0;
-		int turnReal = 0;
 
 		while (true) {
 			++turn;
-			++turnReal;
-			cout << "Turn #" << turnReal << '\n';
 
-			Player& playerTurn = (i%2) ? human : computer;
-			Player& playerNext = (i%2) ? computer : human;
+			Player& playerTurn = (turn%2) ? human : computer;
+			Player& playerNext = (turn%2) ? computer : human;
 
-			cout << "Turn of the " << playerTurn.getName() << ":\n";
+			cout << "Turn #" << turn << " of the " << playerTurn.getName() << ":\n";
+
+			if (playerTurn.isSkipsTurn()) {
+				cout << playerTurn.getName() << " skipping its turn\n";
+				playerTurn.skipTurn();
+				continue;
+			}
 
 			if (!playerTurn.hasCards()) {
 				cout << playerTurn.getName() << " has no more cards left\n";
@@ -76,18 +98,34 @@ int main() {
 
 			// Next player`s counter cards
 			std::vector<Card> counterCards = playerNext.getCounterCards(tableCard);
-			cout << playerNext.getName() << " has " << counterCards.size() << " couter card for " << tableCard.toString() << '\n';
+			// Output counter cards
+			cout << playerNext.getName() << " has " << counterCards.size() << " couter card for " << tableCard.toString();
+			if (counterCards.size() > 0){
+				cout << ": ";
+				std::vector<Card>::iterator iter = counterCards.begin();
+				while (true) {
+					cout << (*iter).toString();
+					++iter;
+					if (iter != counterCards.end()) {
+						cout << ' ';
+					} else {
+						break;
+					}
+				}
+			}
+			cout << ".\n";
 
 			// Try to beat
 			if (counterCards.size() == 0) {
 				cout << playerNext.getName() << " takes " << tableCard.toString() << " and skipping its turn\n";
 				playerNext.addCard(tableCard);
-				++turn;
+				playerNext.skipTurn();
 			} else {
 				int i = std::rand() % counterCards.size();
 				Card& counterCard = counterCards[i];
 				bool succ = playerNext.eraseCard(counterCard);
 
+				// FIXME: Remove this weird bug-control
 				if (succ) {
 					cout << "Succ\n";
 				} else {
@@ -104,10 +142,13 @@ int main() {
 					if (!playerTurn.getCard(deck)) {
 						cout << "No more cards in the deck.\n";
 						break;
+					} else {
+						cout << playerTurn.getName() << " got a card from a deck.\n";
 					}
 				}
 			} else if (playerTurn.cardsLeft() == 0) {
 				cout << playerTurn.getName() << " won!\n";
+				cout << playerNext.getName() << " left cards: " << playerNext.getCardsString() << '\n';
 				break;
 			}
 			// and same for playerNext:
@@ -116,10 +157,13 @@ int main() {
 					if (!playerNext.getCard(deck)) {
 						cout << "No more cards in the deck.\n";
 						break;
+					} else {
+						cout << playerNext.getName() << " got a card from a deck.\n";
 					}
 				}
 			} else if (playerNext.cardsLeft() == 0) {
 				cout << playerNext.getName() << " won!\n";
+				cout << playerTurn.getName() << " left cards: " << playerNext.getCardsString() << '\n';
 				break;
 			}
 		}

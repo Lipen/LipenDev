@@ -9,7 +9,8 @@
 
 #define pb push_back
 
-Player::Player(std::string name) : name(name) {}
+Player::Player(std::string name, bool humanity)
+	: name(name), humanity(humanity) {}
 
 std::string Player::getName() {
 	return name;
@@ -21,6 +22,10 @@ void Player::addCard(Card &card) {
 
 bool Player::hasCards() {
 	return !hand.empty();
+}
+
+int Player::cardsLeft() {
+	return hand.size();
 }
 
 Card & Player::popCard() {
@@ -36,7 +41,7 @@ Card& Player::popRandomCard() {
 	return *randomCard;
 }
 
-std::string Player::getCards() {
+std::string Player::getCardsString() {
 	std::string s;
 
 	std::vector<Card>::iterator iter = hand.begin();
@@ -63,7 +68,7 @@ bool Player::getCard(Deck &deck) {
 	return false;
 }
 
-std::vector<Card> Player::getCounterCards(Card &card) {
+std::vector<Card> Player::getCounterCards(const Card &card) {
 	std::vector<Card> counterCards;
 
 	for (Card &handCard : hand) {
@@ -75,7 +80,7 @@ std::vector<Card> Player::getCounterCards(Card &card) {
 	return counterCards;
 }
 
-bool Player::eraseCard(Card &card) {
+bool Player::eraseCard(const Card &card) {
 	for (std::vector<Card>::iterator iter = hand.begin(); iter != hand.end(); ++iter) {
 		if (*iter == card) {
 			size_t xx = hand.size();
@@ -84,4 +89,20 @@ bool Player::eraseCard(Card &card) {
 		}
 	}
 	return false;
+}
+
+bool Player::isHuman() {
+	return humanity;
+}
+
+bool Player::isComputer() {
+	return !humanity;
+}
+
+void Player::skipTurn() {
+	skipsTurn = !skipsTurn;
+}
+
+bool Player::isSkipsTurn() {
+	return skipsTurn;
 }

@@ -15,13 +15,18 @@ Deck::Deck() {
 			deck.pb(Card(static_cast<Rank>(i), static_cast<Suit>(j)));
 		}
 	}
+	// for (auto r : Rank) {
+	// 	for (auto s : Suit) {
+	// 		deck.pb(Card(r, s));
+	// 	}
+	// }
 }
 
 void Deck::shuffle() {
 	std::shuffle(deck.begin(), deck.end(), RandomEngine);
 }
 
-std::string Deck::getCards() {
+std::string Deck::getCardsString() {
 	std::string s;
 	std::vector<Card>::iterator iter = deck.begin();
 

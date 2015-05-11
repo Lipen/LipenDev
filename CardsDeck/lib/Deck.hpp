@@ -11,7 +11,7 @@ public:
 	Deck();
 
 	void shuffle();
-	std::string getCards();
+	std::string getCardsString();
 	bool hasCards();
 	Card & popCard();
 };
