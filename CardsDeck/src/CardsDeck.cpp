@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <ctime>
 #include <cstdlib>
 
@@ -10,6 +11,10 @@
 #include "Player.hpp"
 
 #define FOR(i, n) for(int i = 0; i < (n); i++)
+#define pb push_back
+
+using std::cout;
+using std::string;
 
 
 int main() {
@@ -21,91 +26,108 @@ int main() {
 		Deck deck;
 		deck.shuffle();
 
-		std::cout << "Initial shuffled deck:\n" << deck.getCards() << std::endl;
+		cout << "Initial shuffled deck:\n" << deck.getCardsString() << '\n';
 
-		Player players[] = { Player("Lipen"), Player("AI"), Player("Qwerty") };
-		int playersAmount = (int)(sizeof(players)/sizeof(*players));
+		Player human = Player("Lipen", true);
+		Player computer = Player("AI", false);
 
 		// pre-exhaust deck:
 		// FOR(i, 42) deck.popCard();
 
-		FOR(i, 6) {
-			bool breaked = false;
-			FOR(j, playersAmount) {
-				if (!players[j].getCard(deck)) {
-					std::cout << "No more cards.\n";
-					breaked = true;
-					break;
+		bool ex = true;
+		int i = 1;
+		while (ex) {
+			ex = false;
+			Player& player = (i%2) ? human : computer;
+			if (player.cardsLeft() < 6) {
+				if (player.getCard(deck)) {
+					ex = true;
+				} else {
+					cout << "No more cards in the deck.\n";
 				}
 			}
-			if (breaked) break;
+			++i;
 		}
 
-		FOR(i, playersAmount)
-			std::cout << players[i].getName() << "`s cards:\n\t" << players[i].getCards() << '\n';
+		cout << human.getName() << "`s cards:\n\t" << human.getCardsString() << '\n';
+		cout << computer.getName() << "`s cards:\n\t" << computer.getCardsString() << '\n';
 
 		int turn = 0;
+		int turnReal = 0;
 
 		while (true) {
-			Player &playerTurn = players[turn];
-			Player &playerNext = players[(turn+1)%playersAmount];
+			++turn;
+			++turnReal;
+			cout << "Turn #" << turnReal << '\n';
 
-			std::cout << "Turn of the " << playerTurn.getName() << ":\n";
-			FOR(i, playersAmount) std::cout << "\t" << players[i].getName() << "`s cards:\t" << players[i].getCards() << '\n';
+			Player& playerTurn = (i%2) ? human : computer;
+			Player& playerNext = (i%2) ? computer : human;
+
+			cout << "Turn of the " << playerTurn.getName() << ":\n";
 
 			if (!playerTurn.hasCards()) {
-				std::cout << playerTurn.getName() << " has no more cards left\n";
+				cout << playerTurn.getName() << " has no more cards left\n";
 				break;
 			}
 
 			// Player`s turn
 			Card &tableCard = playerTurn.popRandomCard();
-			std::cout << playerTurn.getName() << " puts " << tableCard.toString() << " on table\n";
+			cout << playerTurn.getName() << " puts " << tableCard.toString() << " on table\n";
 
 			// Next player`s counter cards
 			std::vector<Card> counterCards = playerNext.getCounterCards(tableCard);
+			cout << playerNext.getName() << " has " << counterCards.size() << " couter card for " << tableCard.toString() << '\n';
 
-			std::cout << playerNext.getName() << " has " << counterCards.size() << " couter card for " << tableCard.toString() << '\n';
-
+			// Try to beat
 			if (counterCards.size() == 0) {
-				std::cout << playerNext.getName() << " takes " << tableCard.toString() << " and skipping its turn\n";
+				cout << playerNext.getName() << " takes " << tableCard.toString() << " and skipping its turn\n";
 				playerNext.addCard(tableCard);
 				++turn;
 			} else {
 				int i = std::rand() % counterCards.size();
-				Card &counterCard = counterCards[i];
+				Card& counterCard = counterCards[i];
 				bool succ = playerNext.eraseCard(counterCard);
 
 				if (succ) {
-					std::cout << "Succ\n";
+					cout << "Succ\n";
 				} else {
-					std::cout << "Nope :c\n";
+					cout << "Nope :c\n";
 				}
 
-				std::cout << playerNext.getName() << " beats " << tableCard.toString() << " with " << counterCard.toString() << "!\n";
+				cout << playerNext.getName() << " beats " << tableCard.toString() << " with " << counterCard.toString() << "!\n";
 			}
 
 			// Get cards after turn
-			if (!playerTurn.getCard(deck)) {
-				bool breaked = false;
-				FOR(i, playersAmount) {
-					if (!players[i].hasCards()) {
-						std::cout << players[i].getName() << " won!\n";
-						breaked = true;
+			// For playerTurn:
+			if (deck.hasCards()) {
+				while (playerTurn.cardsLeft() < 6) {
+					if (!playerTurn.getCard(deck)) {
+						cout << "No more cards in the deck.\n";
 						break;
 					}
 				}
-				if (breaked) break;
-				std::cout << "No more cards in the deck.\n";
+			} else if (playerTurn.cardsLeft() == 0) {
+				cout << playerTurn.getName() << " won!\n";
+				break;
 			}
-
-			turn = (turn + 1) % playersAmount;
+			// and same for playerNext:
+			if (deck.hasCards()) {
+				while (playerNext.cardsLeft() < 6) {
+					if (!playerNext.getCard(deck)) {
+						cout << "No more cards in the deck.\n";
+						break;
+					}
+				}
+			} else if (playerNext.cardsLeft() == 0) {
+				cout << playerNext.getName() << " won!\n";
+				break;
+			}
 		}
 
 		fi.close();
 		fo.close();
 	} else {
-		std::cout << "Unable to open input or output file :c\n";
+		cout << "Unable to open input or output file :c\n";
 	}
 	return 0;
 }
