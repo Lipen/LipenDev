@@ -4,9 +4,17 @@ x = 0  # variable
 out = []  # sdtout
 
 
-def debug(s):
-	if False:
+## LOCAL
+def debug(s, type='info'):
+	if False and type == 'info':
 		print(s)
+	elif True and type == 'important':
+		print(s)
+	elif True and type == 'error':
+		print(s)
+	elif False:
+		print('NTD::{}'.format(s))
+##
 
 
 def process(s):
@@ -15,8 +23,7 @@ def process(s):
 	i = 0  # position in current string slice
 	while i < len(s):
 		c = s[i]
-		if debug:
-			debug('processing s[i={}] = {}'.format(i, c))
+		debug('processing s[i={}] = {}'.format(i, c))
 
 		if c == ',':
 			mem[p] = int(data.pop(0)) % 256
@@ -97,7 +104,7 @@ def process(s):
 			i = end_if
 		## LOCAL
 		else:
-			debug('Unknown char :{}:'.format(c))
+			debug('Unknown char :{}:'.format(c), 'error')
 		## ENDLOCAL
 		i += 1
 
@@ -109,7 +116,7 @@ def main():
 		data = f.read().splitlines()
 
 	s = data.pop(0)
-	debug('Program: {}'.format(s))
+	debug('Program: {}'.format(s), 'important')
 	## ENDLOCAL
 
 	# s = input()
