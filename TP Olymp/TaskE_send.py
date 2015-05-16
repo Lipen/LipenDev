@@ -2,11 +2,11 @@ from math import *
 
 
 def f(e, x):
-	return abs(eval(e.replace('^', '**').replace('x', str(x))))
+	return abs(eval(e.replace('^', '**').replace('x', '('+str(x)+')')))
 
 
 def solve(e, a, b):
-	N = 5741
+	N = 1999
 	t = f(e, a) + f(e, b)
 
 	for i in range(1, 2*N):
