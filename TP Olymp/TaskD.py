@@ -4,13 +4,19 @@ x = 0  # variable
 out = []  # sdtout
 
 
-def process(data, s):
+def debug(s):
+	if False:
+		print(s)
+
+
+def process(s):
 	global mem, p, x, out
 
-	i = 0
+	i = 0  # position in current string slice
 	while i < len(s):
 		c = s[i]
-		print('processing s[i={}] = {}'.format(i, c))
+		if debug:
+			debug('processing s[i={}] = {}'.format(i, c))
 
 		if c == ',':
 			mem[p] = int(data.pop(0)) % 256
@@ -55,15 +61,15 @@ def process(data, s):
 					k -= 1
 
 				if k == 0:
-					print('Wh::Going deeper: i+1:j ({} : {})'.format(i+1, j))
+					debug('Wh::Going deeper: i+1:j ({} : {})'.format(i+1, j))
 					end_if = j
 					break
 
-			print('While mem[p] ({})'.format(mem[p]))
+			debug('While mem[p] ({})'.format(mem[p]))
 			while mem[p]:
-				print('While tick')
+				debug('While tick')
 				# excluding end (there is closing bracet):
-				process(data, s[start_if:end_if])
+				process(s[start_if:end_if])
 
 			i = end_if
 		elif c == '(':
@@ -78,19 +84,21 @@ def process(data, s):
 					k -= 1
 
 				if k == 0:
-					print('If::Going deeper: i+1:j ({} : {})'.format(i+1, j))
+					debug('If::Going deeper: i+1:j ({} : {})'.format(i+1, j))
 					end_if = j
 					break
 
-			print('If mem[p] ({})'.format(mem[p]))
+			debug('If mem[p] ({})'.format(mem[p]))
 			if mem[p]:
-				print('If tick')
+				debug('If tick')
 				# excluding end (there is closing bracet):
-				process(data, s[start_if:end_if])
+				process(s[start_if:end_if])
 
 			i = end_if
+		## LOCAL
 		else:
-			print('Unknown char :{}:'.format(c))
+			debug('Unknown char :{}:'.format(c))
+		## ENDLOCAL
 		i += 1
 
 
@@ -101,12 +109,13 @@ def main():
 		data = f.read().splitlines()
 
 	s = data.pop(0)
-	print('Program: {}'.format(s))
+	debug('Program: {}'.format(s))
 	## ENDLOCAL
 
 	# s = input()
 
-	process(data, s)
+	process(s)
+
 	# print('\n'.join(map(str, out)))
 
 	## LOCAL
@@ -119,6 +128,6 @@ def main():
 		print(ans[:200] + '...')
 	else:
 		print(ans)
-	## LOCAL
+	## ENDLOCAL
 
 main()
