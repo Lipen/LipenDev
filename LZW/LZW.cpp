@@ -81,7 +81,7 @@ bool compress(string nameIn, string nameOut) {
 
 		if (fo) {
 			flow.resize(ceil(flow.length()/8.)*8, '0');
-			for (int i=0; i<flow.length(); i+=8) {
+			for (int i=0; i<(int)flow.length(); i+=8) {
 				fo.put(convertBitsToByte(flow.substr(i, 8)));
 			}
 			fo.close();
@@ -125,7 +125,7 @@ bool decompress(string nameIn, string nameOut) {
 			len = (int)log2(last+1)+1; //force(!) pre(!) ceil
 			string z = data.substr(i, len);
 			//Ignore trailing bits == last-byte-building-(zeros):
-			if (z.length() < len) break;
+			if ((int)z.length() < len) break;
 			k = convertBitsToNumber(z);
 
 			if (d.count(k)) {
