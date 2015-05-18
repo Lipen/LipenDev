@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <cstdlib>
 #include <vector>
 #include <map>
 #include <string>
@@ -400,7 +399,7 @@ int process() {
 
 		return 4;
 
-	} else if (ExtraUtils::match(task, matcher<string[]>{"1", "A"})) {
+	} else if (ExtraUtils::match(task, matcher<string[]>{"1", "A", "mix"})) {
 		system("cls");
 		cout << "Chosen task A.\n";
 
@@ -448,7 +447,7 @@ int process() {
 		fi2.close();
 		fo.close();
 
-	} else if (ExtraUtils::match(task, matcher<string[]>{"2", "B"})) {
+	} else if (ExtraUtils::match(task, matcher<string[]>{"2", "B", "align"})) {
 		system("cls");
 		cout << "Chosen task B.\n";
 
@@ -488,7 +487,7 @@ int process() {
 		fi.close();
 		fo.close();
 
-	} else if (ExtraUtils::match(task, matcher<string[]>{"3", "C"})) {
+	} else if (ExtraUtils::match(task, matcher<string[]>{"3", "C", "search", "find"})) {
 		system("cls");
 		cout << "Chosen task C.\n";
 
@@ -520,7 +519,7 @@ int process() {
 		// Don`t forget to close all
 		fi.close();
 
-	} else if (ExtraUtils::match(task, matcher<string[]>{"4", "D"})) {
+	} else if (ExtraUtils::match(task, matcher<string[]>{"4", "D", "histogram", "count", "frequency"})) {
 		system("cls");
 		cout << "Chosen task D.\n";
 
@@ -563,6 +562,7 @@ int main() {
 
 	while (running) {
 		int e = process();
+
 		if (e == 0) {
 			system("pause");
 			system("cls");
