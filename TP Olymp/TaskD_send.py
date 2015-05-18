@@ -12,7 +12,10 @@ def process(s):
 		c = s[i]
 
 		if c == ',':
-			mem[p] = int(input()) % 256
+			try:
+				mem[p] = int(input()) % 256
+			except:
+				mem[p] = 0
 		elif c == '.':
 			out.append(mem[p])
 		elif c == '=':
@@ -24,13 +27,13 @@ def process(s):
 		elif c == '?':
 			mem[p] = x
 		elif c == '*':
-			mem[p] = (mem[p] * mem[p-1]) % 256
+			mem[p] = (mem[p] * mem[(p-1) % 30000]) % 256
 		elif c == '/':
-			mem[p] = (mem[p] // mem[p-1]) % 256
+			mem[p] = (mem[p] // mem[(p-1) % 30000])
 		elif c == '+':
 			mem[p] = (mem[p] + 1) % 256
 		elif c == '-':
-			mem[p] = (mem[p] - 1) % 256
+			mem[p] = max(0, mem[p] - 1)
 		elif c == '>':
 			p = (p + 1) % 30000
 		elif c == '<':

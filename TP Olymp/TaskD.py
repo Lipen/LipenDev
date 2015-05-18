@@ -26,8 +26,11 @@ def process(s):
 		debug('processing s[i={}] = {}'.format(i, c))
 
 		if c == ',':
-			mem[p] = int(data.pop(0)) % 256
-			# mem[p] = int(input()) % 256
+			try:
+				mem[p] = int(data.pop(0)) % 256
+				# mem[p] = int(input()) % 256
+			except:
+				mem[p] = 0
 		elif c == '.':
 			out.append(mem[p])
 		elif c == '=':
@@ -39,13 +42,13 @@ def process(s):
 		elif c == '?':
 			mem[p] = x
 		elif c == '*':
-			mem[p] = (mem[p] * mem[p-1]) % 256
+			mem[p] = (mem[p] * mem[(p-1) % 30000]) % 256
 		elif c == '/':
-			mem[p] = (mem[p] // mem[p-1]) % 256
+			mem[p] = (mem[p] // mem[(p-1) % 30000])
 		elif c == '+':
 			mem[p] = (mem[p] + 1) % 256
 		elif c == '-':
-			mem[p] = (mem[p] - 1) % 256
+			mem[p] = max(0, mem[p] - 1)
 		elif c == '>':
 			p = (p + 1) % 30000
 		elif c == '<':
@@ -127,6 +130,7 @@ def main():
 
 	## LOCAL
 	ans = '\n'.join(map(str, out))
+	print(mem[:5], 'important')
 	with open('output.txt', 'w') as f:
 		f.write(ans)
 
