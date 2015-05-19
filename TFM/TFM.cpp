@@ -16,7 +16,13 @@ using std::vector;
 using std::string;
 using std::map;
 
+// Classes for every task:
 class TaskA {
+	/*
+		TaskA: mix two files by specified amount of words
+	*/
+
+	// private default constructor
 	TaskA() {}
 
 public:
@@ -25,16 +31,26 @@ public:
 };
 
 class TaskB {
+	/*
+		TaskB: align file with specified amount of spaces
+	*/
+
+	// private default constructor
 	TaskB() {}
 
 public:
-	static vector<string> getWords(ifstream &ifs);
+	// static vector<string> getWords(ifstream &ifs);
 	static void align(vector<string> &fLines, int N);
 	static vector<string> getLines(ifstream &ifs);
 	static void writeLines(ofstream &ofs, vector<string> fLines);
 };
 
 class TaskC {
+	/*
+		TaskC: find specified word in file
+	*/
+
+	// private default constructor
 	TaskC() {}
 
 public:
@@ -43,6 +59,11 @@ public:
 };
 
 class TaskD {
+	/*
+		TaskD: count chars in file and print frequency histogram
+	*/
+
+	// private default constructor
 	TaskD() {}
 
 public:
@@ -51,6 +72,11 @@ public:
 };
 
 class ExtraUtils {
+	/*
+		Extra utils class for some additional functions
+	*/
+
+	// private default constructor
 	ExtraUtils() {}
 
 public:
@@ -63,20 +89,33 @@ public:
 
 
 vector<string> TaskA::getWords(ifstream &ifs) {
+	/*
+	Input:
+		ifstream& ifs -- Input 'file' as a filestream
+	Output:
+		vector<string> -- Vector of words contained in the file
+	*/
+
+	// Reset ifs to start reading from the beginning
 	ifs.clear();
 	ifs.seekg(0, ifs.beg);
 
 	vector<string> words;
-	string t;
+	string t;  // TODO: Replace with a stringstream
 	char c;
 
+	// Read file char by char
 	while (ifs.get(c)) {
+		// Separate words with 'space' or 'newline'
 		if (c == ' ' or c == '\n') {
 			if (!t.empty()) {
+				// Save 'temporary word' into the vector
 				words.pb(t);
+				// Reset 'temporary word' ( t = ""; )
 				t.clear();
 			}
 		} else {
+			// Append current 'temporary word' with current char
 			t += c;
 		}
 	}
@@ -90,15 +129,30 @@ vector<string> TaskA::getWords(ifstream &ifs) {
 }
 
 void TaskA::mixFiles(ofstream &ofs, int M, vector<string> words1, vector<string> words2, string sep=" ") {
+	/*
+	Input:
+		ofstream& ofs -- Output 'file' as a filestream
+		int M -- Specified M, by which files will be mixed
+		vector<string> words1 -- Vector of words from first 'input file' (can be taken from calling TaskA::getWords(..))
+		vector<string> words2 -- --//-- second --//--
+		string sep (Delault value = " ") -- Words separator
+	Output:
+		Nothing
+	*/
+
 	if (M <= 0)
 		return;
 
-	// Reverse, so we can pop_back proper things
+	// Reverse, so we could pop_back proper things
 	std::reverse(words1.begin(), words1.end());
 	std::reverse(words2.begin(), words2.end());
 
+	// Container for words in output mixed file
 	vector<string> mixed;
-	int i=0, j=0, k=0;
+	// Amount of words taken from each words-container(vector<string> words1/2)
+	int i = 0, j = 0;
+	// Tricky counter
+	int k = 0;
 	int ie = (int)words1.size();
 	int je = (int)words2.size();
 
@@ -130,57 +184,50 @@ void TaskA::mixFiles(ofstream &ofs, int M, vector<string> words1, vector<string>
 		++j;
 	}
 
+	// Join mixed words with specified separator and write into the ofs
 	ofs << ExtraUtils::joinWithSeparator(mixed, sep);
 }
 
 
-vector<string> TaskB::getWords(ifstream &ifs) {
-	ifs.clear();
-	ifs.seekg(0, ifs.beg);
-
-	vector<string> words;
-	string t;
-	char c;
-
-	while (ifs.get(c)) {
-		if (c == ' ' or c == '\n') {
-			if (!t.empty()) {
-				words.pb(t);
-				t.clear();
-			}
-		} else {
-			t += c;
-		}
-	}
-	// Extra action for possible last word
-	if (!t.empty()) {
-		words.pb(t);
-		t.clear();
-	}
-
-	return words;
-}
-
 void TaskB::align(vector<string> &fLines, int N) {
+	/*
+	Input:
+		vector<string>& fLines -- Reference to the container with file`s lines
+		int N -- Specified N
+	Output:
+		Nothing
+	*/
+
+	// 'for every line in fLines do...'
 	for (int i=0; i<(int)fLines.size(); ++i) {
 		string &line = fLines[i];
 
 		if (line[0] == ' ') {
-			cout << "DBG::Inserting\n";
+			// Insert N-1 spaces in the beginning of line
 			line.insert(line.begin(), N-1, ' ');
 		}
 	}
 }
 
 vector<string> TaskB::getLines(ifstream &ifs) {
+	/*
+	Input:
+		ifstream& ifs -- Input 'file' as a filestream
+	Output:
+		vector<string> -- Vector of lines contained in the file
+	*/
+
 	ifs.clear();
 	ifs.seekg(0, ifs.beg);
 
+	// Lines-container
 	vector<string> fLines;
+	// Temporary 't' -- 'line placeholder'
+	string t;
 
-	while (ifs.good()) {
-		string t;
-		getline(ifs, t);
+	// 'while "reading line" action was succussful do...'
+	while (getline(ifs, t)) {
+		// Save temporary 't' inside lines-container
 		fLines.pb(t);
 	}
 
@@ -188,10 +235,19 @@ vector<string> TaskB::getLines(ifstream &ifs) {
 }
 
 void TaskB::writeLines(ofstream &ofs, vector<string> fLines) {
+	/*
+	Input:
+		ofstream& ofs -- Output 'file' as a filestream
+		vector<string> fLines -- Vector of lines to write into the 'file'
+	Output:
+		Nothing
+	*/
+
 	for(int i=0; i<(int)fLines.size(); ++i) {
 		ofs << fLines[i];
 
 		if (i < (int)fLines.size()-1) {
+			// Don`t forget to write newlines between all the lines
 			ofs << '\n';
 		}
 	}
@@ -199,6 +255,10 @@ void TaskB::writeLines(ofstream &ofs, vector<string> fLines) {
 
 
 vector<string> TaskC::getWords(ifstream &ifs) {
+	/*
+		SAME AS 'TaskA::getWords'
+	*/
+
 	ifs.clear();
 	ifs.seekg(0, ifs.beg);
 
@@ -226,35 +286,49 @@ vector<string> TaskC::getWords(ifstream &ifs) {
 }
 
 void TaskC::findString(ifstream &ifs, string s, int &pT, int &pL, int &pC) {
+	/*
+	Input:
+		ifstream& ifs -- Input 'file' as a filestream
+		string s -- String to search
+		int& pT -- Reference to 'total counter'
+		int& pL -- Reference to 'line counter'
+		int& pC -- Reference to 'column counter'
+	Output:
+		Nothing
+	*/
+
 	ifs.clear();
 	ifs.seekg(0, ifs.beg);
 
 	int t = 0;  // total counter
 	int l = -1;  // line counter
 	int c = -1;  // column counter
+	string line;  // current line
 
-	while (ifs.good()) {
+	while (getline(ifs, line)) {
+		// Increase line number
 		l++;
-		cout << "DBG:processing line#" << l+1 << '\n';
-		string line;
-		std::getline(ifs, line);
-		size_t p = line.find(s); // default 0..?
+		// Use standart methods to find char in the string
+		size_t p = line.find(s);
 
+		// 'if found the...'  // p==string::npos means 'not found'
 		if (p != string::npos) {
-			cout << "DBG:found!\n";
+			// Increase total counter
 			t += (int)p;
+			// Increase column counter
 			c = (int)p;
 			break;
 		} else {
+			// Increase total counter
 			t += (int)line.size();
 		}
 	}
-
+	// 'if search was successful then...'
 	if (c != -1) {
 		pT = t;
 		pL = l;
 		pC = c;
-	} else {
+	} else {  // 'else -1 everything'
 		pT = -1;
 		pL = -1;
 		pC = -1;
@@ -263,25 +337,33 @@ void TaskC::findString(ifstream &ifs, string s, int &pT, int &pL, int &pC) {
 
 
 map<char, int> TaskD::countCharsSimple(ifstream &ifs) {
+	/*
+	Input:
+		ifstream& ifs -- Input 'file' as a filestream
+	Output:
+		map<char, int> -- A map, contains pairs <'char' : 'amount of that char in the file'>.
+		// Simple version contains only UPPERCASE english alphabet and digits. Other chars are skips.
+	*/
+
 	ifs.clear();
 	ifs.seekg(0, ifs.beg);
 
 	map<char, int> charsAmount;
 
+	/* Do not read this.
 	// For 'not simple' version:
-	// for (char c : "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ ") {
-	// 	charsAmount[c] = 0;
-	// }
+	for (char c : "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ ") {
+		charsAmount[c] = 0;
+	} */
 
-	for (char i='A'; i<='Z'; i++) {
-		charsAmount[i] = 0;
-	}
-	for (char i='0'; i<='9'; i++) {
-		charsAmount[i] = 0;
-	}
+	// C++0x
+	for (char c : "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+		charsAmount[c] = 0;
 
 	char c;
+	// 'while "reading char" action was successful do...'
 	while (ifs.get(c)) {
+		// Trivial counting
 		if (charsAmount.find(std::toupper(c)) != charsAmount.end()) {
 			charsAmount[std::toupper(c)]++;
 		} // else just skip
@@ -291,6 +373,16 @@ map<char, int> TaskD::countCharsSimple(ifstream &ifs) {
 }
 
 void TaskD::printHistrogramSimple(const map<char, int> &charsAmount) {
+	/*
+	Input:
+		const map<char, int>& charsAmount -- Reference to the map, contains pairs <'char' : 'amount of that char in the file'>. (Can be taken from calling TaskD::countCharsSimple(..)).
+		// Given map doesn`t changes, so -> 'const'
+	Output:
+		Nothing
+	*/
+
+	// Tricky function......
+
 	map<char, vector<char>> matrix;
 	int maxAmount = 0;
 
@@ -298,7 +390,7 @@ void TaskD::printHistrogramSimple(const map<char, int> &charsAmount) {
 		if (iter->second > maxAmount) {
 			maxAmount = iter->second;
 		}
-		// there is no condition ('simple')
+		// there goes condition ('non-simple' ver)
 		vector<char> head;
 		head.pb(iter->first);
 		head.pb('-');
@@ -326,6 +418,19 @@ void TaskD::printHistrogramSimple(const map<char, int> &charsAmount) {
 
 
 string ExtraUtils::joinWithSeparator(vector<string> s, string sep) {
+	/*
+	Description:
+		Joins given string using specified separator.
+	Input:
+		vector<string> s -- Strings to join
+		string sep -- String to place between joined strings
+	Output:
+		string -- Joined string
+	// STRING, STRING, STRING
+	*/
+
+	// Trivial function.....
+
 	std::stringstream ss;
 	vector<string>::iterator iter = s.begin();
 
@@ -346,45 +451,69 @@ string ExtraUtils::joinWithSeparator(vector<string> s, string sep) {
 }
 
 string ExtraUtils::caseString(string s, bool upperCase) {
+	/*
+	Description:
+		Translates given string into the UPPERCASE if given 'true'.
+		Translates given string into the lowercase otherwise.
+	Input:
+		string s -- String to UP or lower
+		bool upperCase -- see description
+	Output:
+		string -- Translated string
+	*/
+
 	std::stringstream ss;
 
-	for (int i=0; i<(int)s.size(); ++i) {
-		ss << (upperCase) ? std::toupper(s[i]) : std::tolower(s[i]);
+	// 'for every char in given string do...'
+	// C++0x
+	for (char c : s) {
+		// 'Ternary operator'
+		ss << ( (upperCase) ? std::toupper(c) : std::tolower(c) );
 	}
 
 	return ss.str();
 }
 
 bool ExtraUtils::compareStrings(string s, string t, bool ignoreCase=false) {
+	/*
+	Input:
+		string s -- First string
+		string t -- Second string
+		bool ignoreCase (Default value=false) -- Is to ignore case
+	*/
+
 	if (s.size() != t.size())
 		return false;
 
+	// 'for every co-position in strings do...'
 	for (int i=0; i<(int)s.size(); ++i) {
 		if (ignoreCase) {
+			// 'if chars on the co-position are differse then...'
 			if (std::tolower(s[i]) != std::tolower(t[i]))
 				return false;
 		} else {
+			// 'if chars on the co-position are differse then...'
 			if (s[i] != t[i])
 				return false;
 		}
 	}
-
+	// If cycle have ended then strings are the same
 	return true;
 }
 
+// Do not read this.
 template<size_t N>
 bool ExtraUtils::match(string toMatch, const string (&matchWith)[N], bool ignoreCase=true) {
-	for (int i=0; i<(int)N; ++i) {
-		if (ExtraUtils::compareStrings(toMatch, matchWith[i], ignoreCase)) {
+	for (int i=0; i<(int)N; ++i)
+		if (ExtraUtils::compareStrings(toMatch, matchWith[i], ignoreCase))
 			return true;
-		}
-	}
-
+	// Py :: for..else:
 	return false;
 }
 
 template<class T>
 using matcher = T;
+
 
 
 int process() {
