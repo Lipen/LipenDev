@@ -426,7 +426,7 @@ string ExtraUtils::joinWithSeparator(vector<string> s, string sep) {
 		string sep -- String to place between joined strings
 	Output:
 		string -- Joined string
-	// STRING, STRING, STRING
+	// STRING, STRING, STRING!!!
 	*/
 
 	// Trivial function.....
@@ -480,8 +480,11 @@ bool ExtraUtils::compareStrings(string s, string t, bool ignoreCase=false) {
 		string s -- First string
 		string t -- Second string
 		bool ignoreCase (Default value=false) -- Is to ignore case
+	Output:
+		bool -- Returns true is strings are the same (adjusted for case) and false otherwise
 	*/
 
+	// Pre-check: if lengths are differs then strings can`t be same
 	if (s.size() != t.size())
 		return false;
 
@@ -497,7 +500,7 @@ bool ExtraUtils::compareStrings(string s, string t, bool ignoreCase=false) {
 				return false;
 		}
 	}
-	// If cycle have ended then strings are the same
+	// If cycle have ended successfully then strings are the same
 	return true;
 }
 
@@ -521,6 +524,12 @@ int process() {
 
 	string task;
 	cin >> task;
+
+	// 'Match strings' format:
+	// matcher<string[]>{"First string", "Second one", "et cetera"}
+
+	// Usage:
+	// if (ExtraUtils::match(task, matcher<string[]>{"Strings"...})) {/*then*/}
 
 	if (ExtraUtils::match(task, matcher<string[]>{"0", "E", "Exit"})) {
 		system("cls");
