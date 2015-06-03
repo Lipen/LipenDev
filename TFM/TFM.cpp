@@ -514,7 +514,7 @@ bool ExtraUtils::match(string toMatch, const string (&matchWith)[N], bool ignore
 	return false;
 }
 
-template<class T>
+template<typename T>
 using matcher = T;
 
 
