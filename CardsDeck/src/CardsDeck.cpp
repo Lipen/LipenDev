@@ -93,7 +93,8 @@ int main() {
 			}
 
 			// Player`s turn
-			Card &tableCard = playerTurn.popRandomCard();
+			// Card &tableCard = playerTurn.popRandomCard();
+			Card& tableCard = playerTurn.makeTurn();
 			cout << playerTurn.getName() << " puts " << tableCard.toString() << " on table\n";
 
 			// Next player`s counter cards
@@ -121,18 +122,12 @@ int main() {
 				playerNext.addCard(tableCard);
 				playerNext.skipTurn();
 			} else {
-				int i = std::rand() % counterCards.size();
-				Card& counterCard = counterCards[i];
-				bool succ = playerNext.eraseCard(counterCard);
+				playerNext.makeCounterTurn(tableCard, counterCards);
+				// int i = std::rand() % counterCards.size();
+				// Card& counterCard = counterCards[i];
+				// playerNext.eraseCard(counterCard);
 
-				// FIXME: Remove this weird bug-control
-				if (succ) {
-					cout << "Succ\n";
-				} else {
-					cout << "Nope :c\n";
-				}
-
-				cout << playerNext.getName() << " beats " << tableCard.toString() << " with " << counterCard.toString() << "!\n";
+				// cout << playerNext.getName() << " beats " << tableCard.toString() << " with " << counterCard.toString() << "!\n";
 			}
 
 			// Get cards after turn

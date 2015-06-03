@@ -34,11 +34,57 @@ Card& Player::popCard() {
 	return back;
 }
 
+Card& Player::popCard(int i) {
+	Card *card = new Card(hand[i]);
+	hand.erase(hand.begin() + i);
+	return *card;
+}
+
 Card& Player::popRandomCard() {
 	int i = std::rand() % hand.size();
-	Card * randomCard = new Card(hand[i]);
-	hand.erase(hand.begin() + i);
-	return *randomCard;
+	return popCard(i);
+}
+
+Card& Player::makeTurn() {
+	if (humanity) {
+		std::cout << "Your cards:\n\t" << getCardsString() << "\nChoose card:";
+		std::string choiceStr;
+		std::cin >> choiceStr;
+		int choice = std::stoi(choiceStr);
+
+		return popCard(choice-1);
+	} else {
+		return popRandomCard();
+	}
+}
+
+// FIXME: Arch
+void Player::popCounterCard(int i, const Card &tableCard, const std::vector<Card> &counterCards) {
+	Card& counterCard = (const_cast<std::vector<Card>&>(counterCards))[i];
+	eraseCard(counterCard);
+
+	std::cout << getName() << " beats " << (const_cast<Card&>(tableCard)).toString() << " with " << counterCard.toString() << "!\n";
+}
+
+void Player::makeCounterTurn(const Card &tableCard, const std::vector<Card> &counterCards) {
+	if (humanity) {
+		std::cout << "Your cards:\n\t" << getCardsString() << "\nChoose card:";
+		std::string choiceStr;
+		std::cin >> choiceStr;
+		int choice = std::stoi(choiceStr);
+
+		if (choice == 0) {
+			std::cout << getName() << " takes " << (const_cast<Card&>(tableCard)).toString() << " and skipping its turn\n";
+			addCard(const_cast<Card&>(tableCard));
+			skipTurn();
+		} else {
+			popCounterCard(choice-1, tableCard, counterCards);
+		}
+	} else {
+		int i = std::rand() % counterCards.size();
+		popCounterCard(i, tableCard, counterCards);
+	}
+
 }
 
 std::string Player::getCardsString() {
@@ -71,7 +117,7 @@ bool Player::getCard(Deck &deck) {
 std::vector<Card> Player::getCounterCards(const Card &card) {
 	std::vector<Card> counterCards;
 
-	for (Card &handCard : hand) {
+	for (Card & handCard : hand) {
 		if (handCard.isBeats(card)) {
 			counterCards.pb(handCard);
 		}
@@ -80,15 +126,13 @@ std::vector<Card> Player::getCounterCards(const Card &card) {
 	return counterCards;
 }
 
-bool Player::eraseCard(const Card &card) {
+void Player::eraseCard(const Card &card) {
 	for (std::vector<Card>::iterator iter = hand.begin(); iter != hand.end(); ++iter) {
 		if (*iter == card) {
-			size_t xx = hand.size();
 			hand.erase(iter);
-			return (hand.size() != xx);
+			return;
 		}
 	}
-	return false;
 }
 
 bool Player::isHuman() {

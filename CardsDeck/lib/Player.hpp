@@ -16,15 +16,19 @@ public:
 	Player(std::string, bool);
 
 	std::string getName();
-	void addCard(Card&);
+	void addCard(Card&);  //non-const?
 	bool hasCards();
 	int cardsLeft();
 	Card& popCard();
+	Card& popCard(int);
 	Card& popRandomCard();
+	Card& makeTurn();
+	void popCounterCard(int, const Card&, const std::vector<Card>&);
+	void makeCounterTurn(const Card&, const std::vector<Card>&);
 	std::string getCardsString();
 	bool getCard(Deck&);  //non-const
 	std::vector<Card> getCounterCards(const Card&);
-	bool eraseCard(const Card&);
+	void eraseCard(const Card&);
 	bool isHuman();
 	bool isComputer();
 	void skipTurn();
