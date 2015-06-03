@@ -13,18 +13,18 @@ class Player {
 	Player() {}
 
 public:
-	Player(std::string name, bool humanity);
+	Player(std::string, bool);
 
 	std::string getName();
-	void addCard(Card &card);
+	void addCard(Card&);
 	bool hasCards();
 	int cardsLeft();
-	Card & popCard();
-	Card & popRandomCard();
+	Card& popCard();
+	Card& popRandomCard();
 	std::string getCardsString();
-	bool getCard(Deck &deck);
-	std::vector<Card> getCounterCards(const Card &card);
-	bool eraseCard(const Card &card);
+	bool getCard(Deck&);  //non-const
+	std::vector<Card> getCounterCards(const Card&);
+	bool eraseCard(const Card&);
 	bool isHuman();
 	bool isComputer();
 	void skipTurn();

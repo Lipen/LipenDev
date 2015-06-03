@@ -14,4 +14,7 @@ static const std::string RankStr[] = { "2", "3", "4", "5", "6", "7", "8", "9", "
 enum class Suit { Hearts, Diamonds, Clubs, Spades };
 static const std::string SuitStr[] = { "H", "D", "C", "S" };
 
+template<class T, size_t N>
+size_t size(const T(&)[N]) { return N; }
+
 #endif

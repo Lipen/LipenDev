@@ -10,16 +10,11 @@
 
 
 Deck::Deck() {
-	for (int i=0; i<(int)(sizeof(RankStr)/sizeof(*RankStr)); ++i) {
-		for (int j=0; j<(int)(sizeof(SuitStr)/sizeof(*SuitStr)); ++j) {
+	for (int i=0; i<(int)size(RankStr); ++i) {
+		for (int j=0; j<(int)size(SuitStr); ++j) {
 			deck.pb(Card(static_cast<Rank>(i), static_cast<Suit>(j)));
 		}
 	}
-	// for (auto r : Rank) {
-	// 	for (auto s : Suit) {
-	// 		deck.pb(Card(r, s));
-	// 	}
-	// }
 }
 
 void Deck::shuffle() {
@@ -47,7 +42,7 @@ bool Deck::hasCards() {
 	return !deck.empty();
 }
 
-Card & Deck::popCard() {
+Card& Deck::popCard() {
 	Card &back = deck.back();
 	deck.pop_back();
 	return back;

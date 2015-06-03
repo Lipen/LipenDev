@@ -13,7 +13,7 @@ public:
 	void shuffle();
 	std::string getCardsString();
 	bool hasCards();
-	Card & popCard();
+	Card& popCard();
 };
 
 #endif

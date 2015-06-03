@@ -28,7 +28,7 @@ int Player::cardsLeft() {
 	return hand.size();
 }
 
-Card & Player::popCard() {
+Card& Player::popCard() {
 	Card &back = hand.back();
 	hand.pop_back();
 	return back;
