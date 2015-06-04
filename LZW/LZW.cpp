@@ -167,9 +167,10 @@ int main(int argc, char * argv[]) {
 
 	for (int i=1; i<argc; ++i) {
 		string arg(argv[i]);
-		if (arg=="encode" || arg=="compress") {
+		// TODO: impl <matcher> (from TFM)
+		if (arg=="encode" || arg=="compress" || arg=="-encode" || arg=="-compress") {
 			isCompress = true;
-		} else if (arg=="decode" || arg=="decompress") {
+		} else if (arg=="decode" || arg=="decompress" || arg=="-decode" || arg=="-decompress") {
 			isCompress = false;
 		} else if (arg=="-in") {
 			nameIn = string(argv[i+++1]);
