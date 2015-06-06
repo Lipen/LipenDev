@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 #include <cmath>
-#include <stdlib.h>
+#include <cstdlib>
 
 #define pb push_back
 
@@ -58,20 +58,23 @@ bool compress(string nameIn, string nameOut) {
 		char c;
 		string stack;
 		string newstack;
+		int last = 256;
+		int len = 9; //(int)log2(last+1)+1
+
 		map<string, int> d;
 		for (int i = 0; i < 256; ++i) {
 			d[string(1, i)] = i;
 		}
-		int last = 256;
-		int len = 9;
 
 		while (fi.get(c)) {
 			newstack = stack + c;
+
 			if (d.find(newstack) == d.end()) {
 				flow += convertNumberToBits(d[stack], len);
 				d[newstack] = last++;
 				newstack = c;
 			}
+
 			stack = newstack;
 			len = (int)log2(last) + 1;
 		}
@@ -83,9 +86,11 @@ bool compress(string nameIn, string nameOut) {
 
 		if (fo) {
 			flow.resize(ceil(flow.length()/8.)*8, '0');
+
 			for (int i = 0; i < (int)flow.length(); i += 8) {
 				fo.put(convertBitsToByte(flow.substr(i, 8)));
 			}
+
 			fo.close();
 		} else {
 			cout << "Unable to open output file :C\n";
@@ -120,9 +125,9 @@ bool decompress(string nameIn, string nameOut) {
 		}
 
 		int k = convertBitsToNumber(data.substr(0, len));
-		string stack(1, k); //char group builder
-		string flow = stack; //result
-		string c; //current char/chargroup
+		string stack(1, k); 	//char group builder
+		string flow = stack; 	//result
+		string c; 				//current char/chargroup
 
 		for (int i = len; i < fileSize; i += len) {
 			len = (int)log2(last+1)+1; //force(!) pre(!) ceil
@@ -189,8 +194,8 @@ bool match(string toMatch, const string (&matchWith)[N]) {
 }
 
 template<typename T>
-using matcher = T;
-using matcherStrings = matcher<string[]>;
+using matcherT = T;
+using matcher = matcherT<string[]>;
 
 
 int main(int argc, char * argv[]) {
@@ -201,33 +206,32 @@ int main(int argc, char * argv[]) {
 
 	for (int i=1; i<argc; ++i) {
 		string arg(argv[i]);
-		// TODO: impl <matcher> (from TFM)
 		if (match(arg,
-			matcherStrings{"encode", "-encode", "compress", "-compress"}))
+			matcher{"encode", "-encode", "compress", "-compress"}))
 		{
 			isCompress = true;
 		} else if (match(arg,
-			matcherStrings{"decode", "decompress", "-decode", "-decompress"}))
+			matcher{"decode", "decompress", "-decode", "-decompress"}))
 		{
 			isCompress = false;
 		} else if (match(arg,
-			matcherStrings{"in", "-in", "input", "-input"}))
+			matcher{"in", "-in", "input", "-input"}))
 		{
 			nameIn = string(argv[i+++1]);
 		} else if (match(arg,
-			matcherStrings{"out", "-out", "output", "-output"}))
+			matcher{"out", "-out", "output", "-output"}))
 		{
 			nameOut = string(argv[i+++1]);
 		} else if (match(arg,
-			matcherStrings{"n", "-n", "number", "-number", "amount", "-amount", "times", "-times"}))
+			matcher{"n", "-n", "number", "-number", "amount", "-amount"}))
 		{
 			amount = atoi(argv[i+++1]);
 		} else {
-			cout << "Weird argument \"" << arg << "\"" << endl;
+			cout << "Weird argument \"" << arg << "\". Ignoring.\n";
 		}
 	}
 
-	cout<<(isCompress?"C":"Dec")<<"ompression mode. At most "<<amount<<" times"<<endl<<nameIn<<"  -->  "<<nameOut<<endl;
+	cout << (isCompress?"C":"Dec") << "ompression mode. At most " << amount << " times\n" << nameIn << "  -->  " << nameOut << '\n';
 
 	int n = 0;
 	if (isCompress) {
