@@ -60,7 +60,7 @@ bool compress(string nameIn, string nameOut) {
 		string stack;
 		string newstack;
 		int last = 256;
-		int len = 9; //(int)log2(last+1)+1
+		int len = 9;  // (int)log2(last+1)+1
 
 		map<string, int> d;
 		for (int i = 0; i < 256; ++i) {
@@ -111,14 +111,14 @@ bool decompress(string nameIn, string nameOut) {
 
 	if (fi) {
 		fi.seekg(0, fi.end);
-		int fileSize = fi.tellg() * 8;  //bits!
+		int fileSize = fi.tellg() * 8;  // bits!
 		fi.seekg(0, fi.beg);
 		map<int, string> d;
-		for (int i=0; i<256; ++i) {
+		for (int i = 0; i < 256; ++i) {
 			d[i] = string(1, i);
 		}
 		int last = 256;
-		int len = 9;  //(int)log2(last+1)+1
+		int len = 9;  // (int)log2(last+1)+1
 
 		char t;
 		string data;
@@ -127,15 +127,15 @@ bool decompress(string nameIn, string nameOut) {
 		}
 
 		int k = convertBitsToNumber(data.substr(0, len));
-		string stack(1, k);	//char group builder
-		stringstream flow;	//result
+		string stack(1, k);  // char group builder
+		stringstream flow;   // result
 		flow << stack;
-		string c;			//current char/chargroup
+		string c;            // current char/chargroup
 
 		for (int i = len; i < fileSize; i += len) {
-			len = (int)log2(last+1) + 1;  //force(!) pre(!) ceil
+			len = (int)log2(last+1) + 1;  // force(!) pre(!) ceil
 			string z = data.substr(i, len);
-			//Ignore trailing bits == last-byte-building-(zeros):
+			// Ignore trailing bits == last-byte-building-(zeros):
 			if ((int)z.length() < len) break;
 			k = convertBitsToNumber(z);
 
@@ -207,27 +207,17 @@ int main(int argc, char * argv[]) {
 	int amount = 1;
 	bool isCompress = true;
 
-	for (int i=1; i<argc; ++i) {
+	for (int i = 1; i < argc; ++i) {
 		string arg(argv[i]);
-		if (match(arg,
-			matcher{"encode", "-encode", "compress", "-compress"}))
-		{
+		if (match(arg, matcher{"encode", "-encode", "compress", "-compress"})) {
 			isCompress = true;
-		} else if (match(arg,
-			matcher{"decode", "decompress", "-decode", "-decompress"}))
-		{
+		} else if (match(arg, matcher{"decode", "decompress", "-decode", "-decompress"})) {
 			isCompress = false;
-		} else if (match(arg,
-			matcher{"in", "-in", "input", "-input"}))
-		{
+		} else if (match(arg, matcher{"in", "-in", "input", "-input"})) {
 			nameIn = string(argv[i+++1]);
-		} else if (match(arg,
-			matcher{"out", "-out", "output", "-output"}))
-		{
+		} else if (match(arg, matcher{"out", "-out", "output", "-output"})) {
 			nameOut = string(argv[i+++1]);
-		} else if (match(arg,
-			matcher{"n", "-n", "number", "-number", "amount", "-amount"}))
-		{
+		} else if (match(arg, matcher{"n", "-n", "number", "-number", "amount", "-amount"})) {
 			amount = atoi(argv[i+++1]);
 		} else {
 			cout << "Weird argument \"" << arg << "\". Ignoring.\n";
@@ -239,13 +229,13 @@ int main(int argc, char * argv[]) {
 	int n = 0;
 	if (isCompress) {
 		if (compress(nameIn, nameOut))
-			while (++n<amount && compress(nameOut, nameOut));
+			while (++n<amount && compress(nameOut, nameOut)) {}
 	} else {
 		if (decompress(nameIn, nameOut))
-			while (++n<amount && decompress(nameOut, nameOut));
+			while (++n<amount && decompress(nameOut, nameOut)) {}
 	}
 
-	cout << "Done. Total " << (isCompress?"c":"dec") << "ompressed " << n << " times.\n";
+	cout << "Done. Total " << (isCompress ? "c" : "dec") << "ompressed " << n << " times.\n";
 
 	return 0;
 }
