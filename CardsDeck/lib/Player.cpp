@@ -68,10 +68,10 @@ void Player::popCounterCard(int i, const Card &tableCard, const std::vector<Card
 
 void Player::makeCounterTurn(const Card &tableCard, const std::vector<Card> &counterCards) {
 	if (humanity) {
-		std::cout << "Your cards:\n\t" << getCardsString() << "\nChoose card:";
+		std::cout << "Choose card:";
 		std::string choiceStr;
 		std::cin >> choiceStr;
-		int choice = std::stoi(choiceStr);
+		int choice = std::stoi(choiceStr);  // TODO: catch exception
 
 		if (choice == 0) {
 			std::cout << getName() << " takes " << (const_cast<Card&>(tableCard)).toString() << " and skipping its turn\n";
@@ -88,7 +88,7 @@ void Player::makeCounterTurn(const Card &tableCard, const std::vector<Card> &cou
 }
 
 std::string Player::getCardsString() {
-	std::string s;
+	std::string s;  // FIXME: stringstream
 
 	std::vector<Card>::iterator iter = hand.begin();
 

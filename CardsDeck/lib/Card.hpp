@@ -13,7 +13,7 @@ public:
 	Card(const Card&);
 	Card(Rank, Suit);
 
-	std::string toString();
+	std::string toString() const;
 	Rank getRank();
 	Suit getSuit();
 	bool isBeats(const Card&);
