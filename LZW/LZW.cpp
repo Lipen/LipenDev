@@ -3,6 +3,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <sstream>
 #include <cmath>
 #include <cstdlib>
 
@@ -11,13 +12,13 @@
 using namespace std;
 
 string convertNumberToBits(int n, int size) {
-	string s;
+	stringstream ss;
 	for (int i = size-1; i >= 0; --i) {
 		int p = pow(2, i);
-		s += (n / p) ? "1" : "0";
+		ss << ((n / p) ? "1" : "0");
 		n %= p;
 	}
-	return s;
+	return ss.str();
 }
 
 unsigned char convertBitsToByte(string s) {
@@ -29,13 +30,13 @@ unsigned char convertBitsToByte(string s) {
 }
 
 string convertByteToBits(unsigned char c) {
-	string s;
+	stringstream ss;
 	for (int i = 0; i < 8; ++i) {
 		int p = pow(2, 7-i);
-		s += (c / p) ? "1" : "0";
+		ss << ((c / p) ? "1" : "0");
 		c %= p;
 	}
-	return s;
+	return ss.str();
 }
 
 int convertBitsToNumber(string buf) {
@@ -54,7 +55,7 @@ bool compress(string nameIn, string nameOut) {
 	ifstream fi(nameIn, ios::binary);
 
 	if (fi) {
-		string flow;
+		stringstream flow;
 		char c;
 		string stack;
 		string newstack;
@@ -70,7 +71,7 @@ bool compress(string nameIn, string nameOut) {
 			newstack = stack + c;
 
 			if (d.find(newstack) == d.end()) {
-				flow += convertNumberToBits(d[stack], len);
+				flow << convertNumberToBits(d[stack], len);
 				d[newstack] = last++;
 				newstack = c;
 			}
@@ -78,17 +79,18 @@ bool compress(string nameIn, string nameOut) {
 			stack = newstack;
 			len = (int)log2(last) + 1;
 		}
-		flow += convertNumberToBits(d[stack], len);
+		flow << convertNumberToBits(d[stack], len);
 
 		fi.close();
 
 		ofstream fo(nameOut, ios::binary);
 
 		if (fo) {
-			flow.resize(ceil(flow.length()/8.)*8, '0');
+			string flowString = flow.str();
+			flowString.resize(ceil(flowString.length()/8.)*8, '0');
 
-			for (int i = 0; i < (int)flow.length(); i += 8) {
-				fo.put(convertBitsToByte(flow.substr(i, 8)));
+			for (int i = 0; i < (int)flowString.length(); i += 8) {
+				fo.put(convertBitsToByte(flowString.substr(i, 8)));
 			}
 
 			fo.close();
@@ -109,14 +111,14 @@ bool decompress(string nameIn, string nameOut) {
 
 	if (fi) {
 		fi.seekg(0, fi.end);
-		int fileSize = fi.tellg() * 8; //bits!
+		int fileSize = fi.tellg() * 8;  //bits!
 		fi.seekg(0, fi.beg);
 		map<int, string> d;
 		for (int i=0; i<256; ++i) {
 			d[i] = string(1, i);
 		}
 		int last = 256;
-		int len = 9; //(int)log2(last+1)+1
+		int len = 9;  //(int)log2(last+1)+1
 
 		char t;
 		string data;
@@ -125,12 +127,13 @@ bool decompress(string nameIn, string nameOut) {
 		}
 
 		int k = convertBitsToNumber(data.substr(0, len));
-		string stack(1, k); 	//char group builder
-		string flow = stack; 	//result
-		string c; 				//current char/chargroup
+		string stack(1, k);	//char group builder
+		stringstream flow;	//result
+		flow << stack;
+		string c;			//current char/chargroup
 
 		for (int i = len; i < fileSize; i += len) {
-			len = (int)log2(last+1)+1; //force(!) pre(!) ceil
+			len = (int)log2(last+1) + 1;  //force(!) pre(!) ceil
 			string z = data.substr(i, len);
 			//Ignore trailing bits == last-byte-building-(zeros):
 			if ((int)z.length() < len) break;
@@ -144,7 +147,7 @@ bool decompress(string nameIn, string nameOut) {
 				cout << "Bad encoded k = " << k << " at " << i << "!\n";
 				return false;
 			}
-			flow += c;
+			flow << c;
 			d[last++] = stack+c[0];
 			stack = c;
 		}
@@ -154,7 +157,7 @@ bool decompress(string nameIn, string nameOut) {
 		ofstream fo(nameOut, ios::binary);
 
 		if (fo) {
-			fo << flow;
+			fo << (flow.str());  // parentheses!
 			fo.close();
 		} else {
 			cout << "Unable to open output file :C\n";
