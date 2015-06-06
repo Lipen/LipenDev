@@ -1,3 +1,4 @@
+/* Copyright (c) 2015 Lipen */
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -11,9 +12,9 @@ using namespace std;
 
 string convertNumberToBits(int n, int size) {
 	string s;
-	for (int i=size-1; i>=0; --i) {
+	for (int i = size-1; i >= 0; --i) {
 		int p = pow(2, i);
-		s += (n / p)?"1":"0";
+		s += (n / p) ? "1" : "0";
 		n %= p;
 	}
 	return s;
@@ -21,17 +22,17 @@ string convertNumberToBits(int n, int size) {
 
 unsigned char convertBitsToByte(string s) {
 	unsigned char b = 0;
-	for (int i=0; i<8; ++i) {
-		if (s[i]=='1') b += (int)pow(2, 7-i);
+	for (int i = 0; i < 8; ++i) {
+		if (s[i] == '1') b += (int)pow(2, 7-i);
 	}
 	return b;
 }
 
 string convertByteToBits(unsigned char c) {
 	string s;
-	for (int i=0; i<8; ++i) {
+	for (int i = 0; i < 8; ++i) {
 		int p = pow(2, 7-i);
-		s += (c/p)?"1":"0";
+		s += (c / p) ? "1" : "0";
 		c %= p;
 	}
 	return s;
@@ -40,13 +41,14 @@ string convertByteToBits(unsigned char c) {
 int convertBitsToNumber(string buf) {
 	int size = buf.length();
 	int x = 0;
-	for (int i=0; i<size; ++i) {
-		if (buf[size-i-1]=='1') {
+	for (int i = 0; i < size; ++i) {
+		if (buf[size-i-1] == '1') {
 			x += pow(2, i);
 		}
 	}
 	return x;
 }
+
 
 bool compress(string nameIn, string nameOut) {
 	ifstream fi(nameIn, ios::binary);
@@ -57,7 +59,7 @@ bool compress(string nameIn, string nameOut) {
 		string stack;
 		string newstack;
 		map<string, int> d;
-		for (int i=0; i<256; ++i) {
+		for (int i = 0; i < 256; ++i) {
 			d[string(1, i)] = i;
 		}
 		int last = 256;
@@ -71,7 +73,7 @@ bool compress(string nameIn, string nameOut) {
 				newstack = c;
 			}
 			stack = newstack;
-			len = (int)log2(last)+1;
+			len = (int)log2(last) + 1;
 		}
 		flow += convertNumberToBits(d[stack], len);
 
@@ -81,20 +83,21 @@ bool compress(string nameIn, string nameOut) {
 
 		if (fo) {
 			flow.resize(ceil(flow.length()/8.)*8, '0');
-			for (int i=0; i<(int)flow.length(); i+=8) {
+			for (int i = 0; i < (int)flow.length(); i += 8) {
 				fo.put(convertBitsToByte(flow.substr(i, 8)));
 			}
 			fo.close();
 		} else {
-			cout << "Unable to open output file :C" << endl;
+			cout << "Unable to open output file :C\n";
 			return false;
 		}
 	} else {
-		cout << "Unable to open input file :c" << endl;
+		cout << "Unable to open input file :c\n";
 		return false;
 	}
 	return true;
 }
+
 
 bool decompress(string nameIn, string nameOut) {
 	ifstream fi(nameIn, ios::binary);
@@ -121,7 +124,7 @@ bool decompress(string nameIn, string nameOut) {
 		string flow = stack; //result
 		string c; //current char/chargroup
 
-		for (int i=len; i<fileSize; i+=len) {
+		for (int i = len; i < fileSize; i += len) {
 			len = (int)log2(last+1)+1; //force(!) pre(!) ceil
 			string z = data.substr(i, len);
 			//Ignore trailing bits == last-byte-building-(zeros):
@@ -130,10 +133,10 @@ bool decompress(string nameIn, string nameOut) {
 
 			if (d.count(k)) {
 				c = d[k];
-			} else if (k==last) {
+			} else if (k == last) {
 				c = stack + stack[0];
 			} else {
-				cout << "Bad encoded k = " << k << " at " << i << "!" <<endl;
+				cout << "Bad encoded k = " << k << " at " << i << "!\n";
 				return false;
 			}
 			flow += c;
@@ -149,15 +152,46 @@ bool decompress(string nameIn, string nameOut) {
 			fo << flow;
 			fo.close();
 		} else {
-			cout << "Unable to open output file :C" << endl;
+			cout << "Unable to open output file :C\n";
 			return false;
 		}
 	} else {
-		cout << "Unable to open input file :c" << endl;
+		cout << "Unable to open input file :c\n";
 		return false;
 	}
 	return true;
 }
+
+
+bool compareStrings(string s, string t, bool ignoreCase=false) {
+	if (s.size() != t.size())
+		return false;
+
+	for (int i = 0; i < (int)s.size(); ++i) {
+		if (ignoreCase) {
+			if (std::tolower(s[i]) != std::tolower(t[i]))
+				return false;
+		} else {
+			if (s[i] != t[i])
+				return false;
+		}
+	}
+
+	return true;
+}
+
+template<size_t N>
+bool match(string toMatch, const string (&matchWith)[N]) {
+	for (int i = 0; i < (int)N; ++i)
+		if (compareStrings(toMatch, matchWith[i], true))
+			return true;
+	return false;
+}
+
+template<typename T>
+using matcher = T;
+using matcherStrings = matcher<string[]>;
+
 
 int main(int argc, char * argv[]) {
 	string nameIn("LZW_toEncode.txt");
@@ -168,15 +202,25 @@ int main(int argc, char * argv[]) {
 	for (int i=1; i<argc; ++i) {
 		string arg(argv[i]);
 		// TODO: impl <matcher> (from TFM)
-		if (arg=="encode" || arg=="compress" || arg=="-encode" || arg=="-compress") {
+		if (match(arg,
+			matcherStrings{"encode", "-encode", "compress", "-compress"}))
+		{
 			isCompress = true;
-		} else if (arg=="decode" || arg=="decompress" || arg=="-decode" || arg=="-decompress") {
+		} else if (match(arg,
+			matcherStrings{"decode", "decompress", "-decode", "-decompress"}))
+		{
 			isCompress = false;
-		} else if (arg=="-in") {
+		} else if (match(arg,
+			matcherStrings{"in", "-in", "input", "-input"}))
+		{
 			nameIn = string(argv[i+++1]);
-		} else if (arg=="-out") {
+		} else if (match(arg,
+			matcherStrings{"out", "-out", "output", "-output"}))
+		{
 			nameOut = string(argv[i+++1]);
-		} else if (arg=="-n") {
+		} else if (match(arg,
+			matcherStrings{"n", "-n", "number", "-number", "amount", "-amount", "times", "-times"}))
+		{
 			amount = atoi(argv[i+++1]);
 		} else {
 			cout << "Weird argument \"" << arg << "\"" << endl;
@@ -194,7 +238,7 @@ int main(int argc, char * argv[]) {
 			while (++n<amount && decompress(nameOut, nameOut));
 	}
 
-	cout << "Done. Total " << (isCompress?"c":"dec") << "ompressed " << n << " times." << endl;
+	cout << "Done. Total " << (isCompress?"c":"dec") << "ompressed " << n << " times.\n";
 
 	return 0;
 }
