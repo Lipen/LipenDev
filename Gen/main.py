@@ -1,64 +1,78 @@
 import random
 import re
-import math
-
-
-# Some species:
 # CATGACTTCAGCTGGTTAAC :: @TSAG~
+
 
 class Cell:
 	seq = ''
 	genes = ''
 	food = 0
 	feeding_rate = 1.
+	name = ''
 
-	def __init__(self, seq):
+	def __init__(self, seq, name):
 		self.seq = seq
+		self.name = name
 
 	def getGenes(self):
 		return '@' + self.genes + '~'
 
+	def getName(self):
+		if len(self.name) > 20:
+			return self.name[:7] + '...' + self.name[-10:]
+		else:
+			return self.name
+
 	def test(self):
-		t = re.match('.*?(ATG)+(?P<genes>(...)*?)((TAG)|(TAA)|(TGA)).*', self.seq)
+		# think that smaller regex:
+		# (ATG)+(?P<genes>(...)*?)((TAG)|(TAA)|(TGA))
+		# will be enough...
+		t = re.match('.*?(ATG)+(?P<genes>(...)*?)((TAG)|(TAA)|(TGA)).*', self.seq)  # FIXME: replace regex with proper searching loop
+		# bug: ATGGCCGTAATTGTAGGCCATCCTATCACACCCTGGCCGTTTAATGTAAA shouldn`t fit, because first ATG-start codon doesn`t have matching stop-codon, BUT another one ATG at the end has it, which shouldn`t matter, because first doesn`t!
 		if t:
 			self.genes = convertToProteins(t.group('genes'))
 
 			# There goes genes' functions:
-			self.feeding_rate = max(.1, 1. + 0.5*math.sqrt(self.genes.count('R')) - 1.*self.genes.count('E'))
+			self.feeding_rate = max(.1, 1. + 0.5*self.genes.count('R')**(0.5) + 1.*self.genes.count('RRRRR')**(2) - 1.*self.genes.count('E'))
 
 			##
 			return True
-		else:
+		else:  # else it is a junk
 			return False
 
 	def feed(self, k=1):
 		self.food += k*self.feeding_rate
 
-	def mutate(self):
-		t = random.randint(0, len(self.seq)-1)
-		self.seq = self.seq[:t] + {'A': 'GCT', 'G': 'ACT', 'T': 'AGC', 'C': 'ATG'}[self.seq[t]][random.randint(0, 2)] + self.seq[t+1:]
+	def mutate(self, n=1):
+		for t in random.sample(range(len(self.seq)), n):
+			# t = random.randint(0, len(self.seq)-1)
+			self.seq = self.seq[:t] + {'A': 'GCT', 'G': 'ACT', 'T': 'AGC', 'C': 'ATG'}[self.seq[t]][random.randint(0, 2)] + self.seq[t+1:]
 
 	def produce(self):
 		F = []
 		k = int(self.food)
-		lim = 10
-		ex = 5
-		if k > lim:
-			k = lim + (k-lim)//ex
-			F.append(self)  # Also reproduces itself
 
-		for i in range(k):
-			t = Cell(self.seq)
-			t.mutate()
-			if t.test():
-				F.append(t)
+		limMin = 3
+		limEx = 10
+		ex = 5
+
+		if k > limMin:
+			if k > limEx:
+				k = limEx + (k-limEx)//ex
+				F.append(self)  # Also reproduces itself
+
+			for i in range(k):
+				t = Cell(self.seq, convertName(self.name, i+1, k))
+				t.mutate(random.randint(1, 3))
+				if t.test():
+					F.append(t)
 
 		self.food = 0
 		return F
 
 
 def initial_random_cell(n=20):
-	return Cell(''.join('ACGT'[random.randint(0, 3)] for _ in range(n)))
+	return Cell(''.join('ACGT'[random.randint(0, 3)] for _ in range(n)), '&')
 
 
 def convertToProteins(s):
@@ -76,41 +90,58 @@ def convertToProteins(s):
 	return ''.join(d[s[i*3:(i+1)*3]] for i in range(len(s)//3))
 
 
+def convertName(name, i, n):
+	s = ''
+
+	if n < 10:
+		s = str(i)
+	else:
+		if n <= 26:
+			s = chr(ord('A') + i-1)
+		else:
+			x = i-1
+			while x:
+				s += chr(ord('a') + x % 26)
+				x //= 26
+			s = s[::-1].lower()
+			s = s[0].upper()+s[1:]
+
+	return name + s
+
+
 def turn(A, i):
+	if not A:
+		return []
+
 	F = []
 
-	food = 50 + i//2
+	food = 50 + i**(1/4)
 	while food > 0:
 		a = random.choice(A)
-		a.feed(1)
-		food -= 1
+		x = min(food, random.uniform(0.5, 2.))
+		a.feed(x)
+		food -= x
 
 	for i in range(len(A)):
 		f = A[i].produce()
 		F.extend(f)
-		# q = A[i].seq
-		# for k in range(5):
-		# 	t = Cell(q)
-		# 	t.mutate()
-		# 	if t.test():
-		# 		F.append(t)
 
 	return F
 
 
 def main():
 	F = []
-	n = 1
+	n = 5
 
 	while len(F) < n:
-		f = initial_random_cell(50)
+		f = initial_random_cell(100)
 		if f.test():
 			F.append(f)
-			print('Born #{}: {} :: {}'.format(len(F), f.seq, f.getGenes()))
+			# print('Born #{}: \"{}\" :: {}'.format(len(F), f.getName(), f.getGenes()))
 
 	print('Initial generation: ({} species)'.format(len(F)))
 	for i in range(len(F)):
-		print('#{: <2}: {} :: {}'.format(i+1, F[i].seq, F[i].getGenes()))
+		print('#{: <2}: \"{}\" :: {}'.format(i+1, F[i].getName(), F[i].getGenes()))
 	print('-------------------')
 
 	for i in range(100):  # skip turns
@@ -118,7 +149,7 @@ def main():
 
 	print('New generation: ({} species)'.format(len(F)))
 	for i in range(len(F)):
-		print('#{: <2}: {} :: {}'.format(i+1, F[i].seq, F[i].getGenes()))
+		print('#{: <2}: \"{}\" :: {}'.format(i+1, F[i].getName(), F[i].getGenes()))
 	print('-------------------')
 
 
