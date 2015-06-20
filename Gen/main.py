@@ -1,6 +1,7 @@
 import random
 import re
-# CATGACTTCAGCTGGTTAAC :: @TSAG~
+
+# TODO: Add various mutation processes: inserting, cutting, replacing groups...
 
 
 class Cell:
@@ -18,18 +19,21 @@ class Cell:
 		return '@' + self.genes + '~'
 
 	def getName(self):
-		if len(self.name) > 20:
-			return self.name[:7] + '...' + self.name[-10:]
-		else:
-			return self.name
+		m = 30
+		return format(self.seq[:m-3] + ('...' if len(self.seq) > m-3 else ''), ' <{}'.format(m))
+		# if len(self.name) > 20:
+		# 	return self.name[:7] + '...' + self.name[-10:]
+		# else:
+		# 	return self.name
 
 	def test(self):
 		# think that smaller regex:
 		# (ATG)+(?P<genes>(...)*?)((TAG)|(TAA)|(TGA))
 		# will be enough...
-		t = re.match('.*?(ATG)+(?P<genes>(...)*?)((TAG)|(TAA)|(TGA)).*', self.seq)  # FIXME: replace regex with proper searching loop
-		# bug: ATGGCCGTAATTGTAGGCCATCCTATCACACCCTGGCCGTTTAATGTAAA shouldn`t fit, because first ATG-start codon doesn`t have matching stop-codon, BUT another one ATG at the end has it, which shouldn`t matter, because first doesn`t!
+		t = re.match('.*?(?P<start_codon>ATG)+(?P<genes>(...)*?)(?P<stop_codon>(TAG)|(TAA)|(TGA)).*', self.seq)  # FIXME: replace regex with proper searching loop
+		# FIXME: bug :: ATGGCCGTAATTGTAGGCCATCCTATCACACCCTGGCCGTTTAATGTAAA shouldn`t fit, because first ATG-start codon doesn`t have matching stop-codon, BUT another one ATG at the end has it, which shouldn`t matter, because first doesn`t!
 		if t:
+			self.seq = t.group('start_codon') + t.group('genes') + t.group('stop_codon')
 			self.genes = convertToProteins(t.group('genes'))
 
 			# There goes genes' functions:
@@ -45,7 +49,6 @@ class Cell:
 
 	def mutate(self, n=1):
 		for t in random.sample(range(len(self.seq)), n):
-			# t = random.randint(0, len(self.seq)-1)
 			self.seq = self.seq[:t] + {'A': 'GCT', 'G': 'ACT', 'T': 'AGC', 'C': 'ATG'}[self.seq[t]][random.randint(0, 2)] + self.seq[t+1:]
 
 	def produce(self):
@@ -144,7 +147,7 @@ def main():
 		print('#{: <2}: \"{}\" :: {}'.format(i+1, F[i].getName(), F[i].getGenes()))
 	print('-------------------')
 
-	for i in range(100):  # skip turns
+	for i in range(1000):  # skip turns
 		F = turn(F, i)
 
 	print('New generation: ({} species)'.format(len(F)))
