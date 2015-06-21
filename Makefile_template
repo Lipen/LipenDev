@@ -1,0 +1,30 @@
+CC=g++
+CV=-std=gnu++0x
+# There goes list of all sources:
+SOURCES=filename.cpp
+EXECUTABLE=exename
+
+OBJECTS=$(SOURCES:.cpp=.o)
+OPTLEVEL=-O2
+# Compiler flags:
+CFLAGS=$(CV) -c -Wall $(OPTLEVEL)
+# Linker flags:
+LDFLAGS=
+
+.SUFFIXES: .cpp .o
+
+all: compile run
+
+compile: $(EXECUTABLE)
+
+run:
+	$(EXECUTABLE)
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(CV) $(LDFLAGS) $(OBJECTS) -o $@
+
+.cpp.o:
+	$(CC) $(CV) $(CFLAGS) $< -o $@
+
+clean:
+	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).exe
