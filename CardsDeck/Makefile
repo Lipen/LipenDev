@@ -1,33 +1,42 @@
-CC=g++
-CV=-std=gnu++0x
-# There goes list of all sources:
-SOURCES=src/CardsDeck.cpp lib/Card.cpp lib/Deck.cpp lib/Player.cpp
-EXECUTABLE=bin/CardsDeck
+CC = g++
+CV = -std=gnu++0x
+OPTLVL = -O2
+# DEBUG = -g
+INCLUDE = -Ilib
+RUNDEPS = input.txt output.txt
 
-OBJECTS=$(SOURCES:.cpp=.o)
-OPTLEVEL=-O2
+EXECUTABLE = bin/CardsDeck
+# Sources to compile:
+SOURCES = src/CardsDeck.cpp lib/Card.cpp lib/Deck.cpp lib/Player.cpp
+OBJS = $(SOURCES:.cpp=.o)
+
 # Compiler flags:
-CFLAGS=$(CV) -c -Wall $(OPTLEVEL) -Ilib
+CFLAGS = $(CV) -c -Wall $(OPTLVL) $(DEBUG) $(INCLUDE)
 # Linker flags:
-LDFLAGS=
-
-.SUFFIXES: .cpp .o
+LFLAGS = -Wall $(DEBUG)
 
 all: compile run
 
 compile: $(EXECUTABLE)
 
-run:
+run: $(RUNDEPS)
 	@echo -n "Executing: "
 	$(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): $(OBJS)
 	@echo -n "Linking: "
-	$(CC) $(CV) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(LFLAGS) $(OBJS) -o $@
+
+.SUFFIXES: .cpp .o
 
 .cpp.o:
 	@echo -n "Compiling: "
-	$(CC) $(CV) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).exe
+	@echo -n "Cleaning up: "
+	rm -f $(OBJS) $(EXECUTABLE) $(EXECUTABLE).exe
+
+%.txt:
+	@echo -n "Creating non-existing empty txt file: "
+	touch $@
