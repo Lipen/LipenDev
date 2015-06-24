@@ -1,29 +1,42 @@
-CC=g++
-CV=-std=gnu++0x
-# There goes list of all sources:
-SOURCES=TFM.cpp
-EXECUTABLE=TFM
+CC = g++
+CV = -std=gnu++0x
+OPTLVL = -O2
+# DEBUG = -g
+# INCLUDE = -Ilib
+RUNDEPS = input.txt output.txt
 
-OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE = TFM
+# Sources to compile:
+SOURCES = TFM.cpp
+OBJS = $(SOURCES:.cpp=.o)
+
 # Compiler flags:
-CFLAGS=$(CV) -c -Wall -O2
+CFLAGS = $(CV) -c -Wall $(OPTLVL) $(DEBUG) $(INCLUDE)
 # Linker flags:
-LDFLAGS=
-
-.SUFFIXES: .cpp .o
+LFLAGS = -Wall $(DEBUG)
 
 all: compile run
 
 compile: $(EXECUTABLE)
 
-run:
+run: $(RUNDEPS)
+	@echo -n "Executing: "
 	$(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(CV) $(LDFLAGS) $(OBJECTS) -o $@
+$(EXECUTABLE): $(OBJS)
+	@echo -n "Linking: "
+	$(CC) $(LFLAGS) $(OBJS) -o $@
+
+.SUFFIXES: .cpp .o
 
 .cpp.o:
-	$(CC) $(CV) $(CFLAGS) $< -o $@
+	@echo -n "Compiling: "
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).exe
+	@echo -n "Cleaning up: "
+	rm -f $(OBJS) $(EXECUTABLE) $(EXECUTABLE).exe
+
+%.txt:
+	@echo -n "Creating non-existing empty txt file: "
+	touch $@
