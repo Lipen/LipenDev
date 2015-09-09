@@ -1,6 +1,7 @@
 import os
 sys = os.system
 
+CC = 'g++ {} -std=gnu++0x -Wall'
 FLAG_clear = ['/c', '-c']
 FLAG_window = ['/w', '-w']
 FLAG_exit = ['/e', '-e']
@@ -45,7 +46,7 @@ def main():
 		if len(list(set(FLAG_clear).intersection(set(flags)))) > 0:
 			sys('cls')
 		print('Compiling...')
-		err = sys('g++ {} -std=gnu++0x -o {}.exe'.format(name, name[:-4]))
+		err = sys((CC+' -o {}.exe').format(name, name[:-4]))
 		if err:
 			print('Error during compiling. <{}>'.format(err))
 		else:
@@ -54,7 +55,7 @@ def main():
 		if len(list(set(FLAG_clear).intersection(set(flags)))) > 0:
 			sys('cls')
 		print('Compiling...')
-		err = sys('g++ {} -std=gnu++0x -o {}.exe'.format(name, name[:-4]))
+		err = sys((CC+' -o {}.exe').format(name, name[:-4]))
 		if err:
 			print('Error during compiling. <{}>'.format(err))
 		else:
