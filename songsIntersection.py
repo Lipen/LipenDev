@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import re
+import functools
 import pymorphy2
 
 s1 = '''Темный город ждал огни,
@@ -109,28 +110,4 @@ s3 = '''Среди огней ночного Петербурга,
 
 morph = pymorphy2.MorphAnalyzer()
 
-q1 = re.sub("[^\w]", " ",  s1).split()
-w1 = list(set(s.lower() for s in q1))
-e1 = [morph.parse(s)[0].normal_form for s in w1]
-r1 = set(e1)
-
-# dd1 = [(s, morph.parse(s)) for s in w1]
-# for _ in dd1:
-# 	print('> ' + _[0])
-# 	for __ in _[1][:2]:
-# 		print(__)
-
-q2 = re.sub("[^\w]", " ",  s2).split()
-w2 = list(set(s.lower() for s in q2))
-e2 = [morph.parse(s)[0].normal_form for s in w2]
-r2 = set(e2)
-
-q3 = re.sub("[^\w]", " ",  s3).split()
-w3 = list(set(s.lower() for s in q3))
-e3 = [morph.parse(s)[0].normal_form for s in w3]
-r3 = set(e3)
-
-# print(r1.intersection(r2))
-# print(r2.intersection(r3))
-# print(r1.intersection(r3))
-print(r1.intersection(r2).intersection(r3))
+print(functools.reduce(lambda a, b: a.intersection(b), [set([morph.parse(e)[0].normal_form for e in list(set(e.lower() for e in re.sub("[^\w]", " ",  s).split()))]) for s in [s1, s2, s3]]))
