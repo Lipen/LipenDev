@@ -33,7 +33,8 @@ struct TreeNode {
 	TreeNode(size_t k, T d, Color c = BLACK) : key(k), data(d), color(c) {}
 
 	friend std::ostream& operator<<(std::ostream& o, const TreeNode<T>& node) {
-		return o << "[TreeNode: key=" << node.key << ", data=" << node.data << ", color = " << node.color << "]";
+		// return o << "[TreeNode: key=" << node.key << ", data=" << node.data << ", color = " << node.color << "]";
+		return o << "[TN(" << &node << "): k=" << node.key << ", c=" << (node.color?"R":"B") << ", l="<<node.left << ", r=" << node.right << ", p=" << node.parent << "]";
 	}
 };
 
@@ -53,12 +54,7 @@ class RedBlackTree {
 		if (x == nullptr) {
 			return 0;
 		}
-		cout << "calculating..." << endl;
-		cout << x << " :: " << x->left << " :: " << x->right << endl;
-		// size_t t = get_size(x->left) + get_size(x->right) + 1;
-		size_t t = 1;
-		cout << "size = " << t << endl;
-		return t;
+		return get_size(x->left) + get_size(x->right) + 1;
 	}
 	size_t get_size() {
 		cout << "get_size(root)..." << endl;
@@ -185,13 +181,13 @@ class RedBlackTree {
 		x->parent = y;
 	}
 
-	void rotate_right(Node* x) {
-		if (x->left == nullptr) {
-			cout << "Exception: x->left == nullptr" << endl;
+	void rotate_right(Node* y) {
+		if (y->left == nullptr) {
+			cout << "Exception: y->left == nullptr" << endl;
 			return;
 		}
 
-		Node* y = x->parent;
+		Node* x = y->left;
 		y->left = x->right;
 
 		if (x->right != nullptr) {
@@ -242,57 +238,42 @@ class RedBlackTree {
 	}
 
 	void insert(Node* x) {
-		cout << "insert_tree()..." << endl;
 		insert_tree(x);
-		cout << "insert_tree done" << endl;
-		inorder_walk();
 		x->color = RED;
-		Node* y = nullptr;
 
 		while (x != root && x->parent->color == RED) {
-			cout << "while..." << endl;
 			if (x->parent == x->parent->parent->left) {
-				cout << "dbg00" << endl;
-				y = x->parent->parent->right;
-				cout << "dbg01" << endl;
+				Node* y = x->parent->parent->right;
 
-				if (/*y != nullptr && */y->color == RED) {  // case #1
-					cout << "case #1" << endl;
+				if (y != nullptr && y->color == RED) {  // case #1
 					x->parent->color = BLACK;
 					y->color = BLACK;
 					x->parent->parent->color = RED;
 					x = x->parent->parent;
 				} else {
 					if (x == x->parent->right) {  // case #2
-						cout << "case #2" << endl;
 						x = x->parent;
 						rotate_left(x);
 					}
 					// case #3
-					cout << "case #3" << endl;
 					x->parent->color = BLACK;
 					x->parent->parent->color = RED;
 					rotate_right(x->parent->parent);
 				}
 			} else {
-				cout << "dbg10" << endl;
-				y = x->parent->parent->left;
-				cout << "dbg11" << endl;
+				Node* y = x->parent->parent->left;
 
-				if (/*y != nullptr && */y->color == RED) {  // case #4?
-					cout << "case #4" << endl;
+				if (y != nullptr && y->color == RED) {  // case #4?
 					x->parent->color = BLACK;
 					y->color = BLACK;
 					x->parent->parent->color = RED;
 					x = x->parent->parent;
 				} else {
 					if (x == x->parent->left) {  // case #5?
-						cout << "case #5" << endl;
 						x = x->parent;
 						rotate_right(x);
 					}
 					// case #6?
-					cout << "case #6" << endl;
 					x->parent->color = BLACK;
 					x->parent->parent->color = RED;
 					rotate_left(x->parent->parent);
@@ -300,7 +281,6 @@ class RedBlackTree {
 			}
 		}
 
-		cout << "root color = BLACK" << endl;
 		root->color = BLACK;
 	}
 };
@@ -311,18 +291,18 @@ int main() {
 	cout << "Initial array:\n\t"; show(A);
 
 	RedBlackTree<TreeNode<double>> t;
-	TreeNode<double>* node;
 	cout << "RedBlackTree created." << endl;
+
 	for (auto x : A) {
-		// cout << "node = new node()...\n";
-		node = new TreeNode<double>(x, x*3.14159);
-		// cout << "t.insert()..." << endl;
+		TreeNode<double>* node = new TreeNode<double>(x, x*3.14159);
+		cout << "t.insert(" << x << ")..." << endl;
 		t.insert(node);
-		cout << "Node inserted into tree" << endl;
-		t.inorder_walk();
 	}
-	cout << "done!" << endl;
-	t.inorder_walk();
+
+	cout << "\tdone!" << endl;
+	cout << "Tree inorder:" << endl; t.inorder_walk();
 	cout << "Tree size = " << t.get_size() << endl;
-	cout << "Tree min = " << *t.minimum() << ", max = " << *t.maximum() << endl;
+	cout << "Tree min = " << *t.minimum() << "\nTree max = " << *t.maximum() << endl;
+
+	cout << "\n\tSuccessfully ended!\n" << endl;
 }
