@@ -36,6 +36,7 @@ int main() {
 
 	std::vector<Shape*> v;
 
+
 	for (int i = 0; i < n; ++i) {
 		Shape* sh;
 		char c;
@@ -62,31 +63,10 @@ int main() {
 		cin.ignore(2147483647, '\n');
 	}
 
-	// Print all shapes:
-	// for (auto* s : shapes) {
-	// 	cout << *s << endl;
-	// }
 
 	int size = v.size();
 	Shape** shapes = new Shape*[size];
 	std::copy(v.begin(), v.end(), shapes);
 
 	cout << *min_perimeter(shapes, size) << endl;
-
-	cout << "End." << endl;
-
-	// ### TEST ###
-
-	// Rect r(2, 5); 			cout << r << endl;
-	// RightTriangle t(3, 4);	cout << t << endl;
-	// Circle c(6);			cout << c << endl;
-
-	// Shape* r = new Rect(2, 5);
-	// cout << *r << endl;
-
-	// Shape* t = new RightTriangle(3, 4);
-	// cout << *t << endl;
-
-	// Shape* c = new Circle(6);
-	// cout << *c << endl;
 }

@@ -15,5 +15,5 @@ double Rect::get_area() const {
 }
 
 std::string Rect::get_type() const {
-	return "RECT";
+	return "RECTANGLE";
 }
