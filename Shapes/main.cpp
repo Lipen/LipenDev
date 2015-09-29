@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 #include "Shape.hpp"
 #include "Rect.hpp"
@@ -32,7 +33,7 @@ Shape* min_perimeter(Shape** shapes, int size) {
 
 int main() {
 	int n;
-	cin >> n; cin.ignore(2147483647, '\n');
+	cin >> n;
 
 	std::vector<Shape*> v;
 
@@ -40,7 +41,7 @@ int main() {
 	for (int i = 0; i < n; ++i) {
 		Shape* sh;
 		char c;
-		cin.get(c);
+		cin >> c;
 
 		if (c == 'R') {
 			double a, b;
@@ -59,8 +60,6 @@ int main() {
 		if (sh) {
 			v.push_back(sh);
 		}
-
-		cin.ignore(2147483647, '\n');
 	}
 
 
@@ -68,5 +67,5 @@ int main() {
 	Shape** shapes = new Shape*[size];
 	std::copy(v.begin(), v.end(), shapes);
 
-	cout << *min_perimeter(shapes, size) << endl;
+	cout << std::setprecision(2) << std::fixed << *min_perimeter(shapes, size) << endl;
 }
