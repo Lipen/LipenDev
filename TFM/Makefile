@@ -13,7 +13,7 @@ OBJS = $(SOURCES:.cpp=.o)
 # Compiler flags:
 CFLAGS = $(CV) -c -Wall $(OPTLVL) $(DEBUG) $(INCLUDE)
 # Linker flags:
-LFLAGS = -Wall $(DEBUG)
+LDFLAGS =
 
 all: compile run
 
@@ -25,7 +25,7 @@ run: $(RUNDEPS)
 
 $(EXECUTABLE): $(OBJS)
 	@echo -n "Linking: "
-	$(CC) $(LFLAGS) $(OBJS) -o $@
+	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 .SUFFIXES: .cpp .o
 
