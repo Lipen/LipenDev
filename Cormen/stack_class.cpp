@@ -7,18 +7,19 @@ using std::cin;
 using std::endl;
 
 
-template <typename T>
-struct StackInterface {
-	virtual void push(T c) = 0;
-	virtual void pop() = 0;
+template<typename T>
+struct IStack {
+	virtual ~IStack() {}
+	virtual void push(T c)     = 0;
+	virtual void pop()         = 0;
 	virtual bool empty() const = 0;
-	virtual T    top() const = 0;
-	virtual void makeEmpty() = 0;
+	virtual T    top()   const = 0;
+	virtual void makeEmpty()   = 0;
 };
 
 
 template <typename T>
-class StackArray : public StackInterface<T> {
+class StackArray : public IStack<T> {
 	T*     data;
 	size_t head;  // 0 is a Sentinel
 	size_t capacity;
@@ -90,7 +91,7 @@ class StackArray : public StackInterface<T> {
 
 
 template <typename T>
-class StackList : public StackInterface<T> {
+class StackList : public IStack<T> {
 	struct Node {
 		T     value;
 		Node* next;
@@ -157,7 +158,7 @@ int main() {
 	cin >> stack_type;
 
 	// Determine which stack to use:
-	StackInterface<char>* stack;
+	IStack<char>* stack;
 	if (stack_type == 'a') {
 		stack = new StackArray<char>;
 	} else if (stack_type == 'l') {
@@ -182,7 +183,7 @@ int main() {
 	}
 
 	// Reverse result using another stack:
-	StackInterface<char>* tmp;
+	IStack<char>* tmp;
 	if (stack_type == 'a') {
 		tmp = new StackArray<char>;
 	} else if (stack_type == 'l') {
