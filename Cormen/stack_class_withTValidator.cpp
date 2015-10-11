@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 
+#include "../TValidator.ipp"
+
 using std::cout;
 using std::cin;
 using std::endl;
@@ -153,10 +155,8 @@ class StackList : public IStack<T> {
 	}
 };
 
-#include "C:/Data/OneDrive/Programming/dev/Stuff/TValidator.ipp"
 
 int main() {
-	// typedef char T;
 	typedef TValidator<char> T;
 
 	char stack_type;
