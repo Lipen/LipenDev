@@ -156,10 +156,11 @@ class StackList : public IStack<T> {
 };
 
 
-int main() {
+int main_wrap() {
 	typedef TValidator<char> T;
 
 	char stack_type;
+	cout << "Select stack type by typing <a> or <l>: ";
 	cin >> stack_type;
 
 	// Determine which stack to use:
@@ -207,7 +208,18 @@ int main() {
 		tmp->pop();
 	}
 	cout << ss.str() << endl;
+}
 
 
-	cout << "END." << endl;
+int main() {
+	try {
+		int err = main_wrap();
+		if (err) {
+			cout << "Ended with errcode " << err << "." << endl;
+		} else {
+			cout << "Successfully done." << endl;
+		}
+	} catch (const char* msg) {
+		cout << "Caught exception: <" << msg << ">" << endl;
+	}
 }
