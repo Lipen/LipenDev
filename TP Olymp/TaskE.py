@@ -1,4 +1,5 @@
 from math import *
+# TAGS: intergal, itegrate, eval
 
 
 def f(e, x):
@@ -23,7 +24,7 @@ def main():
 	with open('input.txt', 'r') as f:
 		data = f.read().splitlines()
 
-	a, b = map(int, data[0].split())
+	a, b = map(float, data[0].split())
 	e = data[1]
 	##
 
