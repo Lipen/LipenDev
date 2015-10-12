@@ -33,7 +33,7 @@ struct TreeNode {
 	TreeNode(size_t k, T d, Color c = BLACK) : key(k), data(d), color(c) {}
 
 	friend std::ostream& operator<<(std::ostream& o, const TreeNode<T>& node) {
-		// return o << "[TreeNode: key=" << node.key << ", data=" << node.data << ", color = " << node.color << "]";
+		// return o << "[TreeNode: key=" << node.key << ", data=" << node.data << ", color = " << (node.color?"Red":"Black") << "]";
 		return o << "[TN(" << &node << "): k=" << node.key << ", c=" << (node.color?"R":"B") << ", l="<<node.left << ", r=" << node.right << ", p=" << node.parent << "]";
 	}
 };
@@ -42,9 +42,14 @@ struct TreeNode {
 template<typename Node>
 class RedBlackTree {
 	Node* root = nullptr;
+	// Node* nil;
 
  public:
-	RedBlackTree() { cout << "RedBlackTree initialized." << endl; }
+	RedBlackTree() {
+		// nil = new Node(0, BLACK);
+		// nil->left = nil->right = nil->parent = nil;
+		cout << "Red-Black Tree initialized." << endl;
+	}
 
 	Node* get_root() {
 		return root;
@@ -57,13 +62,11 @@ class RedBlackTree {
 		return get_size(x->left) + get_size(x->right) + 1;
 	}
 	size_t get_size() {
-		cout << "get_size(root)..." << endl;
 		return get_size(root);
 	}
 
 	void inorder_walk(Node* x) {
 		if (x != nullptr) {
-			// cout << "Pre: " << x << " (left = " << x->left << ")" << endl;
 			inorder_walk(x->left);
 			cout << "Visited: " << *x << endl;
 			inorder_walk(x->right);
@@ -283,6 +286,150 @@ class RedBlackTree {
 
 		root->color = BLACK;
 	}
+
+	void cut_fixup(Node* x) {
+		while (x != root && x->color == BLACK) {
+			if (x == x->parent->left) {
+				Node* w = x->parent->right;
+
+				if (w->color == RED) {
+					w->color = BLACK;
+					x->parent->color = BLACK;
+					rotate_left(x->parent);
+					w = x->parent->right;
+				}
+
+				if (w->left->color == BLACK && w->right->color == BLACK) {
+					w->color = RED;
+					x = x->parent;
+				} else {
+					if (w->right->color == BLACK) {
+						w->left->color = BLACK;
+						w->color = RED;
+						rotate_right(w);
+						w = x->parent->right;
+					}
+
+					w->color = x->parent->color;
+					x->parent->color = BLACK;
+					w->right->color = BLACK;
+					rotate_left(x->parent);
+					x = root;
+				}
+			} else {
+				Node* w = x->parent->right;
+
+				if (w->color == RED) {
+					w->color = BLACK;
+					x->parent->color = BLACK;
+					rotate_left(x->parent);
+					w = x->parent->right;
+				}
+
+				if (w->left->color == BLACK && w->right->color == BLACK) {
+					w->color = RED;
+					x = x->parent;
+				} else {
+					if (w->right->color == BLACK) {
+						w->left->color = BLACK;
+						w->color = RED;
+						rotate_right(w);
+						w = x->parent->right;
+					}
+
+					w->color = x->parent->color;
+					x->parent->color = BLACK;
+					w->right->color = BLACK;
+					rotate_left(x->parent);
+					x = root;
+				}
+			}
+		}
+
+		x->color = BLACK;
+	}
+
+	Node* cut(Node* z) {
+		Node* x = nullptr;
+		Node* y = nullptr;
+
+		if (z->left == nullptr || z->right == nullptr) {
+			y = z;
+		} else {
+			y = successor(z);
+		}
+		// cout << "361: " << y << endl;
+
+		if (/*y != nullptr && */y->left != nullptr) {
+			x = y->left;
+		} else {
+			x = y->right;
+		}
+		// cout << "367: x = " << x << ", y = " << y << endl;
+
+		/////
+		if (x == nullptr) {
+			x = new Node(0, BLACK);  // nil!
+			x->parent = y;
+			y->left = x;
+		}
+		/////
+
+		x->parent = y->parent;
+		// cout << "378: x = " << x << ", y = " << y << endl;
+
+		if (/*y != nullptr && */y->parent == nullptr) {
+			root = x;
+			// root = nullptr;
+			cout << "382" << endl;
+		} else {
+			// cout << "388" << endl;
+			if (y == y->parent->left) {
+				y->parent->left = x;
+			} else {
+				y->parent->right = x;
+			}
+			// cout << "390" << endl;
+		}
+
+		if (y != z) {
+			z->key = y->key;
+			z->data = y->data;  // + copy other data if necessary
+		}
+		// cout << "397" << endl;
+
+		if (y->color == BLACK) {
+			// cout << "400" << endl;
+			inorder_walk();
+			// cout << "402" << endl;
+			cut_fixup(x);
+			// cout << "404" << endl;
+		}
+		// cout << "406" << endl;
+
+		/////// Remove sentinel...
+		if (x != nullptr) {
+			if (x->parent != nullptr) {
+				if (x == x->parent->left) {
+					x->parent->left = nullptr;
+				} else {
+					x->parent->right = nullptr;
+				}
+			}
+
+			delete x;
+		}
+		x = nullptr;
+		///////
+
+		return y;
+	}
+
+	void remove(Node* z) {
+		Node* y = cut(z);
+
+		delete y;
+	}
 };
 
 
@@ -300,7 +447,27 @@ int main() {
 	}
 
 	cout << "\tdone!" << endl;
-	cout << "Tree inorder:" << endl; t.inorder_walk();
+	cout << "Tree inorder-walk:" << endl; t.inorder_walk();
+	cout << "Tree size = " << t.get_size() << endl;
+	cout << "Tree min = " << *t.minimum() << "\nTree max = " << *t.maximum() << endl;
+
+	cout << "Removing root..." << endl;
+	cout << "Root = " << *t.get_root() << endl;
+	t.remove(t.get_root());
+
+	cout << "\tdone!" << endl;
+	cout << "Tree inorder-walk:" << endl; t.inorder_walk();
+	cout << "Tree size = " << t.get_size() << endl;
+	cout << "Tree min = " << *t.minimum() << "\nTree max = " << *t.maximum() << endl;
+
+	while (t.get_size()) {
+		cout << "Again removing root..." << endl;
+		// cout << "Root = " << *t.get_root() << endl;
+		t.remove(t.get_root());
+	}
+
+	cout << "\tdone!" << endl;
+	cout << "Tree inorder-walk:" << endl; t.inorder_walk();
 	cout << "Tree size = " << t.get_size() << endl;
 	cout << "Tree min = " << *t.minimum() << "\nTree max = " << *t.maximum() << endl;
 
