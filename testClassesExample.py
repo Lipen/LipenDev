@@ -1,12 +1,15 @@
 __author__ = 'Lipen'
 
+
 class TestClass:
+
 	'''
 	Class example, showing how to write classes
 	'''
+
 	x = 0
 
-	def __init__(self, xDefault = 42):
+	def __init__(self, xDefault=42):
 		print('This is init method, called automatically')
 		self.x = xDefault
 
@@ -17,6 +20,7 @@ class TestClass:
 
 	def get(self):
 		return self.x
+
 
 def main():
 	myClass1 = TestClass()
