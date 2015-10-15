@@ -9,8 +9,6 @@
 #include <algorithm>
 #include <utility>
 
-#define pb push_back
-
 using std::cout;
 using std::cin;
 using std::endl;
@@ -18,7 +16,7 @@ using std::string;
 
 std::default_random_engine RandomEngine;
 std::uniform_real_distribution<double> random;  // 0 .. 1
-std::uniform_real_distribution<double> uni_real_dist(5.0, 10.0);
+std::uniform_real_distribution<double> uni_real_dist(1.0, 5.0);
 
 struct Node;
 struct Edge;
@@ -31,12 +29,6 @@ typedef std::vector<Node*> VN;
 typedef std::vector<Ant*> VA;
 typedef std::vector<std::pair<double, Node*>> VPDN;
 
-
-template<typename T>
-void print_vector(std::vector<T> v) {
-	for (T x : v) cout << " " << x;
-	cout << endl;
-}
 
 template<typename T>
 std::ostream& operator<< (std::ostream &out, std::vector<T> v) {
@@ -58,20 +50,31 @@ std::ostream& operator<< (std::ostream &out, std::vector<T*> v) {
 
 	return out;
 }
+std::ostream& operator<<(std::ostream &out, const Node &node);
+template<>
+std::ostream& operator<< (std::ostream &out, VPDN v) {
+	out << "[";
+
+	for (size_t i = 0; i < v.size(); ++i) {
+		out << "{" << v[i].first << ":" << *v[i].second << "}" << (( i < v.size()-1 ) ? ", " : "]");
+	}
+
+	return out;
+}
 
 template<typename T>
-T constrain(T x, T x_min, T x_max) {
-	if (x < x_min) return x_min;
-	if (x > x_max) return x_max;
-	return x;
+void constrain(T &x, const T &x_min, const T &x_max) {
+	if (x < x_min) x = x_min;
+	if (x > x_max) x = x_max;
 }
 
 
-size_t t_max = 1000;
-double alpha = 0.3;
+size_t t_max = 100;
+double alpha = 0.4;
 double beta = 1. - alpha;
-double Q = 10;
+double Q = 100;
 double rho = 0.1;
+bool phe_minmax = false;
 double phe_min = 1.;
 double phe_max = 20.;
 
@@ -103,7 +106,7 @@ struct Node {
 	int number;
 
 	explicit Node(int n) : number(n) {
-		cout << "Node " << n << " created" << endl;
+		// cout << "Node " << n << " created" << endl;
 	}
 
 	friend std::ostream& operator<<(std::ostream &out, const Node &node) {
@@ -111,16 +114,6 @@ struct Node {
 		return out;
 	}
 };
-template<>
-std::ostream& operator<< (std::ostream &out, VPDN v) {
-	out << "[";
-
-	for (size_t i = 0; i < v.size(); ++i) {
-		out << "{" << v[i].first << ":" << *v[i].second << "}" << (( i < v.size()-1 ) ? ", " : "]");
-	}
-
-	return out;
-}
 
 
 struct Edge {
@@ -132,7 +125,7 @@ struct Edge {
 
 	Edge(int x, int y, int w)
 		: v1(x), v2(y), weight(w), eta(1./weight), phe(uni_real_dist(RandomEngine)), phe_acc(0.0) {
-			cout << "Edge between " << x << " and " << y << " created" << endl;
+			// cout << "Edge between " << x << " and " << y << " created" << endl;
 		}
 
 	friend std::ostream& operator<<(std::ostream &out, const Edge &edge) {
@@ -141,7 +134,8 @@ struct Edge {
 	}
 
 	void update() {
-		phe = constrain( (1. - rho) * phe + phe_acc, phe_min, phe_max );
+		phe = (1. - rho) * phe + phe_acc;
+		if (phe_minmax) constrain( phe, phe_min, phe_max );
 		phe_acc = 0.0;
 	}
 };
@@ -214,7 +208,7 @@ struct Ant {
 
 	// TODO: Fabric Pattern
 	Ant(CompleteGraph* graph, int i) : g(graph), start_town(g->get_node(i)), number(i) {
-		cout << "Ant at " << i << " created" << endl;
+		// cout << "Ant at " << i << " created" << endl;
 
 		path.reserve(g->n);
 
@@ -307,7 +301,7 @@ struct Ant {
 
 	void compare_opt(VN &T_opt, int &L_opt) {
 		if (path_len < L_opt || T_opt.size() == 0) {
-			cout << "Overwriting L_opt=" << L_opt << " with " << path_len << endl;
+			cout << "Overwriting L_opt = " << L_opt << " with " << path_len << endl;
 			T_opt = path;
 			L_opt = path_len;
 		}
@@ -330,9 +324,8 @@ int main() {
 	cout << "Ants created" << endl;
 
 	// Main loop:
-	for (size_t t = 0; t < t_max; ++t) {
-		if ( t % 10 == 0 ) cout << "t = " << t << "..." << endl;
-
+	cout << "Starting main loop..." << endl;
+	for (size_t t = 1; t <= t_max; ++t) {
 		for (Ant* ant : ants) {
 			ant->go();
 		}
@@ -342,7 +335,10 @@ int main() {
 		}
 
 		g->update();
+
+		if ( t % (t_max / 8) == 0 ) cout << "t = " << t << " done.." << endl;
 	}
+	cout << "Main loop done" << endl;
 
 	cout << "Optimal path of length " << L_opt << ":" << endl;
 	cout << "\t" << T_opt << endl;
