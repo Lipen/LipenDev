@@ -1,6 +1,7 @@
 #include <iostream>
 #include <initializer_list>
 #include <utility>
+#include <cstdarg>
 
 using std::cout;
 using std::endl;
@@ -10,6 +11,15 @@ template<typename T>
 class TValidator final {
 	T value_;
 
+	void print_args(auto &t) {  // calls last
+		cout << t << ")" << endl;
+	}
+	template<typename... Args>
+	void print_args(auto &t, Args&&... args) {  // calls recursive
+		cout << t << ", ";
+		print_args(args...);
+	}
+
  public:
 	TValidator() : value_(T()) {
 		cout << "Empty constructor call" << endl;
@@ -17,6 +27,12 @@ class TValidator final {
 
 	explicit TValidator(T value) : value_(value) {
 		cout << "Constructor call (" << value << ")" << endl;
+	}
+
+	template<typename... Args>
+	TValidator( Args&&... args ) : value_( T(std::forward<Args>(args)...) ) {
+		cout << "Emplace constructor call (";
+		print_args(args...);
 	}
 
 	TValidator(std::initializer_list<T> l) : value_(*l.begin()) {
@@ -62,15 +78,37 @@ class TValidator final {
 		return *this;
 	}
 
+
+	// Cast ;Q
+	operator T () {
+		return value_;
+	}
+
+
+	// Some getters
 	T get_value() const {
 		return value_;
 	}
 
-	T& get_reference() {
+	T* operator-> () const {
+		return const_cast<T*>(&value_);
+	}
+
+	T& operator* () const {
 		return value_;
 	}
 
 
+	// // TODO: Access operator (only for arrays (template<typename T*>))
+	// T& operator[](size_t i) {
+	// 	return value_[i];
+	// }
+	// const T& operator[](size_t i) const {
+	// 	return value_[i];
+	// }
+
+
+	// Printable interface
 	friend std::ostream& operator<< (std::ostream& o, const TValidator& rhs) {
 		o << "[TValidator: " << rhs.value_ << "]";
 		return o;
