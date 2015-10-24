@@ -79,8 +79,9 @@ class TValidator final {
 	}
 
 
-	// Cast ;Q
+	// Implicit cast
 	operator T () {
+		cout << "Implicitly casting to " << value_ << endl;
 		return value_;
 	}
 
@@ -90,11 +91,21 @@ class TValidator final {
 		return value_;
 	}
 
+	T* operator-> () {
+		cout << "Operator-> call (" << value_ << ")" << endl;
+		return &value_;
+	}
 	T* operator-> () const {
-		return const_cast<T*>(&value_);
+		cout << "Operator-> const call (" << value_ << ")" << endl;
+		return &value_;
 	}
 
+	T& operator* () {
+		cout << "Operator* call (" << value_ << ")" << endl;
+		return value_;
+	}
 	T& operator* () const {
+		cout << "Operator* const call (" << value_ << ")" << endl;
 		return value_;
 	}
 
