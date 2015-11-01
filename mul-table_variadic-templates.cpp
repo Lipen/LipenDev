@@ -1,8 +1,8 @@
 #include <iostream>
+#include <chrono>
 #include <utility>
 
 using std::cout;
-using std::cin;
 using std::endl;
 
 
@@ -145,5 +145,9 @@ constexpr auto multiplication_table =
 
 
 int main() {
+	auto start = std::chrono::steady_clock::now();
 	cout << multiplication_table<18>;
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> diff = end - start;
+	cout << "Delta = " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()/1000000. << " ms" << endl;
 }
