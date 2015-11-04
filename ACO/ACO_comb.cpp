@@ -21,18 +21,19 @@ using std::string;
 using weight_t = long long signed int;
 
 
-size_t t_max = 100000;
-double alpha = 0.5;
-double beta = 1. - alpha; 	// Greedyness
-double Q = 30000;
-double q0 = 0.2; 			// Probabalisticness
-double rho = 0.02;
-bool phe_minmax = true;
-double phe_min = 1;
-double phe_max = 9999;
-weight_t L_opt = 0;
-bool phe_show_map = false;
-string dataset_name = "dataset_att48";
+const size_t t_max = 100000;
+const double alpha = 0.4;
+const double beta = 1. - alpha; 	// Greedyness
+const double Q = 5000;
+const double q0 = 0.2; 			// Probabalisticness
+const double rho = 0.03;
+const bool phe_minmax = true;
+const double phe_min = 1;
+const double phe_max = 999;
+volatile weight_t L_opt = 0;
+const bool phe_show_map = true;
+const string dataset_name = "dataset_xqf131";
+const string output_filename = "opt";
 
 /*	dataset_fri26
  *	http://people.sc.fsu.edu/~jburkardt/datasets/tsp/fri26.tsp
@@ -86,6 +87,25 @@ string dataset_name = "dataset_att48";
  *	alpha = 0.5 	beta = 0.5
  *	Q = 1000 		q0 = 0.2
  *	rho = 0.01 		phe_minmax = (1, 999)
+ */
+
+/*	dataset_xqf131
+ *	http://www.math.uwaterloo.ca/tsp/vlsi/xqf131.tsp
+ *	Optimal path: 564
+ *	Found:
+
+ */
+
+/*	dataset_bays29
+ *	http://www.iwr.uni-heidelberg.de/groups/comopt/software/TSPLIB95/tsp/ ...
+ *	Optimal path: 2020 (http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/STSP.html)
+ *	Found: 2020 at 150000+
+ *	[1->28->6->12->9->5->26->29->3->2->20->10->4->15->18->17->14->22->11->19->25->7->23->27->8->24->16->13->21->1]
+ *	Algorithm parameters:
+ *	alpha = 0.4 	beta = 0.6
+ *	Q = 4000 		q0 = 0.2
+ *	rho = 0.02 		phe_minmax = (1, 999)
+ *	t_max = 200000
  */
 
 std::default_random_engine RandomEngine;
@@ -364,7 +384,7 @@ struct Ant {
 	}
 
 	// Compare ants (for std::min_element)
-	static struct cmp_ {
+	static struct {
 		constexpr bool operator() ( Ant* const &lhs, Ant* const &rhs ) const {
 			return lhs->path_len < rhs->path_len;
 		}
@@ -433,7 +453,7 @@ int main() {
 		g.update();
 
 		// Some debug inforamation
-		if ( t % (t_max / 10) == 0 ) {
+		if ( t % (t_max / 20) == 0 ) {
 			const auto time_tmp = std::chrono::steady_clock::now();;
 			cout << "t = " << t << " done... \ttook " << std::chrono::duration_cast<std::chrono::milliseconds>(time_tmp - time_).count()/1000. << " s" << endl;
 			time_ = time_tmp;
@@ -481,4 +501,23 @@ int main() {
 	cout << endl << " *\tt_max = " << t_max << endl;
 
 	cout << "\nOptimal path of length " << L_opt << ":\n *\t" << T_opt << endl;
+
+	// Write L_opt and T_opt to file
+	std::ofstream fo(output_filename);
+	if (fo) {
+		cout << "\nWriting to file... " << std::flush;
+		fo << dataset_name << endl;
+		fo << L_opt << endl;
+		for (size_t i = 0; i <= g.n; ++i) {
+			fo << T_opt[i]->number;
+			if (i < g.n) fo << " ";
+		}
+		fo << endl;
+
+		fo.close();
+		cout << "done." << endl;
+	}
+	else {
+		cout << "\nCouldn`t open '" << output_filename << "' to write" << endl;
+	}
 }
