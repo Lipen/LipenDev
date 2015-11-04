@@ -6,33 +6,34 @@
 #include <string>
 #include <iterator>
 #include <vector>
-#include <array>
+#include <valarray>
 #include <cmath>
 #include <chrono>
 #include <random>
 #include <numeric>
 #include <algorithm>
 
+using namespace std::chrono;
 using std::cout;
 using std::cin;
 using std::endl;
 using std::string;
 
-using weight_t = long long signed int;
+using weight_t = int;
 
 
-const size_t t_max = 100000;
-const double alpha = 0.4;
+const size_t t_max = 10000;
+const double alpha = 0.8;
 const double beta = 1. - alpha; 	// Greedyness
-const double Q = 5000;
+const double Q = 2000;
 const double q0 = 0.2; 			// Probabalisticness
-const double rho = 0.03;
+const double rho = 0.02;
 const bool phe_minmax = true;
 const double phe_min = 1;
 const double phe_max = 999;
-volatile weight_t L_opt = 0;
-const bool phe_show_map = true;
-const string dataset_name = "dataset_xqf131";
+weight_t L_opt = 0;
+const bool phe_show_map = false;
+const string dataset_name = "dataset_fri26";
 const string output_filename = "opt";
 
 /*	dataset_fri26
@@ -108,9 +109,9 @@ const string output_filename = "opt";
  *	t_max = 200000
  */
 
+
 std::default_random_engine RandomEngine;
 std::uniform_real_distribution<double> random;  // 0 .. 1
-std::uniform_real_distribution<double> uni_real_dist(5, 10);
 
 
 struct Node;
@@ -121,6 +122,7 @@ struct Ant;
 typedef std::vector<Edge*> VE;
 typedef std::vector<Node*> VN;
 typedef std::vector<Ant*> VA;
+typedef std::vector<double> VD;
 typedef std::pair<double, Node*> PDN;
 typedef std::vector<PDN> VPDN;
 typedef std::vector<std::vector<weight_t>> VVW;
@@ -203,9 +205,22 @@ VVW read_dataset(string filename) {
 	}
 }
 
+// Fast pow function (from http://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/)
+inline double pow_fast(double a, double b) {
+	union {
+		double d;
+		int x[2];
+	} u = { a };
+
+	u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
+	u.x[0] = 0;
+
+	return u.d;
+}
+
 
 struct Node {
-	int number;
+	const int number;
 
 	explicit Node(int n) : number(n) {}
 
@@ -217,22 +232,29 @@ struct Node {
 
 
 struct Edge {
-	int v1, v2;
-	weight_t weight;
-	double eta;
+	const int v1, v2;
+	const weight_t weight;
+	const double eta;
+	const double eta_beta;
 	double phe;
 	double phe_acc;
+	double prob;
 
 
 	Edge( int x, int y, weight_t w )
-	: v1(x), v2(y), weight(w), eta(std::abs(1./weight))
-	, phe(uni_real_dist(RandomEngine)), phe_acc(0.0) {}
+	: v1(x), v2(y), weight(w)
+	, eta(std::abs(1./weight)) , eta_beta(pow_fast( eta, beta ))
+	, phe(Q), phe_acc(0.0)
+	, prob(pow_fast( phe, alpha ) * eta_beta) {}
 
 
 	void update() {
 		phe = (1. - rho) * phe + phe_acc;
 		if (phe_minmax) constrain( &phe, phe_min, phe_max );
+
 		phe_acc = 0.0;
+
+		prob = pow_fast( phe, alpha ) * eta_beta;
 	}
 
 	// Printable interface
@@ -245,7 +267,7 @@ struct Edge {
 struct CompleteGraph {
 	VN nodes;
 	VE edges;
-	size_t n;
+	const size_t n;
 	std::vector<VE> edges_map;
 
 
@@ -267,12 +289,17 @@ struct CompleteGraph {
 		return nodes[i - 1];
 	}
 
-	Edge* get_edge(int i, int j) const {
+	Edge* get_edge( int i, int j ) const {
 		return edges_map[i-1][j-1];
 	}
 
-	Edge* get_edge(Node* x, Node* y) const {
+	Edge* get_edge( Node* x, Node* y ) const {
 		return edges_map[x->number-1][y->number-1];
+	}
+
+
+	double get_prob( Node* x, Node* y ) const {
+		return get_edge(x, y)->prob;
 	}
 
 
@@ -285,76 +312,61 @@ struct CompleteGraph {
 
 
 struct Ant {
-	CompleteGraph* g;
-	Node* start_town;
-	VN J_;  // Nodes to visit. Copy into J every tick (J = J_)
-	// TODO: Replace "copy J_ into J" with something faster
+	CompleteGraph* const g;
+	Node* const start_town;
 	VN path;
 	weight_t path_len;
+	std::valarray<bool> J;
 
 
-	Ant( CompleteGraph* graph, int i ) : g(graph), start_town(g->get_node(i)), path_len(0) {
-		J_.reserve(g->n);
+	Ant( CompleteGraph* graph, size_t i )
+	: g(graph), start_town(g->get_node(i)), path_len(0), J(g->n) {
 		path.reserve(g->n);
-
-		for (Node* node : g->nodes) {
-			if (node != start_town) {
-				J_.push_back(node);
-			}
-		}
-	}
-
-
-	double get_probability_from_to( Node* from, Node* to ) {
-		Edge* e = g->get_edge( from, to );
-		return pow( e->phe, alpha ) * pow( e->eta, beta );
 	}
 
 
 	void go() {
 		Node* cur_town = start_town;
-		VN J = J_;
+
+		J = true;  // implicit  elem = true  for every elem from J
+		J[start_town->number-1] = false;
 
 		path.clear();
 		path.push_back(start_town);
 		path_len = 0;
 
-		while ( !J.empty() ) {
+		for (size_t i = 0; i < g->n-1; ++i) {
 			Node* choice = nullptr;
 			double q = random(RandomEngine);
 
 			if (q < q0) {
-				// Calc probabilities:
-				VPDN probabilities;
-				probabilities.reserve(J.size());
-				for (Node* node : J) {
-					double p = get_probability_from_to( cur_town, node );
-					probabilities.push_back(PDN( p, node ));
-				}
-				std::partial_sum(probabilities.begin(), probabilities.end(), probabilities.begin(), pair_sum);
-				probabilities.back().first = 1.000001;  // round up last..
+				// Calc probabilities
+				std::valarray<double> probabilities(g->n);
 
-				// Choose random way to go:
-				double r = random(RandomEngine);
-
-				for (auto probs_pair : probabilities) {
-					double p = probs_pair.first;
-					Node* node = probs_pair.second;
-
-					if (r <= p) {
-						choice = node;
-						break;
+				for (Node* node : g->nodes) {
+					size_t j = node->number - 1;
+					if (J[j]) {
+						probabilities[j] = g->get_prob(cur_town, node);
 					}
 				}
+
+				std::discrete_distribution<size_t> probs_distr(
+					std::begin(probabilities), std::end(probabilities) );
+
+				choice = g->nodes[probs_distr(RandomEngine)];
 			}
 			else {
+				// Greedy algorithm
 				double eta_max = -1;  // Assume that eta > 0
 
-				for (Node* node : J) {
-					double eta_tmp = g->get_edge( cur_town, node )->eta;
-					if (eta_tmp > eta_max) {
-						eta_max = eta_tmp;
-						choice = node;
+				for (Node* node : g->nodes) {
+					if (J[node->number-1]) {
+						double eta_tmp = g->get_edge( cur_town, node )->eta;
+
+						if (eta_tmp > eta_max) {
+							eta_max = eta_tmp;
+							choice = node;
+						}
 					}
 				}
 			}
@@ -364,7 +376,7 @@ struct Ant {
 			path.push_back(choice);
 			path_len += e->weight;
 			cur_town = choice;
-			J.erase( std::remove(J.begin(), J.end(), choice), J.end() );
+			J[choice->number-1] = false;
 		}
 
 		Edge* e = g->get_edge( cur_town, start_town );
@@ -426,13 +438,19 @@ int main() {
 
 	// Main loop:
 	cout << "Starting main loop..." << endl;
-	const auto time_start = std::chrono::steady_clock::now();
+	const auto time_start = steady_clock::now();
+#ifndef NDEBUG
 	auto time_ = time_start;
+#endif
 
 	for ( size_t t = 1; t <= t_max; ++t ) {
 		// Build ants' solutions
 		for ( Ant* ant : ants ) {
+// const auto time_start_antgo = steady_clock::now();
 			ant->go();
+// const auto time_end_antgo = steady_clock::now();
+// const auto time_delta_antgo = time_end_antgo - time_start_antgo;
+// cout << "antgo took " << duration_cast<nanoseconds>(time_delta_antgo).count()/1000. << "us" << endl;
 		}
 
 		// Find local-best ("lb") ant
@@ -444,7 +462,7 @@ int main() {
 
 		// Update pheromone only on local-best ("lb") path
 		auto lb_path = lb_ant->path;
-		for (size_t i = 0; i < lb_path.size()-1; ++i) {  // exclude last
+		for (size_t i = 0; i < g.n; ++i) {  // exclude last
 			Edge* e = g.get_edge( lb_path[i], lb_path[i+1] );
 			e->phe += std::abs(Q / lb_path_len);
 		}
@@ -452,16 +470,20 @@ int main() {
 		// Update edges
 		g.update();
 
+#ifndef NDEBUG
 		// Some debug inforamation
-		if ( t % (t_max / 20) == 0 ) {
-			const auto time_tmp = std::chrono::steady_clock::now();;
-			cout << "t = " << t << " done... \ttook " << std::chrono::duration_cast<std::chrono::milliseconds>(time_tmp - time_).count()/1000. << " s" << endl;
+		if ( t % (t_max / 10) == 0 ) {
+			const auto time_tmp = steady_clock::now();;
+			const auto time_delta = time_tmp - time_;
+			cout << "t = " << t << " done... \ttook " << duration_cast<milliseconds>(time_delta).count()/1000. << " s \t(" << std::fixed << std::setprecision(3) << duration_cast<nanoseconds>(time_delta).count()/1000. << " us)" << endl;
 			time_ = time_tmp;
 		}
+#endif  // NDEBUG
 	}
 
-	const auto time_end = std::chrono::steady_clock::now();
-	cout << "Main loop done within " << std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start).count()/1000. << " s" << endl;
+	const auto time_end = steady_clock::now();
+	const auto time_delta = time_end - time_start;
+	cout << "Main loop done within " << duration_cast<milliseconds>(time_delta).count()/1000. << " s \t(" << duration_cast<nanoseconds>(time_delta).count() << " ns)" << endl;
 
 
 	// Print pheromon map if neccessary
