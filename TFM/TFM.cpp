@@ -84,7 +84,7 @@ public:
 	static string caseString(string s, bool upperCase);
 	static bool compareStrings(string s, string t, bool ignoreCase);
 	template<size_t N>
-	static bool match(string toMatch, const string (&matchWith)[N], bool ignoreCase);
+	static bool match(string toMatch, const string (&matchWith)[N], bool ignoreCase=true);
 };
 
 
@@ -506,7 +506,7 @@ bool ExtraUtils::compareStrings(string s, string t, bool ignoreCase=false) {
 
 // Do not read this.
 template<size_t N>
-bool ExtraUtils::match(string toMatch, const string (&matchWith)[N], bool ignoreCase=true) {
+bool ExtraUtils::match(string toMatch, const string (&matchWith)[N], bool ignoreCase) {
 	for (int i=0; i<(int)N; ++i)
 		if (ExtraUtils::compareStrings(toMatch, matchWith[i], ignoreCase))
 			return true;

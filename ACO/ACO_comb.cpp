@@ -12,12 +12,14 @@
 #include <random>
 #include <numeric>
 #include <algorithm>
+#include <utility>
 
 using namespace std::chrono;
 using std::cout;
 using std::cin;
 using std::endl;
 using std::string;
+using std::vector;
 
 using weight_t = int;
 
@@ -26,14 +28,14 @@ const size_t t_max = 10000;
 const double alpha = 0.8;
 const double beta = 1. - alpha; 	// Greedyness
 const double Q = 2000;
-const double q0 = 0.2; 			// Probabalisticness
+const double q0 = 0.2; 				// Probabalisticness
 const double rho = 0.02;
 const bool phe_minmax = true;
 const double phe_min = 1;
 const double phe_max = 999;
 weight_t L_opt = 0;
 const bool phe_show_map = false;
-const string dataset_name = "dataset_fri26";
+const string dataset_name = "dataset_p01";
 const string output_filename = "opt";
 
 /*	dataset_fri26
@@ -109,28 +111,26 @@ const string output_filename = "opt";
  *	t_max = 200000
  */
 
-
 std::default_random_engine RandomEngine;
 std::uniform_real_distribution<double> random;  // 0 .. 1
-
 
 struct Node;
 struct Edge;
 struct CompleteGraph;
 struct Ant;
 
-typedef std::vector<Edge*> VE;
-typedef std::vector<Node*> VN;
-typedef std::vector<Ant*> VA;
-typedef std::vector<double> VD;
+typedef vector<Edge*> VE;
+typedef vector<Node*> VN;
+typedef vector<Ant*> VA;
+typedef vector<double> VD;
 typedef std::pair<double, Node*> PDN;
-typedef std::vector<PDN> VPDN;
-typedef std::vector<std::vector<weight_t>> VVW;
+typedef vector<PDN> VPDN;
+typedef vector<vector<weight_t>> VVW;
 
 
 // Display T vector
 template<typename T>
-std::ostream& operator<< ( std::ostream &out, std::vector<T> v ) {
+std::ostream& operator<< ( std::ostream &out, vector<T> v ) {
 	out << '[';
 
 	for (size_t i = 0; i < v.size(); ++i) {
@@ -143,7 +143,7 @@ std::ostream& operator<< ( std::ostream &out, std::vector<T> v ) {
 
 // Display T* vector
 template<typename T>
-std::ostream& operator<< ( std::ostream &out, std::vector<T*> v ) {
+std::ostream& operator<< ( std::ostream &out, vector<T*> v ) {
 	out << '[';
 
 	for (size_t i = 0; i < v.size(); ++i) {
@@ -187,7 +187,7 @@ VVW read_dataset(string filename) {
 		VVW dataset;
 
 		for (string line; std::getline( fi, line ); ) {
-			std::vector<weight_t> line_values;
+			vector<weight_t> line_values;
 			std::istringstream iss(line);
 			std::copy(
 				std::istream_iterator<weight_t>(iss),
@@ -212,7 +212,7 @@ inline double pow_fast(double a, double b) {
 		int x[2];
 	} u = { a };
 
-	u.x[1] = (int)(b * (u.x[1] - 1072632447) + 1072632447);
+	u.x[1] = static_cast<int>(b * (u.x[1] - 1072632447) + 1072632447);
 	u.x[0] = 0;
 
 	return u.d;
@@ -268,7 +268,7 @@ struct CompleteGraph {
 	VN nodes;
 	VE edges;
 	const size_t n;
-	std::vector<VE> edges_map;
+	vector<VE> edges_map;
 
 
 	explicit CompleteGraph(const VVW &W) : n(W.size()), edges_map( n, VE(n) ) {
@@ -295,11 +295,6 @@ struct CompleteGraph {
 
 	Edge* get_edge( Node* x, Node* y ) const {
 		return edges_map[x->number-1][y->number-1];
-	}
-
-
-	double get_prob( Node* x, Node* y ) const {
-		return get_edge(x, y)->prob;
 	}
 
 
@@ -346,7 +341,7 @@ struct Ant {
 				for (Node* node : g->nodes) {
 					size_t j = node->number - 1;
 					if (J[j]) {
-						probabilities[j] = g->get_prob(cur_town, node);
+						probabilities[j] = g->get_edge(cur_town, node)->prob;
 					}
 				}
 
@@ -450,7 +445,7 @@ int main() {
 			ant->go();
 // const auto time_end_antgo = steady_clock::now();
 // const auto time_delta_antgo = time_end_antgo - time_start_antgo;
-// cout << "antgo took " << duration_cast<nanoseconds>(time_delta_antgo).count()/1000. << "us" << endl;
+// cout << "antgo took " << duration_cast<nanoseconds>(time_delta_antgo).count()/1000. << " us" << endl;
 		}
 
 		// Find local-best ("lb") ant
@@ -462,7 +457,7 @@ int main() {
 
 		// Update pheromone only on local-best ("lb") path
 		auto lb_path = lb_ant->path;
-		for (size_t i = 0; i < g.n; ++i) {  // exclude last
+		for (size_t i = 0; i < g.n; ++i) {
 			Edge* e = g.get_edge( lb_path[i], lb_path[i+1] );
 			e->phe += std::abs(Q / lb_path_len);
 		}
@@ -478,7 +473,7 @@ int main() {
 			cout << "t = " << t << " done... \ttook " << duration_cast<milliseconds>(time_delta).count()/1000. << " s \t(" << std::fixed << std::setprecision(3) << duration_cast<nanoseconds>(time_delta).count()/1000. << " us)" << endl;
 			time_ = time_tmp;
 		}
-#endif  // NDEBUG
+#endif
 	}
 
 	const auto time_end = steady_clock::now();
