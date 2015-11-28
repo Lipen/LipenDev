@@ -1,31 +1,20 @@
 /* Copyright (C) 2015, Lipen */
-#include <iostream>  	// cin, cout, endl
-#include <ostream>  	// ostream, flush
-#include <string>  		// string
-#include <vector>  		// vector
-#include <utility>  	// swap
+#include <iostream>    // cin, cout, endl
+#include <sstream>     // stringstream
+#include <ostream>     // ostream, flush
+#include <string>      // string
+#include <vector>      // vector
+#include <utility>     // swap
+#include <functional>  // less, greater
+// TAGS: heap, priority queue
 
 using std::cout;
+using std::cin;
 using std::endl;
 using std::string;
 
 
-template<typename T>
-struct CompareLess {
-	constexpr bool operator() (const T& lhs, const T& rhs) {
-		return lhs < rhs;
-	}
-};
-
-template<typename T>
-struct CompareGreater {
-	constexpr bool operator() (const T& lhs, const T& rhs) {
-		return lhs > rhs;
-	}
-};
-
-
-template<typename T, typename Compare = CompareLess<T>>
+template<typename T, typename Compare = std::less<T>>
 class PriorityQueue {
 	T* data;
 	size_t size_;
@@ -52,7 +41,7 @@ class PriorityQueue {
 		build_heap();
 	}
 
-	PriorityQueue(const PriorityQueue &other)
+	explicit PriorityQueue(const PriorityQueue &other)
 	: size_(other.size_), heap_size(other.heap_size), comp(other.comp) {
 		data = new T[size_];
 		std::copy(other.data, other.data+size_, data);
@@ -60,7 +49,6 @@ class PriorityQueue {
 
 
 	~PriorityQueue() {
-		cout << "~PQ: " << this << endl;
 		delete [] data;
 	}
 
@@ -96,14 +84,13 @@ class PriorityQueue {
 		++size_;
 		size_t i = heap_size - 1;
 
-		T* tmp = new T[size_]();
-		// T* tmp = (T*)::operator new[] (sizeof(T)*size_);
+		T* tmp = new T[size_] ();
 		std::copy(data, data+size_-1, tmp);
 		tmp[size_-1] = T();
 		delete [] data;
 		data = tmp;
 
-		while (i > 0 && comp(key, data[(i-1)/2])) {
+		while (i > 0 && comp(data[(i-1)/2], key)) {
 			data[i] = data[(i-1)/2];
 			i = (i-1)/2;
 		}
@@ -121,10 +108,19 @@ class PriorityQueue {
 		}
 	}
 
+
 	void show() {
 		cout << "PriorityQueue: [ ";
 		for (size_t i = 0; i < size_; ++i) {
 			cout << data[i];
+			if (i+1 < size_) cout << ", ";
+		}
+		cout << " ]" << endl;
+	}
+	void show_deref() {
+		cout << "PriorityQueue: [ ";
+		for (size_t i = 0; i < size_; ++i) {
+			cout << *data[i];
 			if (i+1 < size_) cout << ", ";
 		}
 		cout << " ]" << endl;
@@ -143,13 +139,13 @@ class PriorityQueue {
 		size_t r = 2*i + 2;  // 2(i+1)+1 - 1          = 2i+2
 		size_t largest;
 
-		if (l < heap_size && comp(data[l], data[i])) {
+		if (l < heap_size && comp(data[i], data[l])) {
 			largest = l;
 		} else {
 			largest = i;
 		}
 
-		if (r < heap_size && comp(data[r], data[largest])) {
+		if (r < heap_size && comp(data[largest], data[r])) {
 			largest = r;
 		}
 
@@ -177,14 +173,15 @@ struct BellNode {
 	BellNode(size_t num, size_t in, size_t nt)
 	: number(num), interval(in), next_time(nt) {}
 
-	static struct comparator {
+	struct cmp {
+		// Min heap  ~>  std::greater
 		bool operator() ( BellNode* const &lhs, BellNode* const &rhs ) const {
 			if (lhs->next_time == rhs->next_time) {
-				return lhs->number < rhs->number;
+				return lhs->number > rhs->number;
 			}
-			return lhs->next_time < rhs->next_time;
+			return lhs->next_time > rhs->next_time;
 		}
-	} cmp;
+	};
 
 	// Printable interface
 	friend std::ostream& operator<< ( std::ostream &o, const BellNode &rhs ) {
@@ -193,15 +190,14 @@ struct BellNode {
 };
 
 
-
 int main_wrapped() {
 { /* Test default 'less' comparator */
 	int a[] {4, 1, 3, 2, 16, 9, 10, 14, 7};
 
 	PriorityQueue<int> pq(a);
-	cout << "{Default (less)}:" << endl;
+	cout << "Default std::less ~> max-heap:" << endl;
 	pq.show();
-	cout << "Less. Descending order:" << endl;
+	cout << "std::less ~> ascending order:" << endl;
 	pq.show_ordered();
 
 	while (!pq.empty()) {
@@ -212,11 +208,11 @@ int main_wrapped() {
 { /* Test 'greater' comparator */
 	int a[] {14, 29, 42, 30, 44, 24, 47, 2, 17, 25, 23, 9};
 
-	PriorityQueue<int, CompareGreater<int>> pq(a);
-	cout << "{Greater}:" << endl;
+	PriorityQueue<int, std::greater<int>> pq(a);
+	cout << "std::greater ~> min-heap:" << endl;
 	pq.show();
-	cout << "Greater. Ascending order:" << endl;
-	pq.show_ordered();
+	cout << "std::greater ~> descending order:" << endl;
+	cout << "Heapsorted "; pq.show_ordered();
 
 	while (!pq.empty()) {
 		cout << "\tPop ~> " << pq.pop() << endl;
@@ -229,16 +225,20 @@ int main_wrapped() {
 	pq.show();
 }
 { /* Lab5 */
+	std::stringstream cin;
+	cin << "2 6\n3\n2";  // ~>> 2
+	// cin << "2 3\n7\n3";  // ~>> 1
+//
 	size_t n, k;
-	cout << "Enter <n>, <k> and n <intervals>: " << std::flush;
-	std::cin >> n >> k;
+	cout << "Enter <n>, <k> and n <intervals>:" << endl;
+	cin >> n >> k;
 
 	std::vector<BellNode*> bells;
-	PriorityQueue<BellNode*, BellNode::comparator> q(BellNode::cmp);
+	PriorityQueue<BellNode*, BellNode::cmp> q;
 
 	for (size_t i = 0; i < n; ++i) {
 		size_t ti;
-		std::cin >> ti;
+		cin >> ti;
 		BellNode* bell = new BellNode(i+1, ti, ti);
 
 		bells.push_back(bell);
