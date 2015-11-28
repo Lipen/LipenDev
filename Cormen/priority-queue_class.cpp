@@ -22,11 +22,11 @@ class PriorityQueue {
 	Compare comp;
 
  public:
-	explicit PriorityQueue(const Compare& comp_ = Compare())
+	explicit PriorityQueue(const Compare &comp_ = Compare())
 	: data(nullptr), size_(0), heap_size(0), comp(std::move(comp_)) {}
 
 	template<size_t N>
-	explicit PriorityQueue( T (&a)[N], const Compare& comp_ = Compare() )
+	explicit PriorityQueue( T (&a)[N], const Compare &comp_ = Compare() )
 	: data(new T[1]), size_(1), heap_size(1), comp(std::move(comp_)) {
 		// build_heap':
 		data[0] = a[0];
@@ -37,7 +37,7 @@ class PriorityQueue {
 
 	PriorityQueue( T* a, size_t N, const Compare &comp_ = Compare() )
 	: data(a), size_(N), heap_size(0), comp(comp_) {
-		// copy data?
+		// Copy data (a) if necessary
 		build_heap();
 	}
 
@@ -130,6 +130,11 @@ class PriorityQueue {
 		PriorityQueue tmp(*this);
 		tmp.heapsort();
 		tmp.show();
+	}
+	void show_ordered_deref() {
+		PriorityQueue tmp(*this);
+		tmp.heapsort();
+		tmp.show_deref();
 	}
 
 
