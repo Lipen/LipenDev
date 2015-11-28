@@ -1,72 +1,57 @@
 /* Copyright (C) 2015, Lipen */
 #include <iostream>  	// cout
 #include <utility>  	// swap
-#include <functional>   // function
+#include <functional>   // less, greater
 
 using std::cout;
 using std::endl;
 
 
-template<typename T>
+template<typename T, typename Compare = std::less<T>>
 class Heap {
-using Compare = std::function<bool(T& o1, T& o2)>;
-
 	T* data;
 	size_t size_;
 	size_t heap_size;
-	Compare comp_;
+	Compare comp;
 
  public:
-	Heap(Compare comp) {
-		comp_ = comp;
-		size_ = 0;
-		data = nullptr;
-
-		build_heap();  // or just explicitly heap_size=0
-	}
+	explicit Heap(const Compare& comp_ = Compare())
+	: data(nullptr), size_(0), heap_size(0), comp(std::move(comp_)) {}
 
 	template<size_t N>
-	Heap(T (&a)[N], Compare comp) {
-		comp_ = comp;
-		// size_ = N;
-		// data = new T[size_];
-
-		// for (size_t i = 0; i < size_; ++i) {
-		// 	data[i] = a[i];
-		// }
-
-		// build_heap();
-
-		// build_heap'
-		data = new T[1];
+	explicit Heap( T (&a)[N], const Compare& comp_ = Compare() )
+	: data(new T[1]), size_(1), heap_size(1), comp(std::move(comp_)) {
+		// build_heap':
 		data[0] = a[0];
-		size_ = 1;
-		heap_size = 1;
 		for (size_t i = 1; i < N; ++i) {
-			insert(a[i]);
+			push(a[i]);
 		}
 	}
 
-	Heap(T* a, size_t N, Compare comp) {
-		comp_ = comp;
-		size_ = N;
-		data = a;  // or copy?
-
+	Heap( T* a, size_t N, const Compare &comp_ = Compare() )
+	: data(a), size_(N), heap_size(0), comp(comp_) {
+		// Copy data (a) if necessary
 		build_heap();
 	}
 
+	explicit Heap(const Heap &other)
+	: size_(other.size_), heap_size(other.heap_size), comp(other.comp) {
+		data = new T[size_];
+		std::copy(other.data, other.data+size_, data);
+	}
+
 	void heapify(size_t i) {
-		size_t l = 2*i + 1;  // 2(i+1)   - 1 = 2i+2-1 = 2i+1
-		size_t r = 2*i + 2;  // 2(i+1)+1 - 1          = 2i+2
+		size_t l = 2*i + 1;  // 2*i   ~>> 2(i+1)   - 1 = 2i+1
+		size_t r = 2*i + 2;  // 2*i+1 ~>> 2(i+1)+1 - 1 = 2i+2
 		size_t largest;
 
-		if (l < heap_size && comp_(data[l], data[i])) {
+		if (l < heap_size && comp(data[i], data[l])) {
 			largest = l;
 		} else {
 			largest = i;
 		}
 
-		if (r < heap_size && comp_(data[r], data[largest])) {
+		if (r < heap_size && comp(data[largest], data[r])) {
 			largest = r;
 		}
 
@@ -94,14 +79,13 @@ using Compare = std::function<bool(T& o1, T& o2)>;
 		}
 	}
 
-	T get_root() {
+	T top() {
 		return data[0];
 	}
 
-	T extract_root() {
+	T pop() {
 		if (heap_size < 1) {
-			cout << "Exception: Queue is empty. heap_size = " << heap_size << endl;
-			throw "Queue is empty.";
+			throw "Heap is empty";
 		}
 
 		T m = data[0];
@@ -113,19 +97,18 @@ using Compare = std::function<bool(T& o1, T& o2)>;
 		return m;
 	}
 
-	void insert(T key) {
+	void push(const T &key) {
 		++heap_size;
 		++size_;
 		size_t i = heap_size - 1;
 
-		// T* tmp = new T[size_];
-		T* tmp = (T*)::operator new[] (sizeof(T)*size_);
+		T* tmp = new T[size_] ();
 		std::copy(data, data+size_-1, tmp);
 		tmp[size_-1] = T();
 		delete [] data;
 		data = tmp;
 
-		while (i > 0 && comp_(key, data[(i-1)/2])) {
+		while (i > 0 && comp(data[(i-1)/2], key)) {
 			data[i] = data[(i-1)/2];
 			i = (i-1)/2;
 		}
@@ -134,12 +117,15 @@ using Compare = std::function<bool(T& o1, T& o2)>;
 	}
 
 	void increase_key(size_t i, T k) {
-		if (comp_(k, data[i])) {
-			while (i > 0 && comp_(k, data[(i-1)/2])) {
-				data[i] = data[(i-1)/2];
-				i = (i-1)/2;
-			}
-			data[i] = k;
+		if (k < data[i]) {
+			cout << "Cannot increase key" << endl;
+			return;
+		}
+
+		data[i] = k;
+		while (i > 0 && comp(data[(i+1)/2 - 1], data[i])) {
+			std::swap(data[i], data[(i+1)/2 - 1]);
+			i = (i+1)/2 - 1;
 		}
 	}
 
@@ -159,79 +145,61 @@ using Compare = std::function<bool(T& o1, T& o2)>;
 };
 
 
-template<typename T>
-class MaxHeap: public Heap<T> {
- public:
-	template<size_t N>
-	MaxHeap(T (&a)[N]) : Heap<T>(a, [](const T& o1, const T& o2) {
-		return o1 > o2;
-	}) {
-		cout << "MaxHeap constructor.\n";
-	}
-
-	T get_max() {
-		return this->get_root();
-	}
-
-	T extract_max() {
-		return this->extract_root();
-	}
-};
-
-template<typename T>
-class MinHeap: public Heap<T> {
- public:
-	template<size_t N>
-	MinHeap(T (&a)[N]) : Heap<T>(a, [](const T& o1, const T& o2) {
-		return o1 < o2;
-	}) {
-		cout << "MinHeap constructor.\n";
-	}
-
-	T get_min() {
-		return this->get_root();
-	}
-
-	T extract_min() {
-		return this->extract_root();
-	}
-};
-
-
-class HeapNode {
-	int data;
-	int listNo;
-
- public:
- 	HeapNode() : data(0), listNo(-1) {};
-	HeapNode(int data, int listNo) : data(data), listNo(listNo) {}
-
-	int get_data() {
-		return data;
-	}
-
-	int get_listNo() {
-		return listNo;
-	}
-};
-
-
-int main() {
+int main_wrapped() {
 	int a[] {4, 1, 3, 2, 16, 9, 10, 14, 8, 7};
+cout << "MaxHeap tests:" << endl;
+{
+	Heap<int> H(a);  // MaxHeap by default
+	cout << "Initial heap:\n\t";  H.show();
 
-	MaxHeap<int> H(a);
-	cout << "Initial heap:\n\t"; H.show();
+	H.push(15); cout << "15 inserted:\n\t"; H.show();
 
-	H.insert(15); cout << "15 inserted:\n\t"; H.show();
+	int m = H.pop();
+	cout << "pop from heap:\n\t" << m << endl;
 
-	int m = H.extract_root();
-	cout << "root(min/max) extracted from heap:\n\t" << m << endl;
+	H.push(30);  cout << "30 inserted:\n\t";  H.show();
 
-	H.insert(30); cout << "30 inserted:\n\t"; H.show();
+	H.increase_key(7, 11); cout << "#7 (0-based) increased up to 11:\n\t";  H.show();
 
-	H.increase_key(7, 11); cout << "#7 increased up to 11:\n\t"; H.show();
-
-	H.remove(0); cout << "#0 removed:\n\t"; H.show();
+	H.remove(2); cout << "#2 removed:\n\t"; H.show();
 
 	H.heapsort(); cout << "Sorted:\n\t"; H.show();
+}
+cout << "\nMinHeap tests:" << endl;
+{
+	Heap<int, std::greater<int>> H(a);
+	cout << "Initial min-heap:\n\t";  H.show();
+
+	H.push(15); cout << "15 inserted:\n\t"; H.show();
+
+	int m = H.pop();
+	cout << "pop from heap:\n\t" << m << endl;
+
+	H.push(30);  cout << "30 inserted:\n\t";  H.show();
+
+	H.increase_key(7, 11); cout << "#7 (0-based) increased up to 11:\n\t";  H.show();
+
+	H.remove(2); cout << "#2 removed:\n\t"; H.show();
+
+	H.heapsort(); cout << "Sorted:\n\t"; H.show();
+}
+	return 0;
+}
+
+int main() {
+	try {
+		int e = main_wrapped();
+		if (e == 0) {
+			cout << "\nOK" << endl;
+		}
+		else {
+			cout << "\nMain returned errcode = " << e << endl;
+		}
+	}
+	catch (const char* msg) {
+		cout << "\nException caught: " << msg << endl;
+	}
+	catch (...) {
+		cout << "\nSome exception caught." << endl;
+	}
 }
