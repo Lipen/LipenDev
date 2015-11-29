@@ -35,11 +35,11 @@ static std::default_random_engine RandomEngine;
 
 
 template<typename T, size_t N>
-size_t size(T (&)[N]) { return N; }
+constexpr size_t size(T (&)[N]) { return N; }
 
 template<typename T, size_t N>
 void show(T (&A)[N]) {
-	for (int i = 0; i < static_cast<int>(size(A)); i++) {
+	for (size_t i = 0; i < N; i++) {
 		cout << A[i] << " ";
 	}
 	cout << endl;
@@ -115,22 +115,18 @@ size_t median_of_3_randomized(T (&A)[N], size_t p, size_t r) {
 }
 
 
-// Cormen`s
+// Cormen`s  (Seems to be not working with non-unique elements...)
 // template<typename T, size_t N>
 // size_t partition(T (&A)[N], size_t p = 0, size_t r = N-1) {
 // 	T x = A[p];
-// 	size_t i = p;
-// 	size_t j = r;
-
+// 	size_t i = p,  j = r;
 // 	while (true) {
 // 		while (A[j] > x) { --j; }
 // 		while (A[i] < x) { ++i; }
-
-// 		if (i < j) {
+// 		if (i < j)
 // 			std::swap(A[i], A[j]);
-// 		} else {
+// 		else
 // 			return j;
-// 		}
 // 	}
 // }
 
