@@ -1,10 +1,8 @@
 /* Copyright (c) 2015, Lipen */
 #include <iostream>     // cout, cin, endl
 #include <sstream>      // stringstream
-#include <set>          // set
 #include <vector>       // vector
 #include <algorithm>    // sort
-#include <utility>      // pair
 
 using std::cout;
 using std::cin;
