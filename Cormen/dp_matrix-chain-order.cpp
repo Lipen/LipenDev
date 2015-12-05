@@ -1,7 +1,10 @@
+/* Copyright (c) 2015, Lipen */
 #include <iostream>
 #include <vector>
 #include <limits>
 #include <iomanip>
+#include <algorithm>
+// TAGS: matrix chain order, matrix multiply order, dp, dynamic programming
 
 using std::cout;
 using std::cin;
@@ -13,10 +16,11 @@ using VVI = std::vector<VI>;
 
 
 template<typename T>
-void print( std::vector<std::vector<T>> &v, size_t start=0, size_t width=5 ) {
+void show(const std::vector<std::vector<T>> &v, size_t start = 0, size_t width = 5) {
 	size_t n = v.size();
 
 	for (size_t i = start; i < n; ++i) {
+		cout << '\t';
 		for (size_t j = start; j < n; ++j) {
 			cout << std::setw(width) << v[i][j];
 		}
@@ -25,7 +29,7 @@ void print( std::vector<std::vector<T>> &v, size_t start=0, size_t width=5 ) {
 }
 
 
-void print_optimal_parens( VVI &s, size_t i, size_t j ) {
+void print_optimal_parens(const VVI &s, size_t i, size_t j) {
 	if (i == j) {
 		cout << "A";
 		if (i == 0)
@@ -61,19 +65,8 @@ void print_optimal_parens( VVI &s, size_t i, size_t j ) {
 }
 
 
-// VVI matrix_chain_multiply( VVI &A, VVI &s, size_t i, size_t j ) {
-// 	if (j > i) {
-// 		X = matrix_chain_multiply(A, s, i, s[i][j]);
-// 		Y = matrix_chain_multiply(A, s, s[i][j]+1, j);
-// 		return matrix_multiply(X, Y);  // TODO: implement matrix_multiply
-// 	}
-// 	else {
-// 		return A[i];
-// 	}
-// }
-
-
-void matrix_chain_order( VI &p, VVI &m, VVI &s ) {
+// Cormen`s
+void matrix_chain_order(const VI &p, VVI &m, VVI &s) {
 	size_t n = p.size() - 1;
 	cout << "n = " << n << endl;
 
@@ -95,6 +88,32 @@ void matrix_chain_order( VI &p, VVI &m, VVI &s ) {
 }
 
 
+// Bottom Up dp
+int matrix_mult_BU(const VI &m) {  // m_0 .. m_n    (n+1 total)
+	size_t n = m.size() - 1;
+
+	VVI D(n, VI(n, std::numeric_limits<int>::max()));
+
+	for (size_t i = 0; i < n; ++i) {
+		D[i][i] = 0;
+	}
+
+	for (size_t s = 1; s <= n-1; ++s) {
+		for (size_t i = 1; i <= n-s; ++i) {
+			size_t j = i + s;
+
+			for (size_t k = i; k <= j-1; ++k) {
+				D[i-1][j-1] = std::min( D[i-1][j-1], D[i-1][k-1] + D[k+1-1][j-1] + m[i-1]*m[k]*m[j] );
+			}
+		}
+	}
+	cout << "D:" << endl;
+	show(D, 0, 10);
+
+	return D[0][n-1];
+}
+
+
 int main() {
 	VI p { 5, 10, 3, 12, 5, 50, 6 };
 	// VI p { 30, 35, 15, 5, 10, 20, 25 };
@@ -108,13 +127,17 @@ int main() {
 	cout << "Done." << endl;
 
 	cout << "Matrix m:" << endl;
-	print(m, 1, 6);
+	show(m, 1, 6);
 	cout << "Matrix s:" << endl;
-	print(s, 1, 3);
+	show(s, 1, 3);
 
 	cout << "Optimal multiplications:" << endl;
 	cout << '\t' << m[1][n-1] << endl;
 
 	cout << "Optimal parens:" << endl;
 	print_optimal_parens(s, 1, n-1); cout << endl;
+
+
+	int x = matrix_mult_BU(p);
+	cout << "dp: x = " << x << endl;
 }
