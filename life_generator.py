@@ -3,7 +3,7 @@ from os import system
 _sep = ' '
 _alive = '■'  # alt+254
 _dead = '·'  # alt+249
-_extra = 1  # 0  # extra free space around actual field
+_extra = 2  # 0  # extra free space around actual field
 
 data_to_string = lambda data: '\n'.join(_sep.join(_alive if (x, y) in data else _dead for x in range(min(data, key=lambda t: t[0])[0]-_extra, max(data, key=lambda t: t[0])[0]+1+_extra)) for y in range(min(data, key=lambda t: t[1])[1]-_extra, max(data, key=lambda t: t[1])[1]+1+_extra))
 
@@ -35,13 +35,24 @@ def life_generator(data_initial):
 
 
 def main():
-	state = ((0, 1, 0, 0, 0, 0, 0),
-			 (0, 0, 1, 0, 0, 0, 0),
-			 (1, 1, 1, 0, 0, 0, 0),
-			 (0, 0, 0, 0, 0, 1, 1),
-			 (0, 0, 0, 0, 0, 1, 1),
-			 (0, 0, 0, 0, 0, 0, 0),
-			 (1, 1, 1, 0, 0, 0, 0))
+	# state = ((0, 1, 0, 0, 0, 0, 0),
+	# 		 (0, 0, 1, 0, 0, 0, 0),
+	# 		 (1, 1, 1, 0, 0, 0, 0),
+	# 		 (0, 0, 0, 0, 0, 1, 1),
+	# 		 (0, 0, 0, 0, 0, 1, 1),
+	# 		 (0, 0, 0, 0, 0, 0, 0),
+	# 		 (1, 1, 1, 0, 0, 0, 0))
+	# state = ((0, 1, 0, 0, 1, 0, 0, 0, 0, 0),
+	# 		 (0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
+	# 		 (1, 1, 1, 0, 0, 0, 0, 0, 0, 0),
+	# 		 (0, 0, 0, 0, 0, 1, 1, 0, 0, 0),
+	# 		 (0, 0, 0, 1, 0, 0, 1, 0, 1, 0),
+	# 		 (0, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+	# 		 (1, 1, 1, 0, 0, 0, 0, 0, 1, 1))
+	state = ((0, 0, 0, 0, 0, 0, 1, 0),
+			 (1, 1, 0, 0, 0, 0, 0, 0),
+			 (0, 1, 0, 0, 0, 1, 1, 1),)  # Diehard
+	# state = ((1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1),)  # Inifinity
 
 	data = set()
 	for y in range(len(state)):
