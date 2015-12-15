@@ -1,7 +1,7 @@
 CC = g++
-CV = -std=gnu++1y
+CV = -std=gnu++11
 OPTLVL = -O2
-# DEBUG = -g
+# DEBUG = -DDEBUG
 # INCLUDE = -Ilib
 # RUNDEPS = input.txt output.txt
 
@@ -11,7 +11,7 @@ SOURCES = source_name.cpp
 OBJS = $(SOURCES:.cpp=.o)
 
 # Compiler flags:
-CFLAGS = $(CV) -c -Wall $(OPTLVL) $(DEBUG) $(INCLUDE)
+CFLAGS = $(CV) -c -Wall -Wextra $(OPTLVL) $(DEBUG) $(INCLUDE)
 # Linker flags:
 LDFLAGS =
 
