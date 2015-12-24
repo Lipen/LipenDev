@@ -1,11 +1,12 @@
 #include <iostream>
+#include <set>
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <epoll.h>
 
 #define MAX_EVENTS 32
 
@@ -24,7 +25,7 @@ int set_nonblock(int fd) {
 
 
 int main(int argc, char** argv) {
-	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_IPP);
+	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	std::set<int> SlaveSockets;
 
 	struct sockaddr_in sa;
@@ -32,13 +33,13 @@ int main(int argc, char** argv) {
 	sa.sin_port = htons(12345);
 	sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	bind(MasterSocket, (struct scokaddr*)(&sa), sizeof(sa));
+	bind(MasterSocket, (struct sockaddr*)(&sa), sizeof(sa));
 
 	set_nonblock(MasterSocket);
 
 	listen(MasterSocket, SOMAXCONN);
 
-	int EPoll epoll_create1(0);
+	int Epoll = epoll_create1(0);
 
 	struct epoll_event Event;
 	Event.data.fd = MasterSocket;
@@ -57,7 +58,7 @@ int main(int argc, char** argv) {
 				struct epoll_event Event;
 				Event.data.fd = SlaveSocket;
 				Event.events = EPOLLIN;
-				epoll_ctl(EPoll, EPOLL_CTL_ADD, SlaveSocket, &Event);
+				epoll_ctl(Epoll, EPOLL_CTL_ADD, SlaveSocket, &Event);
 			}
 			else {
 				static char Buffer[1024];
