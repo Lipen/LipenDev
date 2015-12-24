@@ -6,32 +6,30 @@
 
 
 int main(int argc, char** argv) {
-	int socket_master = socket(
-		AF_INET,
-		SOCK_STREAM,
-		IPPROTO_TCP);
+	int socket_master = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	struct sockaddr_in sa;
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(12345);
-	sa.sin_addr.s_addr = htnol(INADDR_ANY);
+	sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	bind(socket_master, (struct sockaddr*)(&socket_master), sizeof(sa));
+	bind(socket_master, (struct sockaddr*)(&sa), sizeof(sa));
 
 	listen(socket_master, SOMAXCONN);
 
 	while (1) {
 		int socket_slave = accept(socket_master, 0, 0);
 
-		int buf[5] = {0, 0, 0, 0, 0};
+		char buf[5] = {0, 0, 0, 0, 0};
 		recv(socket_slave, buf, 4, MSG_NOSIGNAL);
-		buf[0] = "@";
+		printf("Server got: %s\n", buf);
+		buf[1] = '@';
 		send(socket_slave, buf, 4, MSG_NOSIGNAL);
 		shutdown(socket_slave, SHUT_RDWR);
 		close(socket_slave);
-
-		printf("%s\n", buf);
 	}
+
+	printf("Server closed.");
 
 	return 0;
 }

@@ -13,9 +13,9 @@ int main(int argc, char** argv) {
 	sa.sin_port = htons(12345);
 	sa.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-	connect(sock, (struct sock_addr*)(&sa), sizeof(sa));
+	connect(sock, (struct sockaddr*)(&sa), sizeof(sa));
 
-	char buf[] = "PINg";
+	char buf[] = "PING";
 	send(sock, buf, 4, MSG_NOSIGNAL);
 	recv(sock, buf, 4, MSG_NOSIGNAL);
 
