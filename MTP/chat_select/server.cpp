@@ -23,7 +23,7 @@ int set_nonblock(int fd) {
 
 
 int main(int argc, char** argv) {
-	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_IPP);
+	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	std::set<int> SlaveSockets;
 
 	struct sockaddr_in sa;
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 	sa.sin_port = htons(12345);
 	sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	bind(MasterSocket, (struct scokaddr*)(&sa), sizeof(sa));
+	bind(MasterSocket, (struct sockaddr*)(&sa), sizeof(sa));
 
 	set_nonblock(MasterSocket);
 
