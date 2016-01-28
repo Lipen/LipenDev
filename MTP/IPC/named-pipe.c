@@ -14,18 +14,10 @@ int main(int argc, char* argv[]) {
 	char buf[512];
 	ssize_t r;
 
-	printf("Line 12...\n");
-
 	while ((r = read(fifo_in, buf, 10)) > 0) {
 		printf("Read %zu: %s\n", r, buf);
 		write(fifo_out, buf, r);
 	}
-
-	if (r < 0) {
-		perror("Read -1");
-	}
-
-	printf("Closing...\n");
 
 	close(fifo_in);
 	close(fifo_out);
