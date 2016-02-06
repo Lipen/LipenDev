@@ -16,8 +16,8 @@ void* waiter_cb(void* arg) {
 }
 
 void* spin_cb(void* arg) {
-	while (pthread_spin_trylock(&sl));
-	// pthread_spin_unlock(&sl);
+	pthread_spin_lock(&sl);
+	pthread_spin_unlock(&sl);
 	return NULL;
 }
 
