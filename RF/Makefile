@@ -3,7 +3,7 @@ CV = -std=gnu++11
 OPTLVL = -O2
 
 EXECUTABLE = main
-SOURCES = main.cpp
+SOURCES = main.cpp Robot.cpp Ball.cpp LTexture.cpp
 INCLUDE =
 LIBPATH =
 
