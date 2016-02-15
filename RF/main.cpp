@@ -17,32 +17,40 @@ using std::endl;
 using std::string;
 using clock_used = high_resolution_clock;  // steady_clock
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
-#define MAP_WIDTH 3000
-#define MAP_HEIGHT 2250
-#define MAP_EDGE_RIGHT 1400  // ~ MAP_WIDTH/2 minus something
-#define MAP_EDGE_LEFT (-MAP_EDGE_RIGHT)
-#define MAP_EDGE_TOP 1050  // ~ MAP_HEIGHT/2 minus something
-#define MAP_EDGE_BOT (-MAP_EDGE_TOP)
-#define BALL_MASS 10
-#define BALL_RADIUS 30
-#define BALL_FRICTION 0.999
-#define ROBOT_MASS 2000
-#define ROBOT_RADIUS 70
-#define ROBOT_BASE 50
-#define ROBOT_BASE_SPEED 800
-#define ROBOT_BASE_ANGULAR_SPEED 0.2
-#define PID_P 100
-#define DT_MODELLER 10   // 10
-#define DT_DRAWER 40    // 40
-#define DT_STATEGIER 50 // 50
+const double SCREEN_WIDTH = 800;
+const double SCREEN_HEIGHT = 600;
+const double MAP_WIDTH = 3000;
+const double MAP_HEIGHT = 2250;
+const double MAP_EDGE_RIGHT = 1400;  // ~ MAP_WIDTH/2 minus something
+const double MAP_EDGE_LEFT = -MAP_EDGE_RIGHT;
+const double MAP_EDGE_TOP = 1050;  // ~ MAP_HEIGHT/2 minus something
+const double MAP_EDGE_BOT = -MAP_EDGE_TOP;
+
+const double BALL_MASS = 10;
+const double BALL_RADIUS = 30;
+const double BALL_FRICTION = 0.999;
+
+const double ROBOT_MASS = 1000;
+const double ROBOT_RADIUS = 70;
+const double ROBOT_BASE = 50;
+const double ROBOT_BASE_SPEED = 800;
+const double ROBOT_BASE_ANGULAR_SPEED = 0.1;
+const double ROBOT_THRESHOLD_MIN = 100;
+const double ROBOT_THRESHOLD_MAX = 700;
+const double ROBOT_THRESHOLD_SLOPE = 1./(ROBOT_THRESHOLD_MAX-ROBOT_THRESHOLD_MIN);
+const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN;
+
+volatile bool RUNNING = true;
+const double PID_P = 100;
+const int DT_MODELLER = 10;   // 10
+const int DT_DRAWER = 40;     // 40
+const int DT_STATEGIER = 50;  // 50
 
 const double PI = 3.14159265358979323846;
 const double TWO_PI = 6.28318530717958647693;
 const double HALF_PI = 1.57079632679489661923;
+
 const auto time_start = clock_used::now();
-volatile bool RUNNING = true;
 std::mutex mutex_control;
 std::mutex mutex_data;
 
@@ -55,11 +63,27 @@ extern LTexture gRobotTexture;
 
 
 template<typename T, typename U>
-double get_dist_squared(T &a, U &b) {
+double get_dist_squared(const T &a, const U &b) {
 	double ax = a.x, ay = a.y, bx = b.x, by = b.y;
 	double dx = ax - bx, dy = ay - by;
-	double ret = dx*dx + dy*dy;
-	return ret;
+	return dx*dx + dy*dy;
+}
+
+double get_dist_squared(double x1, double y1, double x2, double y2) {
+	double dx = x1 - x2;
+	double dy = y1 - y2;
+	return dx*dx + dy*dy;
+}
+
+template<typename T, typename U>
+double get_dist(const T &a, const U &b) {
+	return sqrt(get_dist_squared(a, b));
+}
+
+double get_dist(double x1, double y1, double x2, double y2) {
+	double dx = x1 - x2;
+	double dy = y1 - y2;
+	return sqrt(dx*dx + dy*dy);
 }
 
 void draw_circle(double x, double y, double r) {
@@ -263,8 +287,7 @@ class Robot {
 	}
 
 	void collide(Robot &other) {
-		// double ds = get_dist_squared(*this, other);
-		double ds = (x-other.x)*(x-other.x) + (y-other.y)*(y-other.y);
+		double ds = get_dist_squared(*this, other);
 		double rs = radius + other.radius;
 
 		if (ds <= 1e-9) {
@@ -272,8 +295,6 @@ class Robot {
 		}
 
 		if (ds < rs*rs) {
-			// cout << "ROBOTS COLLISION" << endl;
-
 			double semi = sqrt(ds) / 2;
 			// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from this to radical line
 			double alpha = atan2(other.y - y, other.x - x);  // Between this and other robot
@@ -303,8 +324,15 @@ class Robot {
 		double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
 		double b = (x1 - a) / k + y1;
 
-		/* Delta alpha for p-regulator */
-		double alpha = atan2(b-y2, a-x2) + sign((x2-x1)*(0-y1) - (y2-y1)*(MAP_EDGE_LEFT-x1)) * HALF_PI - angle;
+		double chi = atan2(b-y2, a-x2);  // Between robot and circle center
+		double tg = chi + sign((x2-x1)*(0-y1) - (y2-y1)*(MAP_EDGE_LEFT-x1)) * HALF_PI;  // Transfer to proper tangent
+		normalize_angle(tg);  // ?
+		double theta = atan2(y1 - y2, x1 - x2);  // Between robot and ball
+		double d = get_dist(x2, y2, x1, y1);     // Between robot and ball
+		double da = theta - tg;
+		double gamma = (d > ROBOT_THRESHOLD_MAX) ? 1 : (d < ROBOT_THRESHOLD_MIN) ? 0 : ROBOT_THRESHOLD_SLOPE * d + ROBOT_THRESHOLD_INTER;
+
+		double alpha = tg + da * gamma - angle;  // Delta alpha for p-regulator
 		normalize_angle(alpha);
 
 		// cout << "k = " << k << ", a = " << a << ", b=" << b << endl;
@@ -372,13 +400,10 @@ class Ball {
 		double a = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
 		double b = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
 
-		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
-		// draw_circle(a, b, radius * SCREEN_WIDTH / MAP_WIDTH);
-
 		gBallTexture.render(a, b);
 	}
 
-	void collide(Robot &other) {
+	void collide(const Robot &other) {
 		double ds = get_dist_squared(*this, other);  // DistanceSquared
 		double rs = radius + other.radius;  // RaduisesSum
 
@@ -396,19 +421,16 @@ class Ball {
 			double vty = vy * sin(da);
 
 			/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */  // Norm
-
 			double ux = (2*ROBOT_MASS*other.vx + vnx*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
 			double uy = (2*ROBOT_MASS*other.vy + vny*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
 			vx = ux + vtx;
 			vy = uy + vty;
 
 			double rho;
-			if (ds < radius*radius) {
+			if (ds < radius*radius)
 				rho = 2*other.radius - sqrt(ds);
-			}
-			else {
+			else
 				rho = rs;
-			}
 			// cout << "RS = " << rs << ", robot.R = " << other.radius << ", dist = " << sqrt(ds) << ", rho = " << rho << endl;
 			x = other.x + rho * cos(alpha + PI);
 			y = other.y + rho * sin(alpha + PI);
@@ -615,10 +637,10 @@ void drawer() {
 
 		// Render green map edges
 		SDL_Rect map_edges = {
-			(MAP_EDGE_LEFT + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
-			(MAP_EDGE_TOP + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT,
-			(MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH,
-			(MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT
+			(int)((MAP_EDGE_LEFT + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH),
+			(int)((MAP_EDGE_TOP + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT),
+			(int)((MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH),
+			(int)((MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT)
 		};
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xC0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
