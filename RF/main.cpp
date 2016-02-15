@@ -16,15 +16,17 @@ using std::cout;
 using std::endl;
 using std::string;
 
-#define MAP_WIDTH 5000
-#define MAP_HEIGHT 1000
-#define MAP_WIDTH_PIXEL 100
-#define MAP_HEIGHT_PIXEL 20
+#define MAP_WIDTH 3000
+#define MAP_HEIGHT 2250
 #define DT_MODELLER 100
 #define DT_DRAWER 500
 #define DT_STATEGIER 50
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
+#define MAP_EDGE_RIGHT 1400  // ~ MAP_WIDTH/2 minus something
+#define MAP_EDGE_LEFT (-MAP_EDGE_RIGHT)
+#define MAP_EDGE_TOP 1050  // ~ MAP_HEIGHT/2 minus something
+#define MAP_EDGE_BOT (-MAP_EDGE_TOP)
 
 const double PI = 3.1415926;
 const double TWO_PI = 6.2831853;
@@ -77,7 +79,7 @@ class LTexture {
 			SDL_SetColorKey(loaded_surface, SDL_TRUE, SDL_MapRGB(loaded_surface->format, 0, 0xFF, 0xFF));
 
 			//Create texture from surface pixels
-	        new_texture = SDL_CreateTextureFromSurface( gRenderer, loaded_surface );
+	        new_texture = SDL_CreateTextureFromSurface(gRenderer, loaded_surface);
 			if (new_texture == NULL) {
 				cout << "Bad texture create (\"" << path << "\"): " << SDL_GetError() << endl;
 			}
@@ -120,13 +122,13 @@ class LTexture {
 	}
 
 	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE) {
-		cout << "Render at (" << x << ", " << y << ")" << endl;
+		cout << "Render at (" << x << ", " << y << ") [RAW COORDS]" << endl;
 
 		//Set rendering space and render to screen
-		SDL_Rect render_quad = { x, y, width, height };
+		SDL_Rect render_quad = { x-width/2, y-width/2, width, height };
 
 		//Set clip rendering dimensions
-		if( clip != NULL ) {
+		if (clip != NULL) {
 			render_quad.w = clip->w;
 			render_quad.h = clip->h;
 		}
@@ -181,6 +183,7 @@ class Robot {
 class Ball {
  public:
 	double x, y, vx, vy, ax, ay;
+	double width, height;
 
 	Ball(double x, double y, double vx, double vy, double ax, double ay)
 	: x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay)
@@ -189,15 +192,42 @@ class Ball {
 	void update(double dt) {
 		vx += ax * dt;
 		vy += ay * dt;
-		vx *= 0.99;  // Friction
-		vy *= 0.99;
+		vx *= 0.999;  // Friction
+		vy *= 0.999;
 		x += vx * dt;
 		y += vy * dt;
+
+		if (x > MAP_WIDTH/2) {
+			x = MAP_WIDTH - x;
+			vx *= -1;
+		}
+		else if (x < -MAP_WIDTH/2) {
+			x = -MAP_WIDTH - x;
+			vx *= -1;
+		}
+		if (y > MAP_HEIGHT/2) {
+			y = MAP_HEIGHT - y;
+			vy *= -1;
+		}
+		else if (y < -MAP_HEIGHT/2) {
+			y = -MAP_HEIGHT - y;
+			vy *= -1;
+		}
+
+		// if (x > MAP_WIDTH)
+		// 	x = 2*MAP_WIDTH - x;
+		// if (x < 0)
+		// 	x = -x;
+		// if (y > MAP_HEIGHT)
+		// 	y = 2*MAP_HEIGHT - y;
+		// if (y < 0)
+		// 	y = -y;
 	}
 
 	void render() {
-		gBallTexture.render( (x+MAP_WIDTH/2)*SCREEN_WIDTH/MAP_WIDTH,
-							(-y+MAP_HEIGHT/2)*SCREEN_HEIGHT/MAP_HEIGHT );
+		gBallTexture.render(
+			(x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
+			(-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT );
 	}
 
 	friend std::ostream& operator<< (std::ostream &o, const Ball &b) {
@@ -294,7 +324,7 @@ int initialize_sdl() {
 			cout << "Warning: Linear texture filtering not enabled!" << endl;
 		}
 
-		gWindow = SDL_CreateWindow("Drawer :: Map", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("Drawer :: Map", 500, 80/*SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED*/, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL) {
 			cout << "Bad SDL window create: " << SDL_GetError() << endl;
 			success = false;
@@ -313,7 +343,7 @@ int initialize_sdl() {
 				//Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
 				if (!(IMG_Init(imgFlags) & imgFlags)) {
-					cout << "Bad sdl_image init: " << SDL_GetError() << endl;
+					cout << "Bad sdl img init: " << SDL_GetError() << endl;
 					success = false;
 				}
 			}
@@ -407,7 +437,7 @@ void drawer() {
 		cout << *ball << " :: " << ball << endl;
 		/* DEBUG END */
 
-// =====================================================================
+	// =====================================================================
 		// //Clear screen
 		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 		// SDL_RenderClear(gRenderer);
@@ -434,18 +464,29 @@ void drawer() {
 
 		// //Update screen
 		// SDL_RenderPresent(gRenderer);
-// =====================================================================
+	// =====================================================================
 
-// =====================================================================
-		//Clear screen
+	// =====================================================================
+		// Clear screen
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 		SDL_RenderClear(gRenderer);
 
+		// Render green map edges
+		SDL_Rect map_edges = {
+			(MAP_EDGE_LEFT + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
+			(MAP_EDGE_TOP + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT,
+			(MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH,
+			(MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT
+		};
+		cout << "Rect at " << map_edges.x << ", " << map_edges.y << endl;
+		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xFF, 0x00, 0xFF);
+		SDL_RenderDrawRect(gRenderer, &map_edges);
+
 		ball->render();
 
-		//Update screen
+		// Update screen
 		SDL_RenderPresent(gRenderer);
-// =====================================================================
+	// =====================================================================
 
 		// cout << "Drawer :: " << duration_cast<milliseconds>(steady_clock::now() - time_start).count()/1000. << " s" << endl;
 		std::this_thread::sleep_for(milliseconds(DT_DRAWER));
