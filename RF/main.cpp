@@ -17,11 +17,11 @@ using std::endl;
 using std::string;
 using namespace std::chrono;
 
-#define MAP_WIDTH 4000
-#define MAP_HEIGHT 3000
+#define MAP_WIDTH 5000
+#define MAP_HEIGHT 1000
 #define MAP_WIDTH_PIXEL 100
-#define MAP_HEIGHT_PIXEL 18
-#define DT_MODELLER 50
+#define MAP_HEIGHT_PIXEL 20
+#define DT_MODELLER 100
 #define DT_DRAWER 500
 #define DT_STATEGIER 50
 
@@ -173,7 +173,6 @@ void modeller() {
 	auto time_modeller = steady_clock::now();
 
 	while (true) {
-		// double dt = duration_cast<milliseconds>(steady_clock::now() - time_modeller).count()/1000.;
 		double dt = duration<double, std::milli>(steady_clock::now() - time_modeller).count() / 1000.;
 		time_modeller = steady_clock::now();
 		cout << "Modeller :: dt = " << std::fixed << std::setprecision(1) << dt*1000 << " ms" << endl;
@@ -189,7 +188,6 @@ void modeller() {
 
 		write_data("data", robots, ball);
 
-		// std::this_thread::sleep_for(milliseconds(DT_MODELLER));
 		std::this_thread::sleep_for(duration<double, std::milli>(DT_MODELLER));
 	}
 }
