@@ -28,7 +28,7 @@ const double MAP_EDGE_BOT = -MAP_EDGE_TOP;
 
 const double BALL_MASS = 10;
 const double BALL_RADIUS = 30;
-const double BALL_FRICTION = 0.999;
+const double BALL_FRICTION = 0.995;
 
 const double ROBOT_MASS = 1000;
 const double ROBOT_RADIUS = 70;
@@ -292,6 +292,7 @@ class Robot {
 
 		if (ds <= 1e-9) {
 			cout << "HMMMM ... " << *this << " (" << this << ") AND " << other << "(" << &other << ")" << endl;
+			system("ini");
 		}
 
 		if (ds < rs*rs) {
@@ -318,7 +319,7 @@ class Robot {
 	void apply_strategy_attack(double x1, double y1 /*Ball* &ball*/) {
 		/* DBG */
 		double kappa = atan2(0 - y1, MAP_EDGE_LEFT - x1);
-		double rho_remmm = 24;
+		double rho_remmm = 70;
 		x1 -= rho_remmm * cos(kappa);
 		y1 -= rho_remmm * sin(kappa);
 		/* DBG */
@@ -326,7 +327,6 @@ class Robot {
 		// double x1 = ball->get_x(), y1 = ball->get_y();
 		double x2 = x, y2 = y;
 		double k = (0 - y1) / (MAP_EDGE_LEFT - x1);  // Slope of ball direction
-
 
 		/* (a, b) is a trajectory center */
 		double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
