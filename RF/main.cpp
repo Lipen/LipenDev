@@ -18,8 +18,8 @@ using std::string;
 
 #define MAP_WIDTH 3000
 #define MAP_HEIGHT 2250
-#define DT_MODELLER 100
-#define DT_DRAWER 500
+#define DT_MODELLER 10
+#define DT_DRAWER 40
 #define DT_STATEGIER 50
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -40,7 +40,16 @@ std::mutex mutex_data;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 class LTexture;
-extern LTexture gBallTexture, gRobotTexture;
+extern LTexture gBallTexture;
+extern LTexture gRobotTexture;
+
+
+template<typename T, typename U>
+double get_dist_squared(T &a, U &b) {
+	double ax = a.x, ay = a.y, bx = b.x, by = b.y;
+	double dx = ax - bx, dy = ay - by;
+	return dx*dx + dy*dy;
+}
 
 
 class LTexture {
@@ -55,7 +64,7 @@ class LTexture {
 	}
 
 	void free() {
-		//Free texture if it exists
+		// Free texture if it exists
 		if (texture != NULL) {
 			SDL_DestroyTexture(texture);
 			texture = NULL;
@@ -65,53 +74,53 @@ class LTexture {
 	}
 
 	bool load_from_file(string path) {
-		//Get rid of preexisting texture
+		// Get rid of preexisting texture
 		free();
 
-		//The final texture
+		// The final texture
 		SDL_Texture* new_texture = NULL;
 
-		//Load image at specified path
+		// Load image at specified path
 		SDL_Surface* loaded_surface = IMG_Load(path.c_str());
 		if (loaded_surface == NULL) {
 			cout << "Bad load image(\"" << path << "\"): " << IMG_GetError() << endl;
 		}
 		else {
-			//Color key image
-			SDL_SetColorKey(loaded_surface, SDL_TRUE, SDL_MapRGB(loaded_surface->format, 0, 0xFF, 0xFF));
+			// Color key image
+			// SDL_SetColorKey(loaded_surface, SDL_TRUE, SDL_MapRGB(loaded_surface->format, 0xFF, 0, 0xFF));
 
-			//Create texture from surface pixels
+			// Create texture from surface pixels
 	        new_texture = SDL_CreateTextureFromSurface(gRenderer, loaded_surface);
 			if (new_texture == NULL) {
 				cout << "Bad texture create (\"" << path << "\"): " << SDL_GetError() << endl;
 			}
 			else {
-				//Get image dimensions
+				// Get image dimensions
 				width = loaded_surface->w;
 				height = loaded_surface->h;
 			}
 
-			//Get rid of old loaded surface
+			// Get rid of old loaded surface
 			SDL_FreeSurface(loaded_surface);
 		}
 
-		//Return success
+		// Return success
 		texture = new_texture;
 		return texture != NULL;
 	}
 
 	void setColor(Uint8 red, Uint8 green, Uint8 blue) {
-		//Modulate texture rgb
+		// Modulate texture rgb
 		SDL_SetTextureColorMod(texture, red, green, blue);
 	}
 
 	void setBlendMode(SDL_BlendMode blending) {
-		//Set blending function
+		// Set blending function
 		SDL_SetTextureBlendMode(texture, blending);
 	}
 
 	void setAlpha(Uint8 alpha) {
-		//Modulate texture alpha
+		// Modulate texture alpha
 		SDL_SetTextureAlphaMod(texture, alpha);
 	}
 
@@ -126,22 +135,69 @@ class LTexture {
 	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE) {
 		// cout << "Render at (" << x << ", " << y << ") [RAW COORDS]" << endl;
 
-		//Set rendering space and render to screen
+		// Set rendering space and render to screen
 		SDL_Rect render_quad = { x-width/2, y-width/2, width, height };
 
-		//Set clip rendering dimensions
+		// Set clip rendering dimensions
 		if (clip != NULL) {
 			render_quad.w = clip->w;
 			render_quad.h = clip->h;
 		}
 
-		//Render to screen
+		// Render to screen
 		SDL_RenderCopyEx(gRenderer, texture, clip, &render_quad, angle, center, flip);
 	}
 };
 
 LTexture gBallTexture;
 LTexture gRobotTexture;
+
+
+class Ball {
+ public:
+	double x, y, vx, vy, ax, ay;
+	double radius = RADIUS_BALL;
+
+	Ball(double x, double y, double vx, double vy, double ax, double ay)
+	: x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay)
+	{}
+
+	void update(double dt) {
+		vx += ax * dt;
+		vy += ay * dt;
+		vx *= 0.999;  // Friction
+		vy *= 0.999;
+		x += vx * dt;
+		y += vy * dt;
+
+		if (x > MAP_EDGE_RIGHT) {
+			x = 2*MAP_EDGE_RIGHT - x;
+			vx *= -1;
+		}
+		if (x < MAP_EDGE_LEFT) {
+			x = 2*MAP_EDGE_LEFT - x;
+			vx *= -1;
+		}
+		if (y > MAP_EDGE_TOP) {
+			y = 2*MAP_EDGE_TOP - y;
+			vy *= -1;
+		}
+		if (y < MAP_EDGE_BOT) {
+			y = 2*MAP_EDGE_BOT - y;
+			vy *= -1;
+		}
+	}
+
+	void render() {
+		gBallTexture.render(
+			(x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
+			(-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT );
+	}
+
+	friend std::ostream& operator<< (std::ostream &o, const Ball &b) {
+		return o << "[Ball: x = " << std::fixed << std::setprecision(1) << b.x << ", y = " << b.y << "; v = " << std::setprecision(2) << b.vx << " / " << b.vy << "; a = " << b.ax << " / " << b.ay << "]";
+	}
+};
 
 
 class Robot {
@@ -199,72 +255,26 @@ class Robot {
 			angle * -180. / PI + 90);
 	}
 
+	void collide(Ball* &ball) {
+		double ds = get_dist_squared(*this, *ball);  // DistanceSquared
+		double rs = radius + ball->radius;  // RaduisesSum
+
+		if (ds < rs*rs) {
+			cout << "COLLISION WITH BALL" << endl;
+		}
+	}
+
+	void collide(Robot &other) {
+		double ds = get_dist_squared(*this, other);
+		double rs = radius + other.radius;
+
+		if (ds < rs*rs) {
+			cout << "ROBOTS COLLISION" << endl;
+		}
+	}
+
 	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
 		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << "]";
-	}
-};
-
-
-class Ball {
- public:
-	double x, y, vx, vy, ax, ay;
-	double radius = RADIUS_BALL;
-
-	Ball(double x, double y, double vx, double vy, double ax, double ay)
-	: x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay)
-	{}
-
-	void update(double dt) {
-		vx += ax * dt;
-		vy += ay * dt;
-		vx *= 0.999;  // Friction
-		vy *= 0.999;
-		x += vx * dt;
-		y += vy * dt;
-
-		if (x > MAP_EDGE_RIGHT) {
-			x = 2*MAP_EDGE_RIGHT - x;
-			vx *= -1;
-		}
-		if (x < MAP_EDGE_LEFT) {
-			x = 2*MAP_EDGE_LEFT - x;
-			vx *= -1;
-		}
-		if (y > MAP_EDGE_TOP) {
-			y = 2*MAP_EDGE_TOP - y;
-			vy *= -1;
-		}
-		if (y < MAP_EDGE_BOT) {
-			y = 2*MAP_EDGE_BOT - y;
-			vy *= -1;
-		}
-
-		// if (x > MAP_WIDTH/2) {
-		// 	x = MAP_WIDTH - x;
-		// 	vx *= -1;
-		// }
-		// else if (x < -MAP_WIDTH/2) {
-		// 	x = -MAP_WIDTH - x;
-		// 	vx *= -1;
-		// }
-		// if (y > MAP_HEIGHT/2) {
-		// 	y = MAP_HEIGHT - y;
-		// 	vy *= -1;
-		// }
-		// else if (y < -MAP_HEIGHT/2) {
-		// 	y = -MAP_HEIGHT - y;
-		// 	vy *= -1;
-		// }
-	}
-
-	void render() {
-		gBallTexture.render(
-			(x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
-			(-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT );
-	}
-
-	friend std::ostream& operator<< (std::ostream &o, const Ball &b) {
-		return o << "[Ball: x = " << std::fixed << std::setprecision(1) << b.x << ", y = " << b.y << "; v = " << std::setprecision(2) << b.vx << " / " << b.vy << "; a = " << b.ax << " / " << b.ay << "]";
 	}
 };
 
@@ -344,6 +354,15 @@ char get_symbol_from_angle(double angle) {
 	return '?';
 }
 
+void detect_collisions(std::vector<Robot> &robots, Ball* &ball) {
+	for (size_t i = 0; i < robots.size(); ++i) {
+		robots[i].collide(ball);
+		for (size_t j = i+1; j < robots.size(); ++j) {
+			robots[i].collide(robots[j]);
+		}
+	}
+}
+
 
 int initialize_sdl() {
 	bool success = true;
@@ -363,17 +382,17 @@ int initialize_sdl() {
 			success = false;
 		}
 		else {
-			//Create renderer for window
+			// Create renderer for window
 			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_SOFTWARE/*SDL_RENDERER_ACCELERATED*/);
 			if (gRenderer == NULL) {
 				cout << "Bad renderer create: " << SDL_GetError() << endl;
 				success = false;
 			}
 			else {
-				//Initialize renderer color
+				// Initialize renderer color
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 
-				//Initialize PNG loading
+				// Initialize PNG loading
 				int imgFlags = IMG_INIT_PNG;
 				if (!(IMG_Init(imgFlags) & imgFlags)) {
 					cout << "Bad sdl img init: " << SDL_GetError() << endl;
@@ -401,7 +420,7 @@ void release_sdl() {
 }
 
 int load_media() {
-	if (!gBallTexture.load_from_file("ball.bmp")) {
+	if (!gBallTexture.load_from_file("ball.png")) {
 		cout << "Bad texture load: " << SDL_GetError() << endl;
 		return -1;
 	}
@@ -431,6 +450,8 @@ void modeller() {
 		for (auto&& r : robots)
 			r.apply_u(dt);
 		ball->update(dt);
+
+		detect_collisions(robots, ball);
 
 		write_data("data", robots, ball);
 
@@ -476,37 +497,37 @@ void drawer() {
 		/* DEBUG END */
 
 	// =====================================================================
-		// //Clear screen
+		// // Clear screen
 		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 		// SDL_RenderClear(gRenderer);
 
-		// //Render red filled quad
+		// // Render red filled quad
 		// SDL_Rect fillRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
 		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
 		// SDL_RenderFillRect(gRenderer, &fillRect);
 
-		// //Render green outlined quad
+		// // Render green outlined quad
 		// SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6, SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
 		// SDL_SetRenderDrawColor(gRenderer, 0x00, 0xFF, 0x00, 0xFF);
 		// SDL_RenderDrawRect(gRenderer, &outlineRect);
 
-		// //Draw blue horizontal line
+		// // Draw blue horizontal line
 		// SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0xFF, 0xFF );
 		// SDL_RenderDrawLine(gRenderer, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
 
-		// //Draw vertical line of yellow dots
+		// // Draw vertical line of yellow dots
 		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0x00, 0xFF);
 		// for (int i = 0; i < SCREEN_HEIGHT; i += 4) {
 		// 	SDL_RenderDrawPoint(gRenderer, SCREEN_WIDTH / 2, i);
 		// }
 
-		// //Update screen
+		// // Update screen
 		// SDL_RenderPresent(gRenderer);
 	// =====================================================================
 
 	// =====================================================================
 		// Clear screen
-		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xF0, 0xFF);
 		SDL_RenderClear(gRenderer);
 
 		// Render green map edges
@@ -572,18 +593,26 @@ int main(int argc, char* argv[]) {
 	cout << "Main now reading events..." << endl;
 	SDL_Event e;
 	while (RUNNING) {
-		while (SDL_PollEvent(&e) != 0) {
-			if (e.type == SDL_QUIT) {
+		SDL_WaitEvent(&e);
+
+		if (e.type == SDL_QUIT) {
+			cout << "Close button pressed" << endl;
+			RUNNING = false;
+		}
+		else if (e.type == SDL_KEYDOWN) {
+			if (e.key.keysym.sym == SDLK_ESCAPE) {
+				cout << "ESC pressed" << endl;
 				RUNNING = false;
 			}
 		}
 	}
 
-	cout << "No more running. Waiting for threads..." << endl;
+	cout << "Waiting for threads to finish..." << endl;
 	th_strata.join();
 	th_draw.join();
 	th_model.join();
 
+	cout << "Releasing SDL" << endl;
 	release_sdl();
 
 	cout << "The end." << endl;
