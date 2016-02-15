@@ -43,7 +43,7 @@ const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN
 volatile bool RUNNING = true;
 const double PID_P = 100;
 const int DT_MODELLER = 10;   // 10
-const int DT_DRAWER = 40;     // 40
+const int DT_DRAWER = 20;     // 40
 const int DT_STATEGIER = 50;  // 50
 
 const double PI = 3.14159265358979323846;
@@ -87,7 +87,7 @@ double get_dist(double x1, double y1, double x2, double y2) {
 }
 
 void draw_circle(double x, double y, double r) {
-	int n = 40;  // 30
+	int n = 90;  // 30
 	SDL_Point* points = new SDL_Point[n+1];
 
 	for (int i = 0; i <= n; ++i) {
@@ -297,7 +297,7 @@ class Robot {
 		if (ds < rs*rs) {
 			double semi = sqrt(ds) / 2;
 			// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from this to radical line
-			double alpha = atan2(other.y - y, other.x - x);  // Between this and other robot
+			double alpha = atan2(other.y - y + 1e-6, other.x - x);  // Between this and other robot
 
 			double dr_this = radius - semi;  // Distance to shift away from collision semipoint
 			x -= dr_this * cos(alpha);
@@ -316,9 +316,17 @@ class Robot {
 	}
 
 	void apply_strategy_attack(double x1, double y1 /*Ball* &ball*/) {
+		/* DBG */
+		double kappa = atan2(0 - y1, MAP_EDGE_LEFT - x1);
+		double rho_remmm = 24;
+		x1 -= rho_remmm * cos(kappa);
+		y1 -= rho_remmm * sin(kappa);
+		/* DBG */
+
 		// double x1 = ball->get_x(), y1 = ball->get_y();
 		double x2 = x, y2 = y;
 		double k = (0 - y1) / (MAP_EDGE_LEFT - x1);  // Slope of ball direction
+
 
 		/* (a, b) is a trajectory center */
 		double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
@@ -603,7 +611,7 @@ void modeller() {
 	auto time_modeller = clock_used::now();
 
 	while (RUNNING) {
-		double dt = duration<double, std::milli>(clock_used::now() - time_modeller).count() / 1000.;
+		double dt = duration<double, std::nano>(clock_used::now() - time_modeller).count() / 1000000000.;
 		time_modeller = clock_used::now();
 		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(1) << dt*1000 << " ms" << endl;
 
