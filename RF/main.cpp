@@ -27,8 +27,10 @@ using std::string;
 #define MAP_EDGE_LEFT (-MAP_EDGE_RIGHT)
 #define MAP_EDGE_TOP 1050  // ~ MAP_HEIGHT/2 minus something
 #define MAP_EDGE_BOT (-MAP_EDGE_TOP)
-#define RADIUS_ROBOT 68
-#define RADIUS_BALL 38
+#define RADIUS_ROBOT 70
+#define RADIUS_BALL 30
+#define MASS_ROBOT 2000
+#define MASS_BALL 10
 
 const double PI = 3.1415926;
 const double TWO_PI = 6.2831853;
@@ -49,6 +51,21 @@ double get_dist_squared(T &a, U &b) {
 	double ax = a.x, ay = a.y, bx = b.x, by = b.y;
 	double dx = ax - bx, dy = ay - by;
 	return dx*dx + dy*dy;
+}
+
+void draw_circle(double x, double y, double r) {
+	int n = 60;
+	SDL_Point* points = new SDL_Point[n+1];
+
+	for (int i = 0; i < n+1; ++i) {
+		int a = x + r * cos(i * 360./n * PI / 180.);
+		int b = y + r * sin(i * 360./n * PI / 180.);
+		points[i] = { a, b };
+	}
+
+	SDL_RenderDrawLines(gRenderer, points, n);
+
+	delete points;
 }
 
 
@@ -153,6 +170,82 @@ LTexture gBallTexture;
 LTexture gRobotTexture;
 
 
+class Robot {
+ public:
+	double x, y, angle;
+	double u_left = 0, u_right = 0;
+	double vx = 0, vy = 0;
+	double radius = RADIUS_ROBOT;
+
+	Robot(double x, double y, double angle)
+	: x(x), y(y), angle(angle)
+	{}
+
+	void set_u(double ul, double ur) {
+		u_left = ul;
+		u_right = ur;
+	}
+
+	void apply_u(double dt) {
+		double base_speed = 100;
+		double base_ang_speed = 0.5;
+		double base = 100;
+
+		double ul = u_left / 100.;
+		double ur = u_right / 100.;
+		double v = (ul + ur) / 2. * base_speed;
+		double w = (ur - ul) * base_speed / base * base_ang_speed;
+
+		vx = v * dt * cos(angle);
+		vy = v * dt * sin(angle);
+
+		x += vx;
+		y += vy;
+
+		if (x > MAP_EDGE_RIGHT) {
+			x = 2*MAP_EDGE_RIGHT - x;
+		}
+		if (x < MAP_EDGE_LEFT) {
+			x = 2*MAP_EDGE_LEFT - x;
+		}
+		if (y > MAP_EDGE_TOP) {
+			y = 2*MAP_EDGE_TOP - y;
+		}
+		if (y < MAP_EDGE_BOT) {
+			y = 2*MAP_EDGE_BOT - y;
+		}
+
+		angle += w * dt;
+		// Normalize angle:
+		// angle = angle - TWO_PI * floor( (angle + PI - center) / TWO_PI )
+		angle -= TWO_PI * floor((angle + PI)/TWO_PI);
+	}
+
+	void render() {
+		double a = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+		double b = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+		draw_circle(a, b, radius * SCREEN_WIDTH / MAP_WIDTH);
+
+		gRobotTexture.render(a, b, NULL, angle * -180. / PI + 90);
+	}
+
+	void collide(Robot &other) {
+		double ds = get_dist_squared(*this, other);
+		double rs = radius + other.radius;
+
+		if (ds < rs*rs) {
+			cout << "ROBOTS COLLISION" << endl;
+		}
+	}
+
+	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
+		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << "]";
+	}
+};
+
+
 class Ball {
  public:
 	double x, y, vx, vy, ax, ay;
@@ -189,92 +282,43 @@ class Ball {
 	}
 
 	void render() {
-		gBallTexture.render(
-			(x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
-			(-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT );
+		double a = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+		double b = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+
+		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+		// draw_circle(a, b, radius * SCREEN_WIDTH / MAP_WIDTH);
+
+		gBallTexture.render(a, b);
+	}
+
+	void collide(Robot &other) {
+		double ds = get_dist_squared(*this, other);  // DistanceSquared
+		double rs = radius + other.radius;  // RaduisesSum
+
+		if (ds < rs*rs) {
+			cout << "COLLISION WITH BALL" << endl;
+			double dx = other.x - x;
+			double dy = other.y - y;
+			double alpha = atan2(dy, dx);
+			double beta = atan2(vy, vx);
+			double da = alpha - beta;
+
+			double vnx = vx * cos(da);
+			double vny = vy * cos(da);
+			double vtx = vx * sin(da);
+			double vty = vy * sin(da);
+
+			/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */
+			double ux = (2*MASS_ROBOT*other.vx + vnx*(MASS_BALL - MASS_ROBOT)) / (MASS_ROBOT + MASS_BALL);
+			double uy = (2*MASS_ROBOT*other.vy + vny*(MASS_BALL - MASS_ROBOT)) / (MASS_ROBOT + MASS_BALL);
+
+			vx = ux + vtx;
+			vy = uy + vty;
+		}
 	}
 
 	friend std::ostream& operator<< (std::ostream &o, const Ball &b) {
 		return o << "[Ball: x = " << std::fixed << std::setprecision(1) << b.x << ", y = " << b.y << "; v = " << std::setprecision(2) << b.vx << " / " << b.vy << "; a = " << b.ax << " / " << b.ay << "]";
-	}
-};
-
-
-class Robot {
- public:
-	double x, y, angle;
-	double u_left = 0, u_right = 0;
-	double radius = RADIUS_ROBOT;
-
-	Robot(double x, double y, double angle)
-	: x(x), y(y), angle(angle)
-	{}
-
-	void set_u(double ul, double ur) {
-		u_left = ul;
-		u_right = ur;
-	}
-
-	void apply_u(double dt) {
-		double base_speed = 100;
-		double base_ang_speed = 0.5;
-		double base = 100;
-
-		double ul = u_left / 100.;
-		double ur = u_right / 100.;
-		double v = (ul + ur) / 2. * base_speed;
-		double w = (ur - ul) * base_speed / base * base_ang_speed;
-
-		x += v * dt * cos(angle);
-		y += v * dt * sin(angle);
-
-		if (x > MAP_EDGE_RIGHT) {
-			x = 2*MAP_EDGE_RIGHT - x;
-		}
-		if (x < MAP_EDGE_LEFT) {
-			x = 2*MAP_EDGE_LEFT - x;
-		}
-		if (y > MAP_EDGE_TOP) {
-			y = 2*MAP_EDGE_TOP - y;
-		}
-		if (y < MAP_EDGE_BOT) {
-			y = 2*MAP_EDGE_BOT - y;
-		}
-
-		angle += w * dt;
-		// Normalize angle:
-		// angle = angle - TWO_PI * floor( (angle + PI - center) / TWO_PI )
-		angle -= TWO_PI * floor((angle + PI)/TWO_PI);
-	}
-
-	void render() {
-		gRobotTexture.render(
-			(x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
-			(-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT,
-			NULL,
-			angle * -180. / PI + 90);
-	}
-
-	void collide(Ball* &ball) {
-		double ds = get_dist_squared(*this, *ball);  // DistanceSquared
-		double rs = radius + ball->radius;  // RaduisesSum
-
-		if (ds < rs*rs) {
-			cout << "COLLISION WITH BALL" << endl;
-		}
-	}
-
-	void collide(Robot &other) {
-		double ds = get_dist_squared(*this, other);
-		double rs = radius + other.radius;
-
-		if (ds < rs*rs) {
-			cout << "ROBOTS COLLISION" << endl;
-		}
-	}
-
-	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
-		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << "]";
 	}
 };
 
@@ -356,7 +400,8 @@ char get_symbol_from_angle(double angle) {
 
 void detect_collisions(std::vector<Robot> &robots, Ball* &ball) {
 	for (size_t i = 0; i < robots.size(); ++i) {
-		robots[i].collide(ball);
+		ball->collide(robots[i]);
+
 		for (size_t j = i+1; j < robots.size(); ++j) {
 			robots[i].collide(robots[j]);
 		}
@@ -540,11 +585,11 @@ void drawer() {
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xE0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
 
-		ball->render();
-
 		for (auto&& r : robots) {
 			r.render();
 		}
+
+		ball->render();
 
 		// Update screen
 		SDL_RenderPresent(gRenderer);
