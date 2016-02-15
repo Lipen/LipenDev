@@ -27,6 +27,8 @@ using std::string;
 #define MAP_EDGE_LEFT (-MAP_EDGE_RIGHT)
 #define MAP_EDGE_TOP 1050  // ~ MAP_HEIGHT/2 minus something
 #define MAP_EDGE_BOT (-MAP_EDGE_TOP)
+#define RADIUS_ROBOT 68
+#define RADIUS_BALL 38
 
 const double PI = 3.1415926;
 const double TWO_PI = 6.2831853;
@@ -38,7 +40,7 @@ std::mutex mutex_data;
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 class LTexture;
-extern LTexture gBallTexture;
+extern LTexture gBallTexture, gRobotTexture;
 
 
 class LTexture {
@@ -122,7 +124,7 @@ class LTexture {
 	}
 
 	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE) {
-		cout << "Render at (" << x << ", " << y << ") [RAW COORDS]" << endl;
+		// cout << "Render at (" << x << ", " << y << ") [RAW COORDS]" << endl;
 
 		//Set rendering space and render to screen
 		SDL_Rect render_quad = { x-width/2, y-width/2, width, height };
@@ -139,12 +141,14 @@ class LTexture {
 };
 
 LTexture gBallTexture;
+LTexture gRobotTexture;
 
 
 class Robot {
  public:
 	double x, y, angle;
 	double u_left = 0, u_right = 0;
+	double radius = RADIUS_ROBOT;
 
 	Robot(double x, double y, double angle)
 	: x(x), y(y), angle(angle)
@@ -158,7 +162,7 @@ class Robot {
 	void apply_u(double dt) {
 		double base_speed = 100;
 		double base_ang_speed = 0.5;
-		double base = 50;
+		double base = 100;
 
 		double ul = u_left / 100.;
 		double ur = u_right / 100.;
@@ -167,11 +171,32 @@ class Robot {
 
 		x += v * dt * cos(angle);
 		y += v * dt * sin(angle);
-		angle += w * dt;
 
+		if (x > MAP_EDGE_RIGHT) {
+			x = 2*MAP_EDGE_RIGHT - x;
+		}
+		if (x < MAP_EDGE_LEFT) {
+			x = 2*MAP_EDGE_LEFT - x;
+		}
+		if (y > MAP_EDGE_TOP) {
+			y = 2*MAP_EDGE_TOP - y;
+		}
+		if (y < MAP_EDGE_BOT) {
+			y = 2*MAP_EDGE_BOT - y;
+		}
+
+		angle += w * dt;
 		// Normalize angle:
 		// angle = angle - TWO_PI * floor( (angle + PI - center) / TWO_PI )
 		angle -= TWO_PI * floor((angle + PI)/TWO_PI);
+	}
+
+	void render() {
+		gRobotTexture.render(
+			(x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH,
+			(-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT,
+			NULL,
+			angle * -180. / PI + 90);
 	}
 
 	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
@@ -183,7 +208,7 @@ class Robot {
 class Ball {
  public:
 	double x, y, vx, vy, ax, ay;
-	double width, height;
+	double radius = RADIUS_BALL;
 
 	Ball(double x, double y, double vx, double vy, double ax, double ay)
 	: x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay)
@@ -197,31 +222,39 @@ class Ball {
 		x += vx * dt;
 		y += vy * dt;
 
-		if (x > MAP_WIDTH/2) {
-			x = MAP_WIDTH - x;
+		if (x > MAP_EDGE_RIGHT) {
+			x = 2*MAP_EDGE_RIGHT - x;
 			vx *= -1;
 		}
-		else if (x < -MAP_WIDTH/2) {
-			x = -MAP_WIDTH - x;
+		if (x < MAP_EDGE_LEFT) {
+			x = 2*MAP_EDGE_LEFT - x;
 			vx *= -1;
 		}
-		if (y > MAP_HEIGHT/2) {
-			y = MAP_HEIGHT - y;
+		if (y > MAP_EDGE_TOP) {
+			y = 2*MAP_EDGE_TOP - y;
 			vy *= -1;
 		}
-		else if (y < -MAP_HEIGHT/2) {
-			y = -MAP_HEIGHT - y;
+		if (y < MAP_EDGE_BOT) {
+			y = 2*MAP_EDGE_BOT - y;
 			vy *= -1;
 		}
 
-		// if (x > MAP_WIDTH)
-		// 	x = 2*MAP_WIDTH - x;
-		// if (x < 0)
-		// 	x = -x;
-		// if (y > MAP_HEIGHT)
-		// 	y = 2*MAP_HEIGHT - y;
-		// if (y < 0)
-		// 	y = -y;
+		// if (x > MAP_WIDTH/2) {
+		// 	x = MAP_WIDTH - x;
+		// 	vx *= -1;
+		// }
+		// else if (x < -MAP_WIDTH/2) {
+		// 	x = -MAP_WIDTH - x;
+		// 	vx *= -1;
+		// }
+		// if (y > MAP_HEIGHT/2) {
+		// 	y = MAP_HEIGHT - y;
+		// 	vy *= -1;
+		// }
+		// else if (y < -MAP_HEIGHT/2) {
+		// 	y = -MAP_HEIGHT - y;
+		// 	vy *= -1;
+		// }
 	}
 
 	void render() {
@@ -373,6 +406,11 @@ int load_media() {
 		return -1;
 	}
 
+	if (!gRobotTexture.load_from_file("robot.png")) {
+		cout << "Bad texture load: " << SDL_GetError() << endl;
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -434,7 +472,7 @@ void drawer() {
 		/* DEBUG */
 		// for (auto&& r : robots)
 		// 	cout << r << endl;
-		cout << *ball << " :: " << ball << endl;
+		// cout << *ball << " :: " << ball << endl;
 		/* DEBUG END */
 
 	// =====================================================================
@@ -478,11 +516,14 @@ void drawer() {
 			(MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH,
 			(MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT
 		};
-		cout << "Rect at " << map_edges.x << ", " << map_edges.y << endl;
-		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xFF, 0x00, 0xFF);
+		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xE0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
 
 		ball->render();
+
+		for (auto&& r : robots) {
+			r.render();
+		}
 
 		// Update screen
 		SDL_RenderPresent(gRenderer);
@@ -512,6 +553,13 @@ void strategier() {
 
 
 int main(int argc, char* argv[]) {
+	if (argc > 1) {
+		cout << "Arguments:\n";
+		for (int i = 1; i < argc; ++i) {
+			cout << '\t' << string(argv[i]) << '\n';
+		}
+	}
+
 	if (initialize_sdl())
 		return -1;
 	if (load_media())
