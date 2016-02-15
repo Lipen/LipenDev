@@ -10,4 +10,4 @@ c:
 	gcc -Wall -Wextra -O3 -o julia julia.c -lOpenCL
 
 run:
-	julia
+	./julia

@@ -45,21 +45,20 @@ int main() {
 	std::vector<cl::Device> all_devices;
 
 	cl::Platform::get(&all_platforms);
-	cl::Platform default_platform = all_platforms[1];
-	default_platform.getDevices(CL_DEVICE_TYPE_ALL, &all_devices);
-	cl::Device default_device = all_devices[0];
-
 	cout << "Platforms list:" << endl;
 	for (auto& item : all_platforms) {
 		cout << '\t' << item.getInfo<CL_PLATFORM_NAME>() << endl;
 	}
+
+	cl::Platform default_platform = all_platforms[0];
+	default_platform.getDevices(CL_DEVICE_TYPE_ALL, &all_devices);
 	cout << "Devices list:" << endl;
 	for (auto&& item : all_devices) {
-		cout << "  " << item.getInfo<CL_DEVICE_NAME>() << endl;
-		cout << "    \"CL_DEVICE_MAX_COMPUTE_UNITS\" = \t" << item.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << endl;
-		cout << "    \"CL_DEVICE_MAX_WORK_GROUP_SIZE\" = " << item.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << endl;
+		cout << " * " << item.getInfo<CL_DEVICE_NAME>() << endl;
+		cout << "   CL_DEVICE_MAX_COMPUTE_UNITS = " << item.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << endl;
 	}
 
+	cl::Device default_device = all_devices[0];
 	cout << "Using platform: "<<default_platform.getInfo<CL_PLATFORM_NAME>() <<"\nUsing device: "<<default_device.getInfo<CL_DEVICE_NAME>()<<endl;
 
 	std::ifstream cl_file("julia.cl");
@@ -80,10 +79,10 @@ int main() {
 	kernel.setArg(5, step_z_re);
 	kernel.setArg(6, step_z_im);
 
-cout << "Calculating...\n";
+	cout << "Calculating...\n";
 
 	for (int frame = 1; frame <= frames_total; frame++) {
-		if (frame%10 == 0)
+		if (frame%20 == 0)
 			cout << "Frame " << frame << " / " << frames_total << " ...\n";
 	// Format file name
 		char buf[32]; snprintf(buf, 32, "_tmp/julia%03d", frame);
