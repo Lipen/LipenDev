@@ -31,6 +31,7 @@ using std::string;
 #define RADIUS_BALL 30
 #define MASS_ROBOT 2000
 #define MASS_BALL 10
+#define PID_P 100
 
 const double PI = 3.1415926;
 const double TWO_PI = 6.2831853;
@@ -54,7 +55,7 @@ double get_dist_squared(T &a, U &b) {
 }
 
 void draw_circle(double x, double y, double r) {
-	int n = 60;
+	int n = 1000;
 	SDL_Point* points = new SDL_Point[n+1];
 
 	for (int i = 0; i < n+1; ++i) {
@@ -66,6 +67,19 @@ void draw_circle(double x, double y, double r) {
 	SDL_RenderDrawLines(gRenderer, points, n);
 
 	delete points;
+}
+
+void normalize_angle(double &angle, double center = 0) {
+	angle -= TWO_PI * floor( (angle + PI - center) / TWO_PI );
+}
+
+template<typename T>
+int sign(T x) {
+	if (x > 0)
+		return 1;
+	else if (x < 0)
+		return -1;
+	return 0;
 }
 
 
@@ -177,19 +191,21 @@ class Robot {
 	double vx = 0, vy = 0;
 	double radius = RADIUS_ROBOT;
 
+	double __a = 0, __b = 0, __r = 0;
+
 	Robot(double x, double y, double angle)
 	: x(x), y(y), angle(angle)
 	{}
 
 	void set_u(double ul, double ur) {
-		u_left = ul;
-		u_right = ur;
+		u_left = (ul > 100) ? 100 : (ul < -100) ? -100 : ul;
+		u_right = (ur > 100) ? 100 : (ul < -100) ? -100 : ur;
 	}
 
 	void apply_u(double dt) {
 		double base_speed = 100;
 		double base_ang_speed = 0.5;
-		double base = 100;
+		double base = 50;
 
 		double ul = u_left / 100.;
 		double ur = u_right / 100.;
@@ -218,17 +234,25 @@ class Robot {
 		angle += w * dt;
 		// Normalize angle:
 		// angle = angle - TWO_PI * floor( (angle + PI - center) / TWO_PI )
-		angle -= TWO_PI * floor((angle + PI)/TWO_PI);
+		// angle -= TWO_PI * floor((angle + PI)/TWO_PI);
+		normalize_angle(angle);
 	}
 
 	void render() {
-		double a = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-		double b = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+		double x_ = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+		double y_ = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
 
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
-		draw_circle(a, b, radius * SCREEN_WIDTH / MAP_WIDTH);
+		draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
 
-		gRobotTexture.render(a, b, NULL, angle * -180. / PI + 90);
+		/* THAT TRICKY CIRCLES */
+		double a_ = (__a + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+		double b_ = (-__b + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+		draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
+		/**/
+
+		gRobotTexture.render(x_, y_, NULL, angle * -180. / PI + 90);
 	}
 
 	void collide(Robot &other) {
@@ -335,9 +359,13 @@ void read_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
 	ball = new Ball(x, y, vx, vy, ax, ay);
 
 	for (int i = 0; i < n; ++i) {
-		double x, y, angle;
-		fi >> x >> y >> angle;
+		double x, y, angle, _a, _b, _r;
+		fi >> x >> y >> angle/**/ >> _a >> _b >> _r;
 		robots.emplace_back(x, y, angle);
+		/*REMOVE:*/
+		robots[i].__a = _a;
+		robots[i].__b = _b;
+		robots[i].__r = _r;
 	}
 
 	fi.close();
@@ -366,7 +394,7 @@ void write_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
 	fo << ball->x << ' ' << ball->y << ' ' << ball->vx << ' ' << ball->vy << ' ' << ball->ax << ' ' << ball->ay << '\n';
 
 	for (auto&& r : robots) {
-		fo << r.x << ' ' << r.y << ' ' << r.angle << '\n';
+		fo << r.x << ' ' << r.y << ' ' << r.angle /**/<<' '<<r.__a<<' '<<r.__b<<' '<<r.__r/**/ << '\n';
 	}
 
 	fo.close();
@@ -607,11 +635,38 @@ void strategier() {
 		read_data("data", robots, ball);
 
 		// TODO: Strategy
-		for (auto&& r : robots) {
-			r.set_u(100, 50);
-		}
+		// for (auto&& r : robots) {
+		// 	r.set_u(100, 50);
+		// }
+
+		robots[0].set_u(100, 50);
+
+		/* Robot #1 */ {
+		double x1 = ball->x, y1 = ball->y;
+		double x2 = robots[1].x, y2 = robots[1].y;
+		double k = (0 - y1) / (MAP_EDGE_LEFT - x1);  // Slope of ball direction
+		/* (a, b) is a trajectory center */
+		double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
+		double b = (x1 - a) / k + y1;
+		/* Delta alpha for p-regulator */
+		double alpha = atan2(b-y2, a-x2) + sign((x2-x1)*(0-y1) - (y2-y1)*(MAP_EDGE_LEFT-x1)) * PI/2 - robots[1].angle;
+		normalize_angle(alpha);
+
+		// cout << "k = " << k << ", a = " << a << ", b=" << b << endl;
+		robots[1].__a = a;
+		robots[1].__b = b;
+		robots[1].__r = sqrt((x2-a)*(x2-a) + (y2-b)*(y2-b));
+
+		double base_u = 80;
+		double ul = base_u - PID_P * alpha;
+		double ur = base_u + PID_P * alpha;
+
+		robots[1].set_u(ul, ur);
+		} /**/
 
 		write_control("control", robots);
+		/*REMOVE:*/
+		write_data("data", robots, ball);
 
 		std::this_thread::sleep_for(milliseconds(DT_STATEGIER));
 	}
