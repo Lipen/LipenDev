@@ -15,28 +15,33 @@ using namespace std::chrono;
 using std::cout;
 using std::endl;
 using std::string;
+using clock_used = high_resolution_clock;  // steady_clock
 
-#define MAP_WIDTH 3000
-#define MAP_HEIGHT 2250
-#define DT_MODELLER 10
-#define DT_DRAWER 40
-#define DT_STATEGIER 50
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
+#define MAP_WIDTH 3000
+#define MAP_HEIGHT 2250
 #define MAP_EDGE_RIGHT 1400  // ~ MAP_WIDTH/2 minus something
 #define MAP_EDGE_LEFT (-MAP_EDGE_RIGHT)
 #define MAP_EDGE_TOP 1050  // ~ MAP_HEIGHT/2 minus something
 #define MAP_EDGE_BOT (-MAP_EDGE_TOP)
-#define RADIUS_ROBOT 70
-#define RADIUS_BALL 30
-#define MASS_ROBOT 2000
-#define MASS_BALL 10
+#define BALL_MASS 10
+#define BALL_RADIUS 30
+#define BALL_FRICTION 0.999
+#define ROBOT_MASS 2000
+#define ROBOT_RADIUS 70
+#define ROBOT_BASE 50
+#define ROBOT_BASE_SPEED 800
+#define ROBOT_BASE_ANGULAR_SPEED 0.2
 #define PID_P 100
+#define DT_MODELLER 10   // 10
+#define DT_DRAWER 40    // 40
+#define DT_STATEGIER 50 // 50
 
 const double PI = 3.14159265358979323846;
 const double TWO_PI = 6.28318530717958647693;
 const double HALF_PI = 1.57079632679489661923;
-const auto time_start = steady_clock::now();
+const auto time_start = clock_used::now();
 volatile bool RUNNING = true;
 std::mutex mutex_control;
 std::mutex mutex_data;
@@ -53,7 +58,8 @@ template<typename T, typename U>
 double get_dist_squared(T &a, U &b) {
 	double ax = a.x, ay = a.y, bx = b.x, by = b.y;
 	double dx = ax - bx, dy = ay - by;
-	return dx*dx + dy*dy;
+	double ret = dx*dx + dy*dy;
+	return ret;
 }
 
 void draw_circle(double x, double y, double r) {
@@ -189,12 +195,13 @@ LTexture gRobotTexture;
 
 class Robot {
  public:
-	double x, y, angle;
-	double u_left = 0, u_right = 0;
-	double vx = 0, vy = 0;
-	double radius = RADIUS_ROBOT;
+	volatile double x, y;
+	double angle;
+	volatile double u_left = 0, u_right = 0;
+	volatile double vx = 0, vy = 0;
+	volatile double radius = ROBOT_RADIUS;
 
-	double __a = 0, __b = 0, __r = 0;
+	volatile double __a = 0, __b = 0, __r = 0;
 
 	Robot(double x, double y, double angle)
 	: x(x), y(y), angle(angle)
@@ -206,9 +213,9 @@ class Robot {
 	}
 
 	void apply_u(double dt) {
-		double base_speed = 100;
-		double base_ang_speed = 0.5;
-		double base = 50;
+		double base_speed = ROBOT_BASE_SPEED;
+		double base_ang_speed = ROBOT_BASE_ANGULAR_SPEED;
+		double base = ROBOT_BASE;
 
 		double ul = u_left / 100.;
 		double ur = u_right / 100.;
@@ -256,11 +263,34 @@ class Robot {
 	}
 
 	void collide(Robot &other) {
-		double ds = get_dist_squared(*this, other);
+		// double ds = get_dist_squared(*this, other);
+		double ds = (x-other.x)*(x-other.x) + (y-other.y)*(y-other.y);
 		double rs = radius + other.radius;
 
+		if (ds <= 1e-9) {
+			cout << "HMMMM ... " << *this << " (" << this << ") AND " << other << "(" << &other << ")" << endl;
+		}
+
 		if (ds < rs*rs) {
-			cout << "ROBOTS COLLISION" << endl;
+			// cout << "ROBOTS COLLISION" << endl;
+
+			double semi = sqrt(ds) / 2;
+			// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from this to radical line
+			double alpha = atan2(other.y - y, other.x - x);  // Between this and other robot
+
+			double dr_this = radius - semi;  // Distance to shift away from collision semipoint
+			x -= dr_this * cos(alpha);
+			y -= dr_this * sin(alpha);
+
+			double dr_other = other.radius - (sqrt(ds) - semi);
+			other.x += dr_other * cos(alpha);
+			other.y += dr_other * sin(alpha);
+
+			if (dr_this <= 0.0 || dr_other <= 0 || semi <= 1e-9) {
+				cout << "COLLISION :: Shifted this for " << dr_this << ", other for " << dr_other << "\tSEMI = " << semi << ", dist = " << sqrt(ds) << ", ds = " << ds << ", alpha = " << alpha << endl;
+				cout << "THIS: " << *this << endl;
+				cout << "OTHER: " << other << endl;
+			}
 		}
 	}
 
@@ -291,15 +321,15 @@ class Robot {
 	}
 
 	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
-		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << "]";
+		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << ", r=" << r.radius << "]";
 	}
 };
 
 
 class Ball {
  public:
-	double x, y, vx, vy, ax, ay;
-	double radius = RADIUS_BALL;
+	volatile double x, y, vx, vy, ax, ay;
+	volatile double radius = BALL_RADIUS;
 
 	Ball(double x, double y, double vx, double vy, double ax, double ay)
 	: x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay)
@@ -315,8 +345,8 @@ class Ball {
 	void update(double dt) {
 		vx += ax * dt;
 		vy += ay * dt;
-		vx *= 0.999;  // Friction
-		vy *= 0.999;
+		vx *= BALL_FRICTION;  // Friction
+		vy *= BALL_FRICTION;
 		x += vx * dt;
 		y += vy * dt;
 
@@ -353,7 +383,7 @@ class Ball {
 		double rs = radius + other.radius;  // RaduisesSum
 
 		if (ds < rs*rs) {
-			cout << "COLLISION WITH BALL" << endl;
+			// cout << "COLLISION WITH BALL" << endl;
 			double dx = other.x - x;
 			double dy = other.y - y;
 			double alpha = atan2(dy, dx);  // Between ball and robot
@@ -366,9 +396,9 @@ class Ball {
 			double vty = vy * sin(da);
 
 			/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */  // Norm
-			double ux = (2*MASS_ROBOT*other.vx + vnx*(MASS_BALL - MASS_ROBOT)) / (MASS_ROBOT + MASS_BALL);
-			double uy = (2*MASS_ROBOT*other.vy + vny*(MASS_BALL - MASS_ROBOT)) / (MASS_ROBOT + MASS_BALL);
 
+			double ux = (2*ROBOT_MASS*other.vx + vnx*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
+			double uy = (2*ROBOT_MASS*other.vy + vny*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
 			vx = ux + vtx;
 			vy = uy + vty;
 
@@ -379,7 +409,7 @@ class Ball {
 			else {
 				rho = rs;
 			}
-			cout << "RS = " << rs << ", robot.R = " << other.radius << ", dist = " << sqrt(ds) << ", rho = " << rho << endl;
+			// cout << "RS = " << rs << ", robot.R = " << other.radius << ", dist = " << sqrt(ds) << ", rho = " << rho << endl;
 			x = other.x + rho * cos(alpha + PI);
 			y = other.y + rho * sin(alpha + PI);
 		}
@@ -392,7 +422,7 @@ class Ball {
 
 
 void read_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
-	mutex_data.lock();
+	std::lock_guard<std::mutex> locker(mutex_data);
 	std::ifstream fi(filename);
 
 	int n;
@@ -406,18 +436,17 @@ void read_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
 		double x, y, angle, _a, _b, _r;
 		fi >> x >> y >> angle/**/ >> _a >> _b >> _r;
 		robots.emplace_back(x, y, angle);
-		/*REMOVE:*/
+		/* THAT TRICKY CIRCLES: */
 		robots[i].__a = _a;
 		robots[i].__b = _b;
 		robots[i].__r = _r;
 	}
 
 	fi.close();
-	mutex_data.unlock();
 }
 
 void read_control(string filename, std::vector<Robot> &robots) {
-	mutex_control.lock();
+	std::lock_guard<std::mutex> locker(mutex_control);
 	std::ifstream fi(filename);
 
 	for (auto&& r : robots) {
@@ -427,11 +456,10 @@ void read_control(string filename, std::vector<Robot> &robots) {
 	}
 
 	fi.close();
-	mutex_control.unlock();
 }
 
 void write_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
-	mutex_data.lock();
+	std::lock_guard<std::mutex> locker(mutex_data);
 	std::ofstream fo(filename);
 
 	fo << robots.size() << '\n';
@@ -442,11 +470,10 @@ void write_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
 	}
 
 	fo.close();
-	mutex_data.unlock();
 }
 
 void write_control(string filename, std::vector<Robot> &robots) {
-	mutex_control.lock();
+	std::lock_guard<std::mutex> locker(mutex_control);
 	std::ofstream fo(filename);
 
 	for (auto&& r: robots) {
@@ -454,7 +481,6 @@ void write_control(string filename, std::vector<Robot> &robots) {
 	}
 
 	fo.close();
-	mutex_control.unlock();
 }
 
 char get_symbol_from_angle(double angle) {
@@ -552,11 +578,11 @@ int load_media() {
 
 
 void modeller() {
-	auto time_modeller = steady_clock::now();
+	auto time_modeller = clock_used::now();
 
 	while (RUNNING) {
-		double dt = duration<double, std::milli>(steady_clock::now() - time_modeller).count() / 1000.;
-		time_modeller = steady_clock::now();
+		double dt = duration<double, std::milli>(clock_used::now() - time_modeller).count() / 1000.;
+		time_modeller = clock_used::now();
 		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(1) << dt*1000 << " ms" << endl;
 
 		std::vector<Robot> robots;
@@ -583,67 +609,6 @@ void drawer() {
 		Ball* ball = nullptr;
 		read_data("data", robots, ball);
 
-		// std::vector<std::vector<char>> m(MAP_HEIGHT_PIXEL, std::vector<char>(MAP_WIDTH_PIXEL, '-'));
-
-		// for (auto&& r : robots) {
-		// 	int x = (r.x + MAP_WIDTH/2) * MAP_WIDTH_PIXEL / MAP_WIDTH;
-		// 	int y = (-r.y + MAP_HEIGHT/2) * MAP_HEIGHT_PIXEL / MAP_HEIGHT;
-		// 	if (x < MAP_WIDTH_PIXEL && x >= 0 && y < MAP_HEIGHT_PIXEL && y >= 0)
-		// 		m[y][x] = get_symbol_from_angle(r.angle);
-		// }
-
-		// /* Ball */ {
-		// 	int x = (ball->x + MAP_WIDTH/2) * MAP_WIDTH_PIXEL / MAP_WIDTH;
-		// 	int y = (-ball->y + MAP_HEIGHT/2) * MAP_HEIGHT_PIXEL / MAP_HEIGHT;
-		// 	if (x < MAP_WIDTH_PIXEL && x >= 0 && y < MAP_HEIGHT_PIXEL && y >= 0)
-		// 		m[y][x] = 'o';
-		// }
-
-		// std::stringstream ss;
-		// for (auto&& line : m) {
-		// 	for (char c : line)
-		// 		ss << c;
-		// 	ss << '\n';
-		// }
-		// system("cls");
-		// cout << ss.str();
-
-		/* DEBUG */
-		// for (auto&& r : robots)
-		// 	cout << r << endl;
-		// cout << *ball << " :: " << ball << endl;
-		/* DEBUG END */
-
-	// =====================================================================
-		// // Clear screen
-		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
-		// SDL_RenderClear(gRenderer);
-
-		// // Render red filled quad
-		// SDL_Rect fillRect = { SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 };
-		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
-		// SDL_RenderFillRect(gRenderer, &fillRect);
-
-		// // Render green outlined quad
-		// SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6, SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
-		// SDL_SetRenderDrawColor(gRenderer, 0x00, 0xFF, 0x00, 0xFF);
-		// SDL_RenderDrawRect(gRenderer, &outlineRect);
-
-		// // Draw blue horizontal line
-		// SDL_SetRenderDrawColor(gRenderer, 0x00, 0x00, 0xFF, 0xFF );
-		// SDL_RenderDrawLine(gRenderer, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
-
-		// // Draw vertical line of yellow dots
-		// SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0x00, 0xFF);
-		// for (int i = 0; i < SCREEN_HEIGHT; i += 4) {
-		// 	SDL_RenderDrawPoint(gRenderer, SCREEN_WIDTH / 2, i);
-		// }
-
-		// // Update screen
-		// SDL_RenderPresent(gRenderer);
-	// =====================================================================
-
-	// =====================================================================
 		// Clear screen
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xF0, 0xFF);
 		SDL_RenderClear(gRenderer);
@@ -655,7 +620,7 @@ void drawer() {
 			(MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH,
 			(MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT
 		};
-		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xE0, 0x00, 0xFF);
+		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xC0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
 
 		for (auto&& r : robots) {
@@ -666,9 +631,8 @@ void drawer() {
 
 		// Update screen
 		SDL_RenderPresent(gRenderer);
-	// =====================================================================
 
-		// cout << "Drawer :: " << duration_cast<milliseconds>(steady_clock::now() - time_start).count()/1000. << " s" << endl;
+		// cout << "Drawer :: " << duration_cast<milliseconds>(clock_used::now() - time_start).count()/1000. << " s" << endl;
 		std::this_thread::sleep_for(milliseconds(DT_DRAWER));
 	}
 }
@@ -680,12 +644,9 @@ void strategier() {
 		read_data("data", robots, ball);
 
 		// TODO: Strategy
-		// for (auto&& r : robots) {
-		// 	r.set_u(100, 50);
-		// }
-
-		robots[0].apply_strategy_attack(ball->x, ball->y);
-		robots[1].apply_strategy_attack(ball->x, ball->y);
+		for (auto&& r : robots) {
+			r.apply_strategy_attack(ball->x, ball->y);
+		}
 
 		write_control("control", robots);
 		/* REMOVE?: */
@@ -726,6 +687,10 @@ int main(int argc, char* argv[]) {
 			if (e.key.keysym.sym == SDLK_ESCAPE) {
 				cout << "ESC pressed" << endl;
 				RUNNING = false;
+			}
+			else if (e.key.keysym.sym == SDLK_r) {
+				cout << "Resetting" << endl;
+				system("ini");
 			}
 		}
 	}
