@@ -87,12 +87,24 @@ inline double get_dist(const T &a, const U &b) {
 }
 double get_dist(double x1, double y1, double x2, double y2);
 
+double get_dist_to_line(double x, double y, double x1, double y1, double x2, double y2);
+
 void draw_circle(double x, double y, double r);
 void normalize_angle(double &angle, double center = 0.0);
+double normalized_angle(double angle, double center = 0.0);
 
 template<typename T>
 int sign(T x) {
 	return (x > 0) ? 1 : (x < 0) ? -1 : 0;
+}
+template<typename T>
+int sign_(T x) {
+	return (x < 0) ? -1 : 1;
+}
+
+template<typename T, typename U>
+T constrain(T x, U a, U b) {
+	return (x > a) ? a : (x < b) ? b : x;
 }
 
 #endif // MAIN_HPP

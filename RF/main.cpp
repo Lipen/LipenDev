@@ -24,14 +24,14 @@ const double ROBOT_RADIUS = 70;
 const double ROBOT_BASE = 50;
 const double ROBOT_BASE_SPEED = 800;
 const double ROBOT_BASE_ANGULAR_SPEED = 0.15;
-const double ROBOT_THRESHOLD_MIN = 100;
-const double ROBOT_THRESHOLD_MAX = 700;
+const double ROBOT_THRESHOLD_MIN = 100;		// 100
+const double ROBOT_THRESHOLD_MAX = 1000;	// 700
 const double ROBOT_THRESHOLD_SLOPE = 1./(ROBOT_THRESHOLD_MAX-ROBOT_THRESHOLD_MIN);
 const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN;
 
 volatile bool RUNNING = true;
-const double PID_P = 100;
-const int DT_MODELLER = 10;		// 10
+const double PID_P = 60;
+const int DT_MODELLER = 20;		// 10
 const int DT_DRAWER = 40;		// 40
 const int DT_STATEGIER = 50;	// 50
 const int DT_LOADER = 100;		//
@@ -64,6 +64,10 @@ double get_dist_squared(double x1, double y1, double x2, double y2) {
 	return sqrt(get_dist_squared(x1, y1, x2, y2));
 }
 
+double get_dist_to_line(double x, double y, double x1, double y1, double x2, double y2) {
+	return std::abs((x1-x2)*(y2-y) - (x2-x)*(y1-y2)) / sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
 void draw_circle(double x, double y, double r) {
 	int n = 90;  // 30
 	SDL_Point* points = new SDL_Point[n+1];
@@ -82,6 +86,10 @@ void draw_circle(double x, double y, double r) {
 
 void normalize_angle(double &angle, double center/* = 0.0*/) {
 	angle -= TWO_PI * floor( (angle + PI - center) / TWO_PI );
+}
+
+double normalized_angle(double angle, double center/* = 0.0*/) {
+	return angle - TWO_PI * floor( (angle + PI - center) / TWO_PI );
 }
 
 
@@ -227,9 +235,17 @@ int load_media() {
 
 void strategier() {
 	while (RUNNING) {
-		for (auto&& item : robots) {
-			item.second.apply_strategy_attack(ball.x, ball.y);
-		}
+		// for (auto&& item : robots) {
+		// 	item.second.apply_strategy_attack(ball.x, ball.y);
+		// }
+
+		robots[0].apply_strategy_attack(ball.x, ball.y);
+		robots[2].apply_strategy_attack(ball.x, ball.y);
+		robots[3].apply_strategy_attack(ball.x, ball.y);
+		// robots[0].apply_strategy_gradient(ball.x, ball.y);
+		// robots[1].apply_strategy_goalkeeper(ball.x, ball.y);
+		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
+		// robots[3].apply_strategy_attack(ball.x, ball.y);
 
 		std::this_thread::sleep_for(milliseconds(DT_STATEGIER));
 	}
@@ -251,6 +267,14 @@ void drawer() {
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xC0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
 
+		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xA0, 0xFF, 0xFF);
+		SDL_RenderDrawLine(gRenderer,
+			(int)((MAP_EDGE_LEFT+150 + MAP_WIDTH/2) * SCREEN_WIDTH/MAP_WIDTH),
+			(int)((300 + MAP_HEIGHT/2) * SCREEN_HEIGHT/MAP_HEIGHT),
+			(int)((MAP_EDGE_LEFT+150 + MAP_WIDTH/2) * SCREEN_WIDTH/MAP_WIDTH),
+			(int)((-300 + MAP_HEIGHT/2) * SCREEN_HEIGHT/MAP_HEIGHT)
+		);
+
 		for (auto&& item : robots) {
 			item.second.render();
 		}
@@ -271,7 +295,7 @@ void modeller() {
 	while (RUNNING) {
 		double dt = duration<double, std::micro>(clock_used::now() - time_modeller).count() / 1000000.;
 		time_modeller = clock_used::now();
-		cout << "Modeller :: dt = " << std::fixed << std::setprecision(5) << dt*1000 << " ms" << endl;
+		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(5) << dt*1000 << " ms" << endl;
 
 		// Update them all
 		for (auto&& item : robots)
@@ -316,7 +340,10 @@ int main(int argc, char* argv[]) {
 		return -2;
 
 	/* DEBUG */
-	robots[0] = {-1000, -500};
+	robots[0] = {500, 0};
+	robots[1] = {MAP_EDGE_LEFT+250, -500, 1.5};
+	robots[2] = {400, -200};
+	robots[3] = {-500, 500};
 	/* DEBUG */
 
 	std::thread th_strata(strategier);

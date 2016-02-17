@@ -6,7 +6,7 @@
 
 class Ball {
  public:
-	double x, y;
+	volatile double x, y;
 	double vx, vy, ax, ay;
 	double radius = BALL_RADIUS;
 
