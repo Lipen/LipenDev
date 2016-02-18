@@ -162,31 +162,22 @@ void Robot::apply_strategy_goalkeeper(double x1, double y1) {
 }
 
 void Robot::apply_strategy_gradient(double x1, double y1) {
-	double K1 = 20;
-	double K2 = 17;
+	double Fx, Fy, U;
+	calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
+	double F = sqrt(Fx*Fx + Fy*Fy);
 
-	double d = get_dist(x, y, x1, y1);
-	double dFdx = -K1 * (x - x1) / d;
-	double dFdy = -K1 * (y - y1) / d;
+	// cout << "F = {" << Fx << ", " << Fy << "} == " << F << ", U = " << U << endl;
 
-	for (auto&& item : robots) {
-		if (&item.second != this) {
-			double dist_obstacle = get_dist(x,y, item.second.x,item.second.y);
-			if (dist_obstacle < 300)
-				dFdx += K2 * (x - item.second.x) / dist_obstacle;
-		}
-	}
-
-	double ksi = atan2(dFdy, dFdx);  // Needed angle
+	double ksi = atan2(Fy, Fx);  // Needed angle
 	double alpha = ksi - angle;  // Delta
 	normalize_angle(alpha);
 
-	double PAUL = 50;
-	double base_u = 70 * ( (d > 500) ? 1 : (0.4+(1-0.4)/(500-0)*d) );
+	double PAUL = 100;
+	// double base_u = 70 * ( (d > 500) ? 1 : (0.4+(1-0.4)/(500-0)*d) );
+	double base_u = 70;
 	double ul = base_u - PAUL * alpha;
 	double ur = base_u + PAUL * alpha;
 
-	// cout << "dFdx = " << dFdx << ", dFdy = " << dFdy << endl;
 	// cout << "ksi = " << ksi << ", angle = " << angle << ", alpha = " << alpha << endl;
 
 	set_u(ul, ur);

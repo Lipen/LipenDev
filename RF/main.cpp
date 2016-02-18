@@ -31,7 +31,7 @@ const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN
 
 volatile bool RUNNING = true;
 const double PID_P = 60;
-const int DT_MODELLER = 20;		// 10
+const int DT_MODELLER = 10;		// 10
 const int DT_DRAWER = 40;		// 40
 const int DT_STATEGIER = 50;	// 50
 const int DT_LOADER = 100;		//
@@ -68,6 +68,10 @@ double get_dist_to_line(double x, double y, double x1, double y1, double x2, dou
 	return std::abs((x1-x2)*(y2-y) - (x2-x)*(y1-y2)) / sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
 
+int random(int a, int b) {
+	return (rand() % (b+1-a)) + a;
+}
+
 void draw_circle(double x, double y, double r) {
 	int n = 90;  // 30
 	SDL_Point* points = new SDL_Point[n+1];
@@ -90,6 +94,53 @@ void normalize_angle(double &angle, double center/* = 0.0*/) {
 
 double normalized_angle(double angle, double center/* = 0.0*/) {
 	return angle - TWO_PI * floor( (angle + PI - center) / TWO_PI );
+}
+
+void calc_gradient_at(double x, double y, double x1, double y1, double* Fx_, double* Fy_, double* U_) {
+	/* F = -grad(U) */
+	// TODO: Move to 'CONSTANTS' block
+	double KSI = 30;
+	double NYA = 20000;
+
+	double d = get_dist(x, y, x1, y1);
+
+	double method;
+	double U;
+	if (d > 500) {
+		// method = -500 * KSI / d;
+		// U = 500 * KSI * d;
+		method = -KSI / d;
+		U = KSI * d;
+	}
+	else {
+		method = -KSI;
+		U = KSI/2 * d*d;
+	}
+
+	double Fx = method * (x - x1);
+	double Fy = method * (y - y1);
+
+
+	for (auto&& item : robots) {
+		// Distance from robot to obstacle:
+		double rho = get_dist(x, y, item.second.x, item.second.y);
+
+		if (rho < 160 && rho > 1) {
+			double method2 = NYA / rho;
+			// double method2 = NYA * (1/rho - 1/100)/(rho*rho*rho);
+			Fx += method2 * (x - item.second.x);
+			Fy += method2 * (y - item.second.y);
+			U += NYA/2 * rho;
+			// U += NYA/2 * (1/rho - 1/100);
+			// U += NYA/2 * (1/rho - 1/100)*(1/rho - 1/100);
+		}
+	}
+
+	double F = sqrt(Fx*Fx + Fy*Fy);
+
+	*Fx_ = Fx;
+	*Fy_ = Fy;
+	*U_ = U;
 }
 
 
@@ -239,13 +290,15 @@ void strategier() {
 		// 	item.second.apply_strategy_attack(ball.x, ball.y);
 		// }
 
-		robots[0].apply_strategy_attack(ball.x, ball.y);
+		// robots[0].apply_strategy_attack(ball.x, ball.y);
 		robots[2].apply_strategy_attack(ball.x, ball.y);
-		robots[3].apply_strategy_attack(ball.x, ball.y);
-		// robots[0].apply_strategy_gradient(ball.x, ball.y);
-		// robots[1].apply_strategy_goalkeeper(ball.x, ball.y);
-		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
 		// robots[3].apply_strategy_attack(ball.x, ball.y);
+		robots[0].apply_strategy_gradient(ball.x, ball.y);
+		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
+
+		// for (int i = 0; i < 10; ++i) {
+		// 	robots[100+i].apply_strategy_gradient(ball.x, ball.y);
+		// }
 
 		std::this_thread::sleep_for(milliseconds(DT_STATEGIER));
 	}
@@ -256,6 +309,42 @@ void drawer() {
 		// Clear screen
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xF0, 0xFF);
 		SDL_RenderClear(gRenderer);
+
+		/* DBG - COLORED VECTOR FIELD */
+		double x1 = ball.x;
+		double y1 = ball.y;
+
+		int STEP = 2;
+
+		for (int i = 0; i <= SCREEN_WIDTH; i += STEP) {
+			double x = i * MAP_WIDTH / SCREEN_WIDTH - MAP_WIDTH/2;
+
+			for (int j = 0; j <= SCREEN_HEIGHT; j += STEP) {
+				double y = -j * MAP_HEIGHT / SCREEN_HEIGHT + MAP_HEIGHT/2;
+
+				double Fx, Fy, U;
+				calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
+
+				double F = sqrt(Fx*Fx + Fy*Fy);
+				// cout << "(" << i << ", " << j << ") = {" << x << ", " << y << "}  F = " << F << ", U = " << U << endl;
+
+				double uu = U / 500000. * 255;
+				// double uu = F/2000. * 255;
+				int r = 255;
+				int g = (uu > 255) ? 255 : (uu < 0) ? 0 : uu;
+				int b = 0;
+				// int g = F/3000. * 255;
+				// int b = F/20. * 255;
+
+				// if ( i == 100 && j == 100 ) {
+				// 	cout << "\tAt 100;100 :: r = " << r << ", g = " << g << ", b = " << b << endl;
+				// }
+
+				SDL_SetRenderDrawColor(gRenderer, r, g, b, 0xFF);
+				SDL_RenderDrawPoint(gRenderer, i, j);
+			}
+		}
+		/* DBG */
 
 		// Render green map edges
 		SDL_Rect map_edges = {
@@ -327,6 +416,8 @@ void saver() {
 
 
 int main(int argc, char* argv[]) {
+	srand(0);
+
 	if (argc > 1) {
 		cout << "Arguments:\n";
 		for (int i = 1; i < argc; ++i) {
@@ -344,6 +435,11 @@ int main(int argc, char* argv[]) {
 	robots[1] = {MAP_EDGE_LEFT+250, -500, 1.5};
 	robots[2] = {400, -200};
 	robots[3] = {-500, 500};
+
+	// for (int i = 0; i < 10; ++i) {
+	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};
+	// }
+	cout << "TOTAL AMOUNT = " << robots.size() << endl;
 	/* DEBUG */
 
 	std::thread th_strata(strategier);

@@ -2,6 +2,7 @@
 #define MAIN_HPP
 
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -89,9 +90,12 @@ double get_dist(double x1, double y1, double x2, double y2);
 
 double get_dist_to_line(double x, double y, double x1, double y1, double x2, double y2);
 
+int random(int a, int b);
+
 void draw_circle(double x, double y, double r);
 void normalize_angle(double &angle, double center = 0.0);
 double normalized_angle(double angle, double center = 0.0);
+void calc_gradient_at(double x, double y, double x1, double y1, double* Fx, double* Fy, double* U);
 
 template<typename T>
 int sign(T x) {
@@ -103,8 +107,9 @@ int sign_(T x) {
 }
 
 template<typename T, typename U>
-T constrain(T x, U a, U b) {
+U constrain(T x, U a, U b) {
 	return (x > a) ? a : (x < b) ? b : x;
 }
+
 
 #endif // MAIN_HPP
