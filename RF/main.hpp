@@ -6,9 +6,10 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
-#include <map>
+#include <ctime>
 #include <chrono>
 #include <cmath>
+#include <map>
 #include <iterator>
 #include "mingw.thread.h"
 #include "mingw.mutex.h"
@@ -34,6 +35,7 @@ extern const double MAP_EDGE_BOT;
 extern const double BALL_MASS;
 extern const double BALL_RADIUS;
 extern const double BALL_FRICTION;
+extern const double BALL_MAXSPEED;
 
 extern const double ROBOT_MASS;
 extern const double ROBOT_RADIUS;
@@ -44,6 +46,10 @@ extern const double ROBOT_THRESHOLD_MIN;
 extern const double ROBOT_THRESHOLD_MAX;
 extern const double ROBOT_THRESHOLD_SLOPE;
 extern const double ROBOT_THRESHOLD_INTER;
+
+extern const double GATE_LEFT_X;
+extern const double GATE_LEFT_TOP;
+extern const double GATE_LEFT_BOT;
 
 extern volatile bool RUNNING;
 extern const double PID_P;
@@ -90,7 +96,15 @@ double get_dist(double x1, double y1, double x2, double y2);
 
 double get_dist_to_line(double x, double y, double x1, double y1, double x2, double y2);
 
+int map2scrX(double x);
+int map2scrY(double y);
+
+double scr2mapX(int x);
+double scr2mapY(int y);
+
 int random(int a, int b);
+
+double logistic_linear(double x, double intersect, double threshold_right, double threshold_left = 0.0);
 
 void draw_circle(double x, double y, double r);
 void normalize_angle(double &angle, double center = 0.0);
@@ -106,8 +120,12 @@ int sign_(T x) {
 	return (x < 0) ? -1 : 1;
 }
 
+// template<typename T, typename U>
+// U constrain(T x, U a, U b) {
+// 	return (x > a) ? a : (x < b) ? b : x;
+// }
 template<typename T, typename U>
-U constrain(T x, U a, U b) {
+T constrain(const T& x, U&& a, U&& b) {
 	return (x > a) ? a : (x < b) ? b : x;
 }
 

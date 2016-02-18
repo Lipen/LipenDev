@@ -18,8 +18,9 @@ const double MAP_EDGE_BOT = -MAP_EDGE_TOP;
 const double BALL_MASS = 10;
 const double BALL_RADIUS = 30;
 const double BALL_FRICTION = 0.995;
+const double BALL_MAXSPEED = 1000;
 
-const double ROBOT_MASS = 1000;
+const double ROBOT_MASS = 2000;
 const double ROBOT_RADIUS = 70;
 const double ROBOT_BASE = 50;
 const double ROBOT_BASE_SPEED = 800;
@@ -29,13 +30,17 @@ const double ROBOT_THRESHOLD_MAX = 1000;	// 700
 const double ROBOT_THRESHOLD_SLOPE = 1./(ROBOT_THRESHOLD_MAX-ROBOT_THRESHOLD_MIN);
 const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN;
 
+const double GATE_LEFT_X = MAP_EDGE_LEFT + 70;
+const double GATE_LEFT_TOP = 300;
+const double GATE_LEFT_BOT = -300;
+
 volatile bool RUNNING = true;
 const double PID_P = 60;
-const int DT_MODELLER = 10;		// 10
-const int DT_DRAWER = 40;		// 40
-const int DT_STATEGIER = 50;	// 50
-const int DT_LOADER = 100;		//
-const int DT_SAVER = 100;		//
+const int DT_MODELLER = 10;  	// 10
+const int DT_DRAWER = 20;  		// 40
+const int DT_STATEGIER = 1;  	// 50
+const int DT_LOADER = 100;  	//
+const int DT_SAVER = 100;  		//
 
 const double PI = 3.14159265358979323846;
 const double TWO_PI = 6.28318530717958647693;
@@ -68,22 +73,40 @@ double get_dist_to_line(double x, double y, double x1, double y1, double x2, dou
 	return std::abs((x1-x2)*(y2-y) - (x2-x)*(y1-y2)) / sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
 }
 
+int map2scrX(double x) {
+	return (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+}
+int map2scrY(double y) {
+	return (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+}
+
+double scr2mapX(int i) {
+	return i * MAP_WIDTH / SCREEN_WIDTH - MAP_WIDTH/2;
+}
+double scr2mapY(int j) {
+	return -j * MAP_HEIGHT / SCREEN_HEIGHT + MAP_HEIGHT/2;
+}
+
 int random(int a, int b) {
 	return (rand() % (b+1-a)) + a;
 }
 
+double logistic_linear(double x, double intersect, double threshold_right, double threshold_left/* = 0.0*/) {
+	return (x > threshold_right) ? 1 : (x < threshold_left) ? 0 : (intersect + (1-intersect)/(threshold_right - threshold_left));
+}
+
 void draw_circle(double x, double y, double r) {
-	int n = 90;  // 30
+	int n = TWO_PI / (0.35 * MAP_WIDTH/SCREEN_WIDTH) * r;
 	SDL_Point* points = new SDL_Point[n+1];
 
 	for (int i = 0; i <= n; ++i) {
-		int a = x + r * cos(i * TWO_PI / n);  // i * 360/n * PI / 180
+		int a = x + r * cos(i * TWO_PI / n);
 		int b = y + r * sin(i * TWO_PI / n);
 		points[i] = { a, b };
 	}
 
-	SDL_RenderDrawLines(gRenderer, points, n);
-	// SDL_RenderDrawPoints(gRenderer, points, n);
+	// SDL_RenderDrawLines(gRenderer, points, n);
+	SDL_RenderDrawPoints(gRenderer, points, n);
 
 	delete points;
 }
@@ -148,45 +171,21 @@ void read_data(const char* filename) {
 	std::lock_guard<std::mutex> locker(mutex_data);
 	FILE* f = fopen(filename, "r");
 
-	size_t n;
-	fscanf(f, "%zu", &n);  // Robots amount
+	int n;
+	fscanf(f, "%d", &n);  // Robots amount
 
 	fscanf(f, "%lf %lf", &ball.x, &ball.y);  // Ball`s parameters
 
-	for (size_t i = 0; i < n; ++i) {
+	for (int i = 0; i < n; ++i) {
 		int id;
 		fscanf(f, "%d", &id);
 
 		Robot& r = robots[id];
 		fscanf(f, "%lf %lf %lf", &r.x, &r.y, &r.angle);
-
-		// Neet, but operator[] does the thing :)
-		// if (robots.count(id) > 0) {
-		// 	Robot r = robots.at(id);
-		// 	fscanf(f, "%lf %lf %lf", &r.x, &r.y, &r.angle);
-		// }
-		// else {
-		// 	double x, y, angle;
-		// 	fscanf(f, "%lf %lf %lf", &x, &y, &angle);
-		// 	robots.at(id) = {x, y, angle};
-		// }
 	}
 
 	fclose(f);
 }
-
-// void write_data(const char* filename) {
-// 	std::lock_guard<std::mutex> locker(mutex_data);
-// 	FILE* f = fopen(filename, "w");
-
-// 	fprintf(f, "%zu\n%lf %lf %lf %lf %lf %lf\n", robots.size(), ball.x, ball.y, ball.vx, ball.vy, ball.ax, ball.ay);
-
-// 	for (auto&& r : robots) {
-// 		fprintf(f, "%lf %lf %lf\n", r.x, r.y, r.angle);
-// 	}
-
-// 	fclose(f);
-// }
 
 void write_control(const char* filename) {
 	std::lock_guard<std::mutex> locker(mutex_control);
@@ -317,28 +316,20 @@ void drawer() {
 		int STEP = 2;
 
 		for (int i = 0; i <= SCREEN_WIDTH; i += STEP) {
-			double x = i * MAP_WIDTH / SCREEN_WIDTH - MAP_WIDTH/2;
+			double x = scr2mapX(i);
 
 			for (int j = 0; j <= SCREEN_HEIGHT; j += STEP) {
-				double y = -j * MAP_HEIGHT / SCREEN_HEIGHT + MAP_HEIGHT/2;
+				double y = scr2mapY(j);
 
 				double Fx, Fy, U;
 				calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
-
 				double F = sqrt(Fx*Fx + Fy*Fy);
-				// cout << "(" << i << ", " << j << ") = {" << x << ", " << y << "}  F = " << F << ", U = " << U << endl;
 
 				double uu = U / 500000. * 255;
-				// double uu = F/2000. * 255;
+				// double uu = F / 2000. * 255;
 				int r = 255;
 				int g = (uu > 255) ? 255 : (uu < 0) ? 0 : uu;
 				int b = 0;
-				// int g = F/3000. * 255;
-				// int b = F/20. * 255;
-
-				// if ( i == 100 && j == 100 ) {
-				// 	cout << "\tAt 100;100 :: r = " << r << ", g = " << g << ", b = " << b << endl;
-				// }
 
 				SDL_SetRenderDrawColor(gRenderer, r, g, b, 0xFF);
 				SDL_RenderDrawPoint(gRenderer, i, j);
@@ -348,26 +339,26 @@ void drawer() {
 
 		// Render green map edges
 		SDL_Rect map_edges = {
-			(int)((MAP_EDGE_LEFT + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH),
-			(int)((MAP_EDGE_TOP + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT),
+			map2scrX(MAP_EDGE_LEFT),
+			map2scrY(MAP_EDGE_TOP),
 			(int)((MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH),
-			(int)((MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT)
+			(int)((MAP_EDGE_TOP - MAP_EDGE_BOT) * SCREEN_HEIGHT / MAP_HEIGHT)
 		};
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xC0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
 
+		// Render gate line
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xA0, 0xFF, 0xFF);
 		SDL_RenderDrawLine(gRenderer,
-			(int)((MAP_EDGE_LEFT+150 + MAP_WIDTH/2) * SCREEN_WIDTH/MAP_WIDTH),
-			(int)((300 + MAP_HEIGHT/2) * SCREEN_HEIGHT/MAP_HEIGHT),
-			(int)((MAP_EDGE_LEFT+150 + MAP_WIDTH/2) * SCREEN_WIDTH/MAP_WIDTH),
-			(int)((-300 + MAP_HEIGHT/2) * SCREEN_HEIGHT/MAP_HEIGHT)
+			map2scrX(GATE_LEFT_X), map2scrY(GATE_LEFT_TOP),
+			map2scrX(GATE_LEFT_X), map2scrY(GATE_LEFT_BOT)
 		);
 
+		// Render robots
 		for (auto&& item : robots) {
 			item.second.render();
 		}
-
+		// Render ball
 		ball.render();
 
 		// Update screen
@@ -416,7 +407,7 @@ void saver() {
 
 
 int main(int argc, char* argv[]) {
-	srand(0);
+	srand(time(0));
 
 	if (argc > 1) {
 		cout << "Arguments:\n";
@@ -439,7 +430,7 @@ int main(int argc, char* argv[]) {
 	// for (int i = 0; i < 10; ++i) {
 	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};
 	// }
-	cout << "TOTAL AMOUNT = " << robots.size() << endl;
+	cout << "TOTAL ROBOTS AMOUNT = " << robots.size() << endl;
 	/* DEBUG */
 
 	std::thread th_strata(strategier);

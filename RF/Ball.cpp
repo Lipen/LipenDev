@@ -12,6 +12,12 @@ void Ball::update(double dt) {
 	vy += ay * dt;
 	vx *= BALL_FRICTION;  // Friction
 	vy *= BALL_FRICTION;
+	if (vx*vx + vy*vy > BALL_MAXSPEED*BALL_MAXSPEED) {
+		double va = atan2(vy, vx);
+		vx = BALL_MAXSPEED * cos(va);
+		vy = BALL_MAXSPEED * sin(va);
+	}
+
 	x += vx * dt;
 	y += vy * dt;
 
@@ -34,8 +40,8 @@ void Ball::update(double dt) {
 }
 
 void Ball::render() {
-	double a = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-	double b = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+	double a = map2scrX(x);
+	double b = map2scrY(y);
 
 	gBallTexture.render(a, b);
 }
@@ -52,12 +58,12 @@ void Ball::collide(const Robot &other) {
 		double beta = atan2(vy, vx);   // Angle of ball`s velocity
 		double da = alpha - beta;
 
-		double vnx = vx * cos(da);  // Norm
+		double vnx = vx * cos(da);  // Norm component
 		double vny = vy * cos(da);
-		double vtx = vx * sin(da);  // Tangent
+		double vtx = vx * sin(da);  // Tangent component
 		double vty = vy * sin(da);
 
-		/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */  // Norm
+		/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */  // Norm component
 		double ux = (2*ROBOT_MASS*other.vx + vnx*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
 		double uy = (2*ROBOT_MASS*other.vy + vny*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
 		vx = ux + vtx;

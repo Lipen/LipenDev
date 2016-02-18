@@ -51,13 +51,13 @@ void Robot::render() {
 	double x_ = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
 	double y_ = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
 
-	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
+	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x40, 0x00, 0xFF);
 	draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
 
 	/* THAT TRICKY CIRCLES */
 	double a_ = (__a + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
 	double b_ = (-__b + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0xE0, 0xFF);
+	SDL_SetRenderDrawColor(gRenderer, 0x63, 0x00, 0xFF, 0xFF);
 	draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
 	/**/
 
@@ -74,8 +74,8 @@ void Robot::collide(Robot &other) {
 	}
 
 	if (ds < rs*rs) {
+		// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from 'this' to radical line
 		double semi = sqrt(ds) / 2;
-		// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from this to radical line
 		double alpha = atan2(other.y - y + 1e-6, other.x - x);  // Between this and other robot
 
 		double dr_this = radius - semi;  // Distance to shift away from collision semipoint
@@ -113,7 +113,7 @@ void Robot::apply_strategy_attack(double x1, double y1) {
 	double tg = chi + HALF_PI * sign((x2-x1)*(0-y1) - (y2-y1)*(MAP_EDGE_LEFT-x1));  // Transfer to proper tangent
 	normalize_angle(tg);  // ?
 	double theta = atan2(y1 - y2, x1 - x2);  // Between robot and ball
-	double d = get_dist(x2, y2, x1, y1);     // Between robot and ball
+	double d = get_dist(x2, y2, x1, y1);  // Between robot and ball
 	double da = theta - tg;
 	normalize_angle(da);
 	double gamma = (d > ROBOT_THRESHOLD_MAX) ? 1 : (d < ROBOT_THRESHOLD_MIN) ? 0 : ROBOT_THRESHOLD_SLOPE * d + ROBOT_THRESHOLD_INTER;  // How much to skew from tangent ('tg') to to-the-ball-direction ('theta')
@@ -126,9 +126,7 @@ void Robot::apply_strategy_attack(double x1, double y1) {
 	__b = b;
 	__r = get_dist(x2, y2, a, b);
 
-	double rho = d; //get_dist_to_line(x, y, x1, y1, MAP_EDGE_LEFT, 0);
-	double ISCANDER = (rho > 500) ? 1 : (0.3 + (1-0.3)/(500-0)*rho);  // Slower
-
+	double ISCANDER = logistic_linear(d, 0.3, 500);  // Slower as closer
 	double base_u = 70 * ISCANDER;
 	double ul = base_u - PID_P * alpha;
 	double ur = base_u + PID_P * alpha;
@@ -138,17 +136,17 @@ void Robot::apply_strategy_attack(double x1, double y1) {
 }
 
 void Robot::apply_strategy_goalkeeper(double x1, double y1) {
-	double rho = get_dist_to_line(x, y, MAP_EDGE_LEFT+150, 300, MAP_EDGE_LEFT+150, -300);
+	double rho = get_dist_to_line(x, y, GATE_LEFT_X, GATE_LEFT_TOP, GATE_LEFT_X, GATE_LEFT_BOT);
 
 	double ISABELL;  // dura
-	if (y1 > 300)
-		ISABELL = 300 - y;
-	else if (y1 < -300)
-		ISABELL = -300 - y;
+	if (y1 > GATE_LEFT_TOP)
+		ISABELL = GATE_LEFT_TOP - y;
+	else if (y1 < GATE_LEFT_BOT)
+		ISABELL = GATE_LEFT_BOT - y;
 	else
 		ISABELL = y1 - y;
 
-	bool lefter = x < MAP_EDGE_LEFT+150;  // Levee li?
+	bool lefter = x < GATE_LEFT_X;
 	double BORIS = 0.5*rho;  // Line-keeper
 
 	double base_u = 1 * ISABELL;
@@ -173,8 +171,8 @@ void Robot::apply_strategy_gradient(double x1, double y1) {
 	normalize_angle(alpha);
 
 	double PAUL = 100;
-	// double base_u = 70 * ( (d > 500) ? 1 : (0.4+(1-0.4)/(500-0)*d) );
-	double base_u = 70;
+	double d = get_dist(x, y, x1, y1);
+	double base_u = 80 * logistic_linear(d, 0.4, 200);
 	double ul = base_u - PAUL * alpha;
 	double ur = base_u + PAUL * alpha;
 
@@ -185,16 +183,16 @@ void Robot::apply_strategy_gradient(double x1, double y1) {
 
 void Robot::apply_strategy_svyat_style(double x1, double y1) {
 	double DIST_MAX = 100;
-	double h = x - (MAP_EDGE_LEFT + 150);
-	double d = get_dist(x, y, MAP_EDGE_LEFT+150, y1);
-	double y_desired = constrain(y1, 300, -300);
+	double h = x - GATE_LEFT_X;
+	double d = get_dist(x, y, GATE_LEFT_X, y1);
+	double y_desired = constrain(y1, GATE_LEFT_TOP, GATE_LEFT_BOT);
 	double dy = y_desired - y;
 
 	double theta = (h > DIST_MAX) ? PI : (h < -DIST_MAX) ? 0 : (HALF_PI + HALF_PI * h/DIST_MAX * sign_(dy));
 	double alpha = theta - angle;
 
 	double P = 40;
-	double base_u = 80 * ((d > 200) ? 1 : (0.1+(1-0.1)/(200-0)*d)) * sign(dy);
+	double base_u = 80 * logistic_linear(d, 0.1, 200) * sign(dy);
 	double ul = base_u - P*alpha;
 	double ur = base_u + P*alpha;
 
