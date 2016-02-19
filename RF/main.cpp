@@ -31,6 +31,7 @@ const double ROBOT_THRESHOLD_SLOPE = 1./(ROBOT_THRESHOLD_MAX-ROBOT_THRESHOLD_MIN
 const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN;
 
 const double GATE_LEFT_X = MAP_EDGE_LEFT + 70;
+const double GATE_RIGHT_X = MAP_EDGE_RIGHT - 70;
 const double GATE_LEFT_TOP = 300;
 const double GATE_LEFT_BOT = -300;
 
@@ -95,8 +96,13 @@ double logistic_linear(double x, double intersect, double threshold_right, doubl
 	return (x > threshold_right) ? 1 : (x < threshold_left) ? 0 : (intersect + (1-intersect)/(threshold_right - threshold_left));
 }
 
+double logistic_sigmoid(double x, double slope, double shift/* = 0.0*/) {
+	return tanh( (x - shift) / slope )/2+.5;
+}
+
 void draw_circle(double x, double y, double r) {
 	int n = TWO_PI / (0.35 * MAP_WIDTH/SCREEN_WIDTH) * r;
+	// int n = 500;
 	SDL_Point* points = new SDL_Point[n+1];
 
 	for (int i = 0; i <= n; ++i) {
@@ -290,10 +296,13 @@ void strategier() {
 		// }
 
 		// robots[0].apply_strategy_attack(ball.x, ball.y);
-		robots[2].apply_strategy_attack(ball.x, ball.y);
+		robots[2].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
 		// robots[3].apply_strategy_attack(ball.x, ball.y);
 		robots[0].apply_strategy_gradient(ball.x, ball.y);
 		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
+		robots[4].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
+
+		// cout << robots[4] << endl;
 
 		// for (int i = 0; i < 10; ++i) {
 		// 	robots[100+i].apply_strategy_gradient(ball.x, ball.y);
@@ -422,10 +431,12 @@ int main(int argc, char* argv[]) {
 		return -2;
 
 	/* DEBUG */
-	robots[0] = {500, 0};
-	robots[1] = {MAP_EDGE_LEFT+250, -500, 1.5};
-	robots[2] = {400, -200};
-	robots[3] = {-500, 500};
+	robots[0] = {500, 0};  // Gradient FTW
+	robots[1] = {MAP_EDGE_LEFT+1250, 500, 1.5};  // GC
+	robots[2] = {400, -200};  // Blue forward
+	robots[3] = {-500, 500};  // Standby
+	robots[4] = {-500, -500};  // Yellow forward
+	robots[4].is_blue = false;
 
 	// for (int i = 0; i < 10; ++i) {
 	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};

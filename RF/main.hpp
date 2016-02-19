@@ -105,6 +105,7 @@ double scr2mapY(int y);
 int random(int a, int b);
 
 double logistic_linear(double x, double intersect, double threshold_right, double threshold_left = 0.0);
+double logistic_sigmoid(double x, double slope, double shift = 0.0);
 
 void draw_circle(double x, double y, double r);
 void normalize_angle(double &angle, double center = 0.0);

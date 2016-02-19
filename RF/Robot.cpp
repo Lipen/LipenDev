@@ -47,17 +47,40 @@ void Robot::apply_u(double dt) {
 	normalize_angle(angle);
 }
 
-void Robot::render() {
-	double x_ = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-	double y_ = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+// void Robot::render() {
+// 	double x_ = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+// 	double y_ = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
 
-	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x40, 0x00, 0xFF);
+// 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x40, 0x00, 0xFF);
+// 	draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
+
+// 	/* THAT TRICKY CIRCLES */
+// 	double a_ = (__a + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+// 	double b_ = (-__b + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+// 	SDL_SetRenderDrawColor(gRenderer, 0x63, 0x00, 0xFF, 0xFF);
+// 	draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
+// 	/**/
+
+// 	gRobotTexture.render(x_, y_, NULL, angle * -180. / PI + 90);
+// }
+
+void Robot::render() {
+	double x_ = map2scrX(x);
+	double y_ = map2scrY(y);
+
+	if (is_blue)
+		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xD2, 0xFF, 0xFF);
+	else
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x9A, 0x00, 0xFF);
 	draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
 
 	/* THAT TRICKY CIRCLES */
-	double a_ = (__a + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-	double b_ = (-__b + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-	SDL_SetRenderDrawColor(gRenderer, 0x63, 0x00, 0xFF, 0xFF);
+	double a_ = map2scrX(__a);
+	double b_ = map2scrY(__b);
+	if (is_blue)
+		SDL_SetRenderDrawColor(gRenderer, 0x49, 0x39, 0xFF, 0xFF);
+	else
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x4D, 0x00, 0xFF);
 	draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
 	/**/
 
@@ -94,23 +117,23 @@ void Robot::collide(Robot &other) {
 	}
 }
 
-void Robot::apply_strategy_attack(double x1, double y1) {
+void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	/* DBG */
-	double kappa = atan2(0 - y1, MAP_EDGE_LEFT - x1);
+	double kappa = atan2(Gy - y1, Gx - x1);
 	double IBRAGIM = 70;  // Distance before ball
 	x1 -= IBRAGIM * cos(kappa);
 	y1 -= IBRAGIM * sin(kappa);
 	/* DBG */
 
 	double x2 = x, y2 = y;  // Robot`s coordinates aliases
-	double k = (0 - y1) / (MAP_EDGE_LEFT - x1);  // Slope of ball direction
+	double k = (Gy - y1 + 1e-6) / (Gx - x1);  // Slope of ball direction
 
 	/* (a, b) is a trajectory center */
 	double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
 	double b = (x1 - a) / k + y1;
 
 	double chi = atan2(b-y2, a-x2);  // Between robot and circle center
-	double tg = chi + HALF_PI * sign((x2-x1)*(0-y1) - (y2-y1)*(MAP_EDGE_LEFT-x1));  // Transfer to proper tangent
+	double tg = chi + HALF_PI * sign((x2-x1)*(Gy-y1) - (y2-y1)*(Gx-x1));  // Transfer to proper tangent
 	normalize_angle(tg);  // ?
 	double theta = atan2(y1 - y2, x1 - x2);  // Between robot and ball
 	double d = get_dist(x2, y2, x1, y1);  // Between robot and ball
@@ -122,12 +145,14 @@ void Robot::apply_strategy_attack(double x1, double y1) {
 	normalize_angle(alpha);
 
 	// cout << "k = " << k << ", a = " << a << ", b=" << b << endl;
+	// cout << "tg = " << tg << ", gamma = " << gamma << ", alpha = " << alpha << endl;
 	__a = a;
 	__b = b;
 	__r = get_dist(x2, y2, a, b);
 
-	double ISCANDER = logistic_linear(d, 0.3, 500);  // Slower as closer
-	double base_u = 70 * ISCANDER;
+	// double ISCANDER = logistic_linear(d, 0.2, 300);  // Slower as closer
+	double ISCANDER = logistic_sigmoid(d, 200, 150);
+	double base_u = 80 * ISCANDER;
 	double ul = base_u - PID_P * alpha;
 	double ur = base_u + PID_P * alpha;
 
@@ -189,10 +214,16 @@ void Robot::apply_strategy_svyat_style(double x1, double y1) {
 	double dy = y_desired - y;
 
 	double theta = (h > DIST_MAX) ? PI : (h < -DIST_MAX) ? 0 : (HALF_PI + HALF_PI * h/DIST_MAX * sign_(dy));
+	// WORKAROUND ANDREI STYLE
+	if (h > DIST_MAX && dy < 0)
+		theta = 0;
+	//
 	double alpha = theta - angle;
+	normalize_angle(alpha);
 
 	double P = 40;
 	double base_u = 80 * logistic_linear(d, 0.1, 200) * sign(dy);
+	// if (h < DIST_MAX && h > -DIST_MAX)  base_u *= sign(dy);
 	double ul = base_u - P*alpha;
 	double ur = base_u + P*alpha;
 

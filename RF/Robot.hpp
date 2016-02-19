@@ -12,6 +12,7 @@ class Robot {
 	double vx = 0.0, vy = 0.0;
 	double radius = ROBOT_RADIUS;
 	bool active = true;
+	bool is_blue = true;
 	double __a = 0, __b = 0, __r = 0;
 
 	Robot();
@@ -21,7 +22,7 @@ class Robot {
 	void apply_u(double dt);
 	void render();
 	void collide(Robot &other);
-	void apply_strategy_attack(double x1, double y1);
+	void apply_strategy_attack(double x1, double y1, double Gx, double Gy = 0);
 	void apply_strategy_goalkeeper(double x1, double y1);
 	void apply_strategy_gradient(double x1, double y1);
 	void apply_strategy_svyat_style(double x1, double y1);
