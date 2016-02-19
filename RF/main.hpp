@@ -9,6 +9,7 @@
 #include <ctime>
 #include <chrono>
 #include <cmath>
+#include <vector>
 #include <map>
 #include <iterator>
 #include "mingw.thread.h"

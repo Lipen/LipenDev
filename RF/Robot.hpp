@@ -11,7 +11,7 @@ class Robot {
 	double u_left = 0.0, u_right = 0.0;
 	double vx = 0.0, vy = 0.0;
 	double radius = ROBOT_RADIUS;
-	bool active = true;
+	bool kick = false;
 	bool is_blue = true;
 	double __a = 0, __b = 0, __r = 0;
 

@@ -37,7 +37,7 @@ const double GATE_LEFT_BOT = -300;
 
 volatile bool RUNNING = true;
 const int DT_MODELLER = 10;  	// 10
-const int DT_DRAWER = 20;  		// 40
+const int DT_DRAWER = 40;  		// 40
 const int DT_STATEGIER = 50;  	// 50
 const int DT_LOADER = 100;  	//
 const int DT_SAVER = 100;  		//
@@ -100,18 +100,23 @@ double logistic_sigmoid(double x, double slope, double shift/* = 0.0*/) {
 }
 
 void draw_circle(double x, double y, double r) {
-	int n = TWO_PI / (0.3 * MAP_WIDTH/SCREEN_WIDTH) * r;
-	// int n = 500;
-	SDL_Point* points = new SDL_Point[n+1];
+	int n = TWO_PI / (0.3 * MAP_WIDTH/SCREEN_WIDTH) * r;  // 0.3
+	std::vector<SDL_Point> v;
 
 	for (int i = 0; i <= n; ++i) {
 		int a = x + r * cos(i * TWO_PI / n);
 		int b = y + r * sin(i * TWO_PI / n);
-		points[i] = { a, b };
+
+		if (a >= MAP_EDGE_LEFT && a <= MAP_EDGE_RIGHT && b >= MAP_EDGE_BOT && b <= MAP_EDGE_TOP)  v.push_back({map2scrX(a), map2scrY(b)});
 	}
 
-	// SDL_RenderDrawLines(gRenderer, points, n);
-	SDL_RenderDrawPoints(gRenderer, points, n);
+	SDL_Point* points = new SDL_Point[v.size()];
+	for (size_t i = 0; i < v.size(); ++i) {
+		points[i] = v[i];
+	}
+
+	// SDL_RenderDrawLines(gRenderer, points, v.size());
+	SDL_RenderDrawPoints(gRenderer, points, v.size());
 
 	delete points;
 }
@@ -205,14 +210,9 @@ void write_control(const char* filename) {
 
 void detect_collisions() {
 	for (auto i = robots.begin(); i != robots.end(); ++i) {
-		if (i->second.active) {
-			ball.collide(i->second);
-
-			for (auto j = std::next(i); j != robots.end(); ++j) {
-				if (j->second.active) {
-					i->second.collide(j->second);
-				}
-			}
+		ball.collide(i->second);
+		for (auto j = std::next(i); j != robots.end(); ++j) {
+			i->second.collide(j->second);
 		}
 	}
 }

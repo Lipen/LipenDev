@@ -3,7 +3,9 @@
 #include "Robot.hpp"
 
 
-Robot::Robot() : x(0), y(0), angle(0) {}
+Robot::Robot() : x(0), y(0), angle(0) {
+	cout << "Robot::Robot() ~ empty ctor call" << endl;
+}
 
 Robot::Robot(double x, double y, double angle)
 : x(x), y(y), angle(angle) {}
@@ -48,26 +50,21 @@ void Robot::apply_u(double dt) {
 }
 
 void Robot::render() {
-	double x_ = map2scrX(x);
-	double y_ = map2scrY(y);
-
 	if (is_blue)
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xD2, 0xFF, 0xFF);
 	else
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x9A, 0x00, 0xFF);
-	draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
+	draw_circle(x, y, radius);
 
 	/* THAT TRICKY CIRCLES */
-	double a_ = map2scrX(__a);
-	double b_ = map2scrY(__b);
 	if (is_blue)
 		SDL_SetRenderDrawColor(gRenderer, 0x49, 0x39, 0xFF, 0xFF);
 	else
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x4D, 0x00, 0xFF);
-	draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
+	draw_circle(__a, __b, __r);
 	/**/
 
-	gRobotTexture.render(x_, y_, NULL, angle * -180. / PI + 90);
+	gRobotTexture.render(map2scrX(x), map2scrY(y), NULL, -angle*180/PI + 90.);
 }
 
 void Robot::collide(Robot &other) {
@@ -102,7 +99,7 @@ void Robot::collide(Robot &other) {
 void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	/* DBG */
 	double kappa = atan2(Gy - y1, Gx - x1);
-	double IBRAGIM = 100;  // Distance before ball
+	double IBRAGIM = 80;  // Distance before ball
 	x1 -= IBRAGIM * cos(kappa);
 	y1 -= IBRAGIM * sin(kappa);
 	/* DBG */
