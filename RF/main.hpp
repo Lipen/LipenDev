@@ -52,7 +52,6 @@ extern const double GATE_LEFT_TOP;
 extern const double GATE_LEFT_BOT;
 
 extern volatile bool RUNNING;
-extern const double PID_P;
 extern const int DT_MODELLER;
 extern const int DT_DRAWER;
 extern const int DT_STATEGIER;
@@ -121,14 +120,9 @@ int sign_(T x) {
 	return (x < 0) ? -1 : 1;
 }
 
-// template<typename T, typename U>
-// U constrain(T x, U a, U b) {
-// 	return (x > a) ? a : (x < b) ? b : x;
-// }
 template<typename T, typename U>
 T constrain(const T& x, U&& a, U&& b) {
 	return (x > a) ? a : (x < b) ? b : x;
 }
-
 
 #endif // MAIN_HPP

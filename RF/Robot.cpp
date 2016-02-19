@@ -47,23 +47,6 @@ void Robot::apply_u(double dt) {
 	normalize_angle(angle);
 }
 
-// void Robot::render() {
-// 	double x_ = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-// 	double y_ = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-
-// 	SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x40, 0x00, 0xFF);
-// 	draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
-
-// 	/* THAT TRICKY CIRCLES */
-// 	double a_ = (__a + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-// 	double b_ = (-__b + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-// 	SDL_SetRenderDrawColor(gRenderer, 0x63, 0x00, 0xFF, 0xFF);
-// 	draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
-// 	/**/
-
-// 	gRobotTexture.render(x_, y_, NULL, angle * -180. / PI + 90);
-// }
-
 void Robot::render() {
 	double x_ = map2scrX(x);
 	double y_ = map2scrY(y);
@@ -93,7 +76,6 @@ void Robot::collide(Robot &other) {
 
 	if (ds <= 1e-9) {
 		cout << "HMMMM ... " << *this << " (" << this << ") AND " << other << "(" << &other << ")" << endl;
-		system("ini");
 	}
 
 	if (ds < rs*rs) {
@@ -120,7 +102,7 @@ void Robot::collide(Robot &other) {
 void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	/* DBG */
 	double kappa = atan2(Gy - y1, Gx - x1);
-	double IBRAGIM = 70;  // Distance before ball
+	double IBRAGIM = 100;  // Distance before ball
 	x1 -= IBRAGIM * cos(kappa);
 	y1 -= IBRAGIM * sin(kappa);
 	/* DBG */
@@ -150,11 +132,13 @@ void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	__b = b;
 	__r = get_dist(x2, y2, a, b);
 
-	// double ISCANDER = logistic_linear(d, 0.2, 300);  // Slower as closer
-	double ISCANDER = logistic_sigmoid(d, 200, 150);
+	double len = normalized_angle(atan2(y1 - b, x1 - a) - atan2(y - b, x - a), PI) * __r;
+	double P = 100;
+	// double ISCANDER = logistic_linear(len, 0.2, 300);  // Slower as closer
+	double ISCANDER = logistic_sigmoid(len, 200, 150);
 	double base_u = 80 * ISCANDER;
-	double ul = base_u - PID_P * alpha;
-	double ur = base_u + PID_P * alpha;
+	double ul = base_u - P * alpha;
+	double ur = base_u + P * alpha;
 
 	// Do not forget to set u
 	set_u(ul, ur);
@@ -222,7 +206,7 @@ void Robot::apply_strategy_svyat_style(double x1, double y1) {
 	normalize_angle(alpha);
 
 	double P = 40;
-	double base_u = 80 * logistic_linear(d, 0.1, 200) * sign(dy);
+	double base_u = 80 * logistic_linear(d, 0.05, 100) * sign(dy);
 	// if (h < DIST_MAX && h > -DIST_MAX)  base_u *= sign(dy);
 	double ul = base_u - P*alpha;
 	double ur = base_u + P*alpha;

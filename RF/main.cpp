@@ -16,12 +16,12 @@ const double MAP_EDGE_TOP = 1050;  // ~ MAP_HEIGHT/2 minus something
 const double MAP_EDGE_BOT = -MAP_EDGE_TOP;
 
 const double BALL_MASS = 10;
-const double BALL_RADIUS = 30;
+const double BALL_RADIUS = 23;
 const double BALL_FRICTION = 0.995;
 const double BALL_MAXSPEED = 1000;
 
 const double ROBOT_MASS = 2000;
-const double ROBOT_RADIUS = 70;
+const double ROBOT_RADIUS = 81;
 const double ROBOT_BASE = 50;
 const double ROBOT_BASE_SPEED = 800;
 const double ROBOT_BASE_ANGULAR_SPEED = 0.15;
@@ -36,10 +36,9 @@ const double GATE_LEFT_TOP = 300;
 const double GATE_LEFT_BOT = -300;
 
 volatile bool RUNNING = true;
-const double PID_P = 60;
 const int DT_MODELLER = 10;  	// 10
 const int DT_DRAWER = 20;  		// 40
-const int DT_STATEGIER = 1;  	// 50
+const int DT_STATEGIER = 50;  	// 50
 const int DT_LOADER = 100;  	//
 const int DT_SAVER = 100;  		//
 
@@ -101,7 +100,7 @@ double logistic_sigmoid(double x, double slope, double shift/* = 0.0*/) {
 }
 
 void draw_circle(double x, double y, double r) {
-	int n = TWO_PI / (0.35 * MAP_WIDTH/SCREEN_WIDTH) * r;
+	int n = TWO_PI / (0.3 * MAP_WIDTH/SCREEN_WIDTH) * r;
 	// int n = 500;
 	SDL_Point* points = new SDL_Point[n+1];
 
@@ -298,7 +297,7 @@ void strategier() {
 		// robots[0].apply_strategy_attack(ball.x, ball.y);
 		robots[2].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
 		// robots[3].apply_strategy_attack(ball.x, ball.y);
-		robots[0].apply_strategy_gradient(ball.x, ball.y);
+		// robots[0].apply_strategy_gradient(ball.x, ball.y);
 		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
 		robots[4].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
 
