@@ -20,6 +20,7 @@ class Robot {
 
 	void set_u(double ul, double ur);
 	void apply_u(double dt);
+	void punch();
 	void render();
 	void collide(Robot &other);
 	void apply_strategy_attack(double x1, double y1, double Gx, double Gy = 0);

@@ -318,32 +318,56 @@ void drawer() {
 		SDL_RenderClear(gRenderer);
 
 		/* DBG - COLORED VECTOR FIELD */
-		double x1 = ball.x;
-		double y1 = ball.y;
+		// double x1 = ball.x;
+		// double y1 = ball.y;
 
-		int STEP = 2;
+		// int STEP = 2;
 
-		for (int i = 0; i <= SCREEN_WIDTH; i += STEP) {
+		// for (int i = 0; i <= SCREEN_WIDTH; i += STEP) {
+		// 	double x = scr2mapX(i);
+
+		// 	for (int j = 0; j <= SCREEN_HEIGHT; j += STEP) {
+		// 		double y = scr2mapY(j);
+
+		// 		double Fx, Fy, U;
+		// 		calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
+		// 		double F = sqrt(Fx*Fx + Fy*Fy);
+
+		// 		double uu = U / 500000. * 255;
+		// 		// double uu = F / 2000. * 255;
+		// 		int r = 255;
+		// 		int g = (uu > 255) ? 255 : (uu < 0) ? 0 : uu;
+		// 		int b = 0;
+
+		// 		SDL_SetRenderDrawColor(gRenderer, r, g, b, 0xFF);
+		// 		SDL_RenderDrawPoint(gRenderer, i, j);
+		// 	}
+		// }
+		/* DBG END */
+
+		/* DBG - COLOR PUNCH AREA */
+		int STEP2 = 2;
+		for (int i = 0; i <= SCREEN_WIDTH; i += STEP2) {
 			double x = scr2mapX(i);
 
-			for (int j = 0; j <= SCREEN_HEIGHT; j += STEP) {
+			for (int j = 0; j <= SCREEN_HEIGHT; j += STEP2) {
 				double y = scr2mapY(j);
 
-				double Fx, Fy, U;
-				calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
-				double F = sqrt(Fx*Fx + Fy*Fy);
+				double w = 120;
+				double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4.);
+				double l = 40;
 
-				double uu = U / 500000. * 255;
-				// double uu = F / 2000. * 255;
-				int r = 255;
-				int g = (uu > 255) ? 255 : (uu < 0) ? 0 : uu;
-				int b = 0;
+				double phi = -robots[2].angle;
+				double x_ = (x-robots[2].x)*cos(phi) - (y-robots[2].y)*sin(phi);
+				double y_ = (x-robots[2].x)*sin(phi) + (y-robots[2].y)*cos(phi);
 
-				SDL_SetRenderDrawColor(gRenderer, r, g, b, 0xFF);
-				SDL_RenderDrawPoint(gRenderer, i, j);
+				if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
+					SDL_SetRenderDrawColor(gRenderer, 0x00, 0xDD, 0x25, 0xFF);
+					SDL_RenderDrawPoint(gRenderer, i, j);
+				}
 			}
 		}
-		/* DBG */
+		/* DBG END */
 
 		// Render green map edges
 		SDL_Rect map_edges = {
@@ -384,6 +408,11 @@ void modeller() {
 		double dt = duration<double, std::micro>(clock_used::now() - time_modeller).count() / 1000000.;
 		time_modeller = clock_used::now();
 		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(5) << dt*1000 << " ms" << endl;
+
+		// Kick the ball
+		for (auto&& item : robots)
+			if (item.second.kick)
+				item.second.punch();
 
 		// Update them all
 		for (auto&& item : robots)
@@ -436,6 +465,7 @@ int main(int argc, char* argv[]) {
 	robots[3] = {-500, 500};  // Standby
 	robots[4] = {-500, -500};  // Yellow forward
 	robots[4].is_blue = false;
+	robots[2].kick = true;
 
 	// for (int i = 0; i < 10; ++i) {
 	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};

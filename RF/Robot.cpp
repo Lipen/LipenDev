@@ -49,6 +49,21 @@ void Robot::apply_u(double dt) {
 	normalize_angle(angle);
 }
 
+void Robot::punch() {
+	double w = 120;
+	double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4);
+	double l = 40;
+
+	double dx = ball.x - x;
+	double dy = ball.y - y;
+	double x_ = dx*cos(-angle) + dy*sin(angle);
+	double y_ = -dx*sin(angle) + dy*cos(angle);
+
+	if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
+		cout << "PUNCHING" << endl;
+	}
+}
+
 void Robot::render() {
 	if (is_blue)
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xD2, 0xFF, 0xFF);
