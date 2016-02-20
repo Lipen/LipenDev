@@ -52,15 +52,34 @@ void Robot::apply_u(double dt) {
 void Robot::punch() {
 	double w = 120;
 	double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4);
-	double l = 40;
+	double l = 64;
 
 	double dx = ball.x - x;
 	double dy = ball.y - y;
-	double x_ = dx*cos(-angle) + dy*sin(angle);
+	double x_ = dx*cos(angle) + dy*sin(angle);
 	double y_ = -dx*sin(angle) + dy*cos(angle);
 
 	if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
-		cout << "PUNCHING" << endl;
+		double theta = atan2(dy, dx);  // Between ball and robot
+		double beta = atan2(ball.vy, ball.vy);  // Angle of ball`s velocity
+		double da = theta - beta;
+
+		double vnx = ball.vx * cos(da);  // Norm component
+		double vny = ball.vy * cos(da);
+		double vtx = ball.vx * sin(da);  // Tangent component
+		double vty = ball.vy * sin(da);
+
+		/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */  // Norm component
+		double ux = (2*ROBOT_MASS*vx + vnx*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
+		double uy = (2*ROBOT_MASS*vy + vny*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
+
+		// Add extra velocity from kicker
+		double vextra = 800;
+		ux += vextra * cos(angle);
+		uy += vextra * sin(angle);
+
+		ball.vx = ux + vtx;
+		ball.vy = uy + vty;
 	}
 }
 

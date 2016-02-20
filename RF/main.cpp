@@ -355,13 +355,23 @@ void drawer() {
 
 				double w = 120;
 				double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4.);
-				double l = 40;
+				double l = 64;
+				bool b = false;
 
-				double phi = -robots[2].angle;
-				double x_ = (x-robots[2].x)*cos(phi) - (y-robots[2].y)*sin(phi);
-				double y_ = (x-robots[2].x)*sin(phi) + (y-robots[2].y)*cos(phi);
+				for (auto&& item : robots) {
+					if (item.second.kick) {
+						double phi = -item.second.angle;
+						double x_ = (x-item.second.x)*cos(phi) - (y-item.second.y)*sin(phi);
+						double y_ = (x-item.second.x)*sin(phi) + (y-item.second.y)*cos(phi);
 
-				if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
+						if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
+							b = true;
+							break;
+						}
+					}
+				}
+
+				if (b) {
 					SDL_SetRenderDrawColor(gRenderer, 0x00, 0xDD, 0x25, 0xFF);
 					SDL_RenderDrawPoint(gRenderer, i, j);
 				}
@@ -466,6 +476,7 @@ int main(int argc, char* argv[]) {
 	robots[4] = {-500, -500};  // Yellow forward
 	robots[4].is_blue = false;
 	robots[2].kick = true;
+	robots[4].kick = true;
 
 	// for (int i = 0; i < 10; ++i) {
 	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};
