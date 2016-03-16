@@ -49,8 +49,11 @@ extern const double ROBOT_THRESHOLD_SLOPE;
 extern const double ROBOT_THRESHOLD_INTER;
 
 extern const double GATE_LEFT_X;
+extern const double GATE_RIGHT_X;
 extern const double GATE_LEFT_TOP;
 extern const double GATE_LEFT_BOT;
+extern const double GATE_RIGHT_TOP;
+extern const double GATE_RIGHT_BOT;
 
 extern volatile bool RUNNING;
 extern const int DT_MODELLER;
@@ -104,7 +107,7 @@ double scr2mapY(int y);
 
 int random(int a, int b);
 
-double logistic_linear(double x, double intersect, double threshold_right, double threshold_left = 0.0);
+double logistic_linear(double x, double intersect_left, double threshold_right, double threshold_left = 0.0);
 double logistic_sigmoid(double x, double slope, double shift = 0.0);
 
 void draw_circle(double x, double y, double r);

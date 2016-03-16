@@ -8,6 +8,7 @@ class Robot {
  public:
 	volatile double x, y;
 	double angle;
+	double angvel = 0.0;
 	double u_left = 0.0, u_right = 0.0;
 	double vx = 0.0, vy = 0.0;
 	double radius = ROBOT_RADIUS;

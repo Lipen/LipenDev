@@ -45,14 +45,19 @@ void Robot::apply_u(double dt) {
 		y = 2*MAP_EDGE_BOT - y;
 	}
 
+	// double angle_WAS = angle;
+
 	angle += w * dt;
 	normalize_angle(angle);
+
+	angvel = w;
+	// angvel = normalized_angle(normalized_angle(angle_WAS, PI) - normalized_angle(angle, PI), PI) / dt;
 }
 
 void Robot::punch() {
 	double w = 120;
 	double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4);
-	double l = 64;
+	double l = 50;
 
 	double dx = ball.x - x;
 	double dy = ball.y - y;
@@ -60,7 +65,7 @@ void Robot::punch() {
 	double y_ = -dx*sin(angle) + dy*cos(angle);
 
 	if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
-		double theta = atan2(dy, dx);  // Between ball and robot
+		double theta = atan2(dy, dx);           // Between ball and robot
 		double beta = atan2(ball.vy, ball.vy);  // Angle of ball`s velocity
 		double da = theta - beta;
 
@@ -84,10 +89,11 @@ void Robot::punch() {
 }
 
 void Robot::render() {
+	/* Robot`s radius */
 	if (is_blue)
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xD2, 0xFF, 0xFF);
 	else
-		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x9A, 0x00, 0xFF);
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xAA, 0x00, 0xFF);
 	draw_circle(x, y, radius);
 
 	/* THAT TRICKY CIRCLES */
@@ -96,7 +102,7 @@ void Robot::render() {
 	else
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x4D, 0x00, 0xFF);
 	draw_circle(__a, __b, __r);
-	/**/
+	/* */
 
 	gRobotTexture.render(map2scrX(x), map2scrY(y), NULL, -angle*180/PI + 90.);
 }
@@ -112,9 +118,11 @@ void Robot::collide(Robot &other) {
 	if (ds < rs*rs) {
 		// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from 'this' to radical line
 		double semi = sqrt(ds) / 2;
-		double alpha = atan2(other.y - y + 1e-6, other.x - x);  // Between this and other robot
+		/* Angle between this and other robot */
+		double alpha = atan2(other.y - y + 1e-6, other.x - x);
 
-		double dr_this = radius - semi;  // Distance to shift away from collision semipoint
+		/* Distance to shift away from collision semipoint */
+		double dr_this = radius - semi;
 		x -= dr_this * cos(alpha);
 		y -= dr_this * sin(alpha);
 
@@ -131,45 +139,62 @@ void Robot::collide(Robot &other) {
 }
 
 void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
-	/* DBG */
+	/* Calculate point before ball to move to */
 	double kappa = atan2(Gy - y1, Gx - x1);
 	double IBRAGIM = 80;  // Distance before ball
 	x1 -= IBRAGIM * cos(kappa);
 	y1 -= IBRAGIM * sin(kappa);
-	/* DBG */
 
-	double x2 = x, y2 = y;  // Robot`s coordinates aliases
-	double k = (Gy - y1 + 1e-6) / (Gx - x1);  // Slope of ball direction
+	/* Robot`s coordinates aliases */
+	double x2 = x, y2 = y;
+	/* Slope of ball direction */
+	double k = (Gy - y1 + 1e-6) / (Gx - x1);
 
 	/* (a, b) is a trajectory center */
 	double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
 	double b = (x1 - a) / k + y1;
 
-	double chi = atan2(b-y2, a-x2);  // Between robot and circle center
-	double tg = chi + HALF_PI * sign((x2-x1)*(Gy-y1) - (y2-y1)*(Gx-x1));  // Transfer to proper tangent
-	normalize_angle(tg);  // ?
-	double theta = atan2(y1 - y2, x1 - x2);  // Between robot and ball
-	double d = get_dist(x2, y2, x1, y1);  // Between robot and ball
+	/* chi   - Angle between robot and circle center */
+	/* tg    - Angle chi transferred to proper tangent */
+	/* theta - Angle between robot and ball */
+	/* d     - Distance between robot and ball */
+	/* da    - Angle ... */
+	/* gamma - Koef: How much to skew from tangent ('tg') to to-the-ball-direction ('theta') */
+	double chi = atan2(b-y2, a-x2);
+	double tg = chi + HALF_PI * sign((x2-x1)*(Gy-y1) - (y2-y1)*(Gx-x1));
+	normalize_angle(tg);  // need?
+	double theta = atan2(y1 - y2, x1 - x2);
+	double d = get_dist(x2, y2, x1, y1);
 	double da = theta - tg;
 	normalize_angle(da);
-	double gamma = (d > ROBOT_THRESHOLD_MAX) ? 1 : (d < ROBOT_THRESHOLD_MIN) ? 0 : ROBOT_THRESHOLD_SLOPE * d + ROBOT_THRESHOLD_INTER;  // How much to skew from tangent ('tg') to to-the-ball-direction ('theta')
+	double gamma = logistic_linear(d, ROBOT_THRESHOLD_INTER, ROBOT_THRESHOLD_MAX, ROBOT_THRESHOLD_MIN);
+	// double gamma = (d > ROBOT_THRESHOLD_MAX) ? 1 : (d < ROBOT_THRESHOLD_MIN) ? 0 : (ROBOT_THRESHOLD_SLOPE * d + ROBOT_THRESHOLD_INTER);
 
-	double alpha = tg + da * gamma - angle;  // Delta alpha for p-regulator
+	double angle_need = tg;
+	// double angle_need = tg + da * gamma;
+	double alpha = angle_need - angle;  // Delta alpha for p-regulator
 	normalize_angle(alpha);
 
-	// cout << "k = " << k << ", a = " << a << ", b=" << b << endl;
-	// cout << "tg = " << tg << ", gamma = " << gamma << ", alpha = " << alpha << endl;
+	// cout << "k = " << k << ", a = " << a << ", b=" << b << endl << "tg = " << tg << ", gamma = " << gamma << ", alpha = " << alpha << endl;
 	__a = a;
 	__b = b;
 	__r = get_dist(x2, y2, a, b);
 
+	double v_need = ROBOT_BASE_SPEED;
+	double w_need = v_need / cos(alpha) / __r;
+	double dw = w_need - angvel;
+
 	double len = normalized_angle(atan2(y1 - b, x1 - a) - atan2(y - b, x - a), PI) * __r;
 	double P = 100;
+	double PETR = 20;
 	// double ISCANDER = logistic_linear(len, 0.2, 300);  // Slower as closer
 	double ISCANDER = logistic_sigmoid(len, 200, 150);
 	double base_u = 80 * ISCANDER;
-	double ul = base_u - P * alpha;
-	double ur = base_u + P * alpha;
+	double ul = v_need + ROBOT_BASE * w_need / 2 ;//- PETR * dw;
+	double ur = v_need - ROBOT_BASE * w_need / 2 ;//+ PETR * dw;
+// cout << *this << ", angvel = " << angvel << endl;
+	// double ul = base_u - P * alpha;
+	// double ur = base_u + P * alpha;
 
 	// Do not forget to set u
 	set_u(ul, ur);

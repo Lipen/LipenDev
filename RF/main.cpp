@@ -18,10 +18,10 @@ const double MAP_EDGE_BOT = -MAP_EDGE_TOP;
 const double BALL_MASS = 10;
 const double BALL_RADIUS = 23;
 const double BALL_FRICTION = 0.995;
-const double BALL_MAXSPEED = 1000;
+const double BALL_MAXSPEED = 2000;
 
 const double ROBOT_MASS = 2000;
-const double ROBOT_RADIUS = 81;
+const double ROBOT_RADIUS = 75;  // 81
 const double ROBOT_BASE = 50;
 const double ROBOT_BASE_SPEED = 800;
 const double ROBOT_BASE_ANGULAR_SPEED = 0.15;
@@ -34,11 +34,13 @@ const double GATE_LEFT_X = MAP_EDGE_LEFT + 70;
 const double GATE_RIGHT_X = MAP_EDGE_RIGHT - 70;
 const double GATE_LEFT_TOP = 300;
 const double GATE_LEFT_BOT = -300;
+const double GATE_RIGHT_TOP = 300;
+const double GATE_RIGHT_BOT = -300;
 
 volatile bool RUNNING = true;
 const int DT_MODELLER = 10;  	// 10
 const int DT_DRAWER = 40;  		// 40
-const int DT_STATEGIER = 50;  	// 50
+const int DT_STRATEGIER = 50;  	// 50
 const int DT_LOADER = 100;  	//
 const int DT_SAVER = 100;  		//
 
@@ -91,8 +93,15 @@ int random(int a, int b) {
 	return (rand() % (b+1-a)) + a;
 }
 
-double logistic_linear(double x, double intersect, double threshold_right, double threshold_left/* = 0.0*/) {
-	return (x > threshold_right) ? 1 : (x < threshold_left) ? 0 : (intersect + (1-intersect)/(threshold_right - threshold_left));
+double logistic_linear(double x, double intersect_left, double threshold_right, double threshold_left/* = 0.0*/) {
+	if (x > threshold_right) {
+		return 1;
+	}
+	else if (x < threshold_left) {
+		return 0;
+	}
+	double slope = (1 - intersect_left) / (threshold_right - threshold_left);
+	return slope*x + 1 - slope*threshold_right;
 }
 
 double logistic_sigmoid(double x, double slope, double shift/* = 0.0*/) {
@@ -295,11 +304,13 @@ void strategier() {
 		// }
 
 		// robots[0].apply_strategy_attack(ball.x, ball.y);
-		robots[2].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
 		// robots[3].apply_strategy_attack(ball.x, ball.y);
 		// robots[0].apply_strategy_gradient(ball.x, ball.y);
 		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
-		robots[4].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
+		robots[2].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
+		robots[4].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
+		robots[5].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
+		robots[6].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
 
 		// cout << robots[4] << endl;
 
@@ -307,7 +318,7 @@ void strategier() {
 		// 	robots[100+i].apply_strategy_gradient(ball.x, ball.y);
 		// }
 
-		std::this_thread::sleep_for(milliseconds(DT_STATEGIER));
+		std::this_thread::sleep_for(milliseconds(DT_STRATEGIER));
 	}
 }
 
@@ -346,7 +357,7 @@ void drawer() {
 		/* DBG END */
 
 		/* DBG - COLOR PUNCH AREA */
-		int STEP2 = 2;
+		int STEP2 = 4;
 		for (int i = 0; i <= SCREEN_WIDTH; i += STEP2) {
 			double x = scr2mapX(i);
 
@@ -355,7 +366,7 @@ void drawer() {
 
 				double w = 120;
 				double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4.);
-				double l = 64;
+				double l = 50;
 				bool b = false;
 
 				for (auto&& item : robots) {
@@ -372,7 +383,7 @@ void drawer() {
 				}
 
 				if (b) {
-					SDL_SetRenderDrawColor(gRenderer, 0x00, 0xDD, 0x25, 0xFF);
+					SDL_SetRenderDrawColor(gRenderer, 0x00, 0xBB, 0x20, 0xFF);
 					SDL_RenderDrawPoint(gRenderer, i, j);
 				}
 			}
@@ -394,6 +405,11 @@ void drawer() {
 		SDL_RenderDrawLine(gRenderer,
 			map2scrX(GATE_LEFT_X), map2scrY(GATE_LEFT_TOP),
 			map2scrX(GATE_LEFT_X), map2scrY(GATE_LEFT_BOT)
+		);
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x83, 0x05, 0xFF);
+		SDL_RenderDrawLine(gRenderer,
+			map2scrX(GATE_RIGHT_X), map2scrY(GATE_RIGHT_TOP),
+			map2scrX(GATE_RIGHT_X), map2scrY(GATE_RIGHT_BOT)
 		);
 
 		// Render robots
@@ -470,13 +486,22 @@ int main(int argc, char* argv[]) {
 
 	/* DEBUG */
 	robots[0] = {500, 0};  // Gradient FTW
-	robots[1] = {MAP_EDGE_LEFT+1250, 500, 1.5};  // GC
-	robots[2] = {400, -200};  // Blue forward
 	robots[3] = {-500, 500};  // Standby
-	robots[4] = {-500, -500};  // Yellow forward
-	robots[4].is_blue = false;
+	robots[1] = {MAP_EDGE_LEFT+1250, 500, 1.5};  // GC
+
+	robots[2] = {400, -200};  // Blue forward
 	robots[2].kick = true;
+
+	robots[4] = {-500, -500};  // Yellow forward
 	robots[4].kick = true;
+	robots[4].is_blue = false;
+
+	robots[5] = {200, 300};
+	robots[5].kick = true;
+
+	robots[6] = {900, -100};
+	robots[6].kick = true;
+	robots[6].is_blue = false;
 
 	// for (int i = 0; i < 10; ++i) {
 	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};
