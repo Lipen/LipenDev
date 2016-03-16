@@ -21,14 +21,14 @@ class shared_ptr_count {
 
  public:
  	/* Default ctor */
-	shared_ptr_count()
+	shared_ptr_count() noexcept
 	: ref_count(nullptr)
 	{
 		cout << "shared_ptr_count :: Default ctor" << endl;
 	}
 
 	/* Copy ctor */
-	shared_ptr_count(const shared_ptr_count &rhs)
+	shared_ptr_count(const shared_ptr_count &rhs) noexcept
 	: ref_count(rhs.ref_count)
 	{
 		cout << "shared_ptr_count :: Copy ctor("; if (ref_count) cout << ref_count << " = " << *ref_count; else cout << "nullptr"; cout << ")" << endl;
@@ -53,8 +53,7 @@ class shared_ptr_count {
 
 		if (p != nullptr) {
 			if (ref_count == nullptr) {
-				// TODO: check for std::bad_alloc
-				ref_count = new long(1);
+				ref_count = new long(1);  // TODO: check for std::bad_alloc
 			}
 			else {
 				++(*ref_count);
@@ -87,27 +86,29 @@ class shared_ptr {
 
  public:
 	/* Default ctor */
-	shared_ptr(void)
-	: data(nullptr), spc()
+	shared_ptr(void) noexcept
+	: data(nullptr)
+	, spc()
 	{
 		cout << "shared_ptr :: Default ctor" << endl;
 	}
 
 	/* Standard ctor */
-	explicit shared_ptr(T* p)
+	explicit shared_ptr(T* p) noexcept(false)
 	: spc()
 	{
 		cout << "shared_ptr :: Standard T* ctor" << endl;
-		acquire(p);
+		acquire(p);  // may throw bad_alloc
 	}
 
 	/* Ctor for weak pointer lock */
 	template<typename U>
-	explicit shared_ptr(const weak_ptr<U> &rhs)
+	explicit shared_ptr(const weak_ptr<U> &rhs) /* noexcept(false) */
 	: spc(rhs.spc)
 	{
+		// TODO: throw bad_weak_ptr if (rhs.expired() == true)
 		cout << "shared_ptr :: Ctor for weak pointer lock" << endl;
-		acquire(rhs.data);
+		acquire(rhs.data);  // may throw bad_alloc???  Nobody knows...
 	}
 
 	/* Copy ctor for copy-and-swap idiom */
@@ -115,11 +116,11 @@ class shared_ptr {
 	: spc(rhs.spc)
 	{
 		cout << "shared_ptr :: Copy ctor" << endl;
-		acquire(rhs.data);
+		acquire(rhs.data);  // will never throw bad_alloc
 	}
 
 	/* Destructor */
-	~shared_ptr() {
+	~shared_ptr() noexcept {
 		cout << "~shared_ptr :: Destructor" << endl;
 		release();
 	}
@@ -140,7 +141,7 @@ class shared_ptr {
 	}
 
 	/* Reset */
-	void reset(void) noexcept {
+	void reset() noexcept {
 		cout << "shared_ptr :: Reset(void)" << endl;
 		release();
 	}
@@ -176,8 +177,8 @@ class shared_ptr {
 
  private:
  	/* Acquire pointer */
-	void acquire(T* p) noexcept(false) {
-		cout << "shared_ptr :: Acquire(" << p; if (p) cout << " = " << *p; cout << ")" << endl;
+	void acquire(T* p) noexcept(false) {  // may throw bad_alloc
+		cout << "shared_ptr :: Acquire(p = "; if (p) cout << p << " = " << *p; else cout << "nullptr"; cout << ")" << endl;
 		spc.acquire(p);  // may throw bad_alloc
 		data = p;
 	}
@@ -200,7 +201,7 @@ class weak_ptr {
 
  public:
  	/* Default ctor */
-	weak_ptr()
+	weak_ptr() noexcept
 	: data(nullptr), spc()
 	{
 		cout << "weak_ptr :: Default ctor" << endl;
@@ -208,14 +209,14 @@ class weak_ptr {
 
 	/* Standard ctor */
 	template<typename U>
-	weak_ptr(const shared_ptr<U> &rhs)
+	weak_ptr(const shared_ptr<U> &rhs) noexcept
 	: data(rhs.data), spc(rhs.spc)
 	{
 		cout << "weak_ptr :: Standard shared_ptr<U>& ctor" << endl;
 	}
 
 	/* Copy ctor */
-	weak_ptr(const weak_ptr &rhs)
+	weak_ptr(const weak_ptr &rhs) noexcept
 	: spc(rhs.spc)
 	{
 		cout << "weak_ptr :: Copy ctor" << endl;
@@ -223,7 +224,7 @@ class weak_ptr {
 	}
 
 	/* Destructor */
-	~weak_ptr() {
+	~weak_ptr() noexcept {
 		cout << "~weak_ptr :: Destructor" << endl;
 	}
 
@@ -262,7 +263,7 @@ class weak_ptr {
 	/* Lock */
 	shared_ptr<T> lock() const noexcept {
 		cout << "weak_ptr :: Lock" << endl;
-		return shared_ptr<T>(*this);
+		return expired() ? shared_ptr<T>() : shared_ptr<T>(*this);
 	}
 
 	/* Operations of reference counter */
@@ -334,20 +335,20 @@ class unique_ptr {
 	}
 
 	/* Reset */
-	void reset(void) noexcept {
+	void reset() noexcept {
 		cout << "unique_ptr :: Reset(void)" << endl;
 		destroy();
 	}
 
 	/* Reset and re-acquire */
 	void reset(T* p) noexcept {
-		cout << "unique_ptr :: Reset(" << p; if (p) cout << " = " << *p; cout << ")" << endl;
+		cout << "unique_ptr :: Reset(" << p << " = "; if (p) cout << *p; else cout << "nullptr"; cout << ")" << endl;
 		destroy();
 		data = p;
 	}
 
 	/* Release pointer without destroying */
-	T* release(void) noexcept {
+	T* release() noexcept {
 		cout << "unique_ptr :: Release" << endl;
 		T* data_old = data;
 		data = nullptr;
@@ -361,7 +362,7 @@ class unique_ptr {
 	T* operator-> () const noexcept {
 		return data;
 	}
-	T* get(void) const noexcept {
+	T* get() const noexcept {
 		return data;
 	}
 	operator bool() const noexcept {
@@ -370,7 +371,7 @@ class unique_ptr {
 
  private:
  	/* Release and destroy underlying pointer */
-	void destroy(void) noexcept {
+	void destroy() noexcept {
 		cout << "unique_ptr :: Destroy" << endl;
 		delete data;
 		data = nullptr;
@@ -391,10 +392,15 @@ std::ostream& operator<< (std::ostream &o, const shared_ptr<T> &rhs) {
 template<typename T>
 std::ostream& operator<< (std::ostream &o, const weak_ptr<T> &rhs) {
 	o << "[get() = " << rhs.get() << " = ";
-	if (rhs.get() != nullptr)
-		o << *rhs;
-	else
+	if (rhs.get() != nullptr) {
+		if (!rhs.expired())
+			o << *rhs;
+		else
+			o << "expired";
+	}
+	else {
 		o << "nullptr";
+	}
 	return o << "; use_count() == " << rhs.use_count() << "]";
 }
 
@@ -483,6 +489,19 @@ int main_wrapped() {
 	}
 	cout << "----------" << endl;
 
+	cout << ">	Copy and assign to empty shared_ptr" << endl;
+	shared_ptr<T> sh8, sh10;
+	cout << "sh8: " << sh8 << endl;
+	cout << "sh10: " << sh10 << endl;
+	cout << ">Two empty shared_ptr created. Copying..." << endl;
+	shared_ptr<T> sh9(sh8);
+	cout << "sh9: " << sh9 << endl;
+	cout << ">Empty shared_ptr copied. Assigning..." << endl;
+	sh8 = sh10;
+	cout << "sh8: " << sh8 << endl;
+	cout << ">Empty shared_ptr assigned" << endl;
+	cout << "----------" << endl;
+
 
 	cout << "\n>	Now testing weak pointers. Empty weak_ptr" << endl;
 	weak_ptr<T> wp1;
@@ -517,6 +536,26 @@ int main_wrapped() {
 	cout << "sh6: " << sh6 << endl;
 	cout << "wp3: " << wp3 << endl;
 	cout << "sh7: " << sh7 << endl;
+	cout << "----------" << endl;
+
+	cout << ">	Lock empty weak_ptr" << endl;
+	weak_ptr<T> wp4;
+	shared_ptr<T> sh11 = wp4.lock();
+	cout << "sh11: " << sh11 << endl;
+	cout << "----------" << endl;
+
+	cout << ">	Lock expired weak_ptr" << endl;
+	shared_ptr<T> sh12(new T(-66));
+	cout << "sh12: " << sh12 << endl;
+	weak_ptr<T> wp5(sh12);
+	cout << "wp5: " << wp5 << endl;
+	sh12.reset();
+	cout << "sh12: " << sh12 << endl;
+	cout << "wp5: " << wp5 << endl;
+	cout << ">Now locking..." << endl;
+	shared_ptr<T> sh13 = wp5.lock();
+	cout << "sh12: " << sh12 << endl;
+	cout << "sh13: " << sh13 << endl;
 	cout << "----------" << endl;
 
 
