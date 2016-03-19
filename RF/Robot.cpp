@@ -45,13 +45,10 @@ void Robot::apply_u(double dt) {
 		y = 2*MAP_EDGE_BOT - y;
 	}
 
-	// double angle_WAS = angle;
-
 	angle += w * dt;
 	normalize_angle(angle);
 
 	angvel = w;
-	// angvel = normalized_angle(normalized_angle(angle_WAS, PI) - normalized_angle(angle, PI), PI) / dt;
 }
 
 void Robot::punch() {
@@ -102,7 +99,6 @@ void Robot::render() {
 	else
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x4D, 0x00, 0xFF);
 	draw_circle(__a, __b, __r);
-	/* */
 
 	gRobotTexture.render(map2scrX(x), map2scrY(y), NULL, -angle*180/PI + 90.);
 }
@@ -170,8 +166,8 @@ void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	double gamma = logistic_linear(d, ROBOT_THRESHOLD_INTER, ROBOT_THRESHOLD_MAX, ROBOT_THRESHOLD_MIN);
 	// double gamma = (d > ROBOT_THRESHOLD_MAX) ? 1 : (d < ROBOT_THRESHOLD_MIN) ? 0 : (ROBOT_THRESHOLD_SLOPE * d + ROBOT_THRESHOLD_INTER);
 
-	double angle_need = tg;
-	// double angle_need = tg + da * gamma;
+	// double angle_need = tg;
+	double angle_need = tg + da * gamma;
 	double alpha = angle_need - angle;  // Delta alpha for p-regulator
 	normalize_angle(alpha);
 
@@ -180,47 +176,15 @@ void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	__b = b;
 	__r = get_dist(x2, y2, a, b);
 
-	double v_need = ROBOT_BASE_SPEED;
-	double w_need = v_need / cos(alpha) / __r;
-	double dw = w_need - angvel;
-
 	double len = normalized_angle(atan2(y1 - b, x1 - a) - atan2(y - b, x - a), PI) * __r;
 	double P = 100;
-	double PETR = 20;
 	// double ISCANDER = logistic_linear(len, 0.2, 300);  // Slower as closer
 	double ISCANDER = logistic_sigmoid(len, 200, 150);
 	double base_u = 80 * ISCANDER;
-	double ul = v_need + ROBOT_BASE * w_need / 2 ;//- PETR * dw;
-	double ur = v_need - ROBOT_BASE * w_need / 2 ;//+ PETR * dw;
-// cout << *this << ", angvel = " << angvel << endl;
-	// double ul = base_u - P * alpha;
-	// double ur = base_u + P * alpha;
+	double ul = base_u - P * alpha;
+	double ur = base_u + P * alpha;
 
 	// Do not forget to set u
-	set_u(ul, ur);
-}
-
-void Robot::apply_strategy_goalkeeper(double x1, double y1) {
-	double rho = get_dist_to_line(x, y, GATE_LEFT_X, GATE_LEFT_TOP, GATE_LEFT_X, GATE_LEFT_BOT);
-
-	double ISABELL;  // dura
-	if (y1 > GATE_LEFT_TOP)
-		ISABELL = GATE_LEFT_TOP - y;
-	else if (y1 < GATE_LEFT_BOT)
-		ISABELL = GATE_LEFT_BOT - y;
-	else
-		ISABELL = y1 - y;
-
-	bool lefter = x < GATE_LEFT_X;
-	double BORIS = 0.5*rho;  // Line-keeper
-
-	double base_u = 1 * ISABELL;
-	double KKK = (angle > 0 && angle < PI) ? 1 : -1;
-	double ul = KKK*(base_u + ISABELL*((lefter) ? BORIS : 0));
-	double ur = KKK*(base_u + ISABELL*((lefter) ? 0 : BORIS));
-
-	// cout << "Isa = " << ISABELL << ", Boria = " << BORIS << ", ul = " << ul << ", ur = " << ur << ", base_u = " << base_u << endl;
-
 	set_u(ul, ur);
 }
 
@@ -228,8 +192,6 @@ void Robot::apply_strategy_gradient(double x1, double y1) {
 	double Fx, Fy, U;
 	calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
 	double F = sqrt(Fx*Fx + Fy*Fy);
-
-	// cout << "F = {" << Fx << ", " << Fy << "} == " << F << ", U = " << U << endl;
 
 	double ksi = atan2(Fy, Fx);  // Needed angle
 	double alpha = ksi - angle;  // Delta
@@ -240,8 +202,6 @@ void Robot::apply_strategy_gradient(double x1, double y1) {
 	double base_u = 80 * logistic_linear(d, 0.4, 200);
 	double ul = base_u - PAUL * alpha;
 	double ur = base_u + PAUL * alpha;
-
-	// cout << "ksi = " << ksi << ", angle = " << angle << ", alpha = " << alpha << endl;
 
 	set_u(ul, ur);
 }
@@ -254,10 +214,9 @@ void Robot::apply_strategy_svyat_style(double x1, double y1) {
 	double dy = y_desired - y;
 
 	double theta = (h > DIST_MAX) ? PI : (h < -DIST_MAX) ? 0 : (HALF_PI + HALF_PI * h/DIST_MAX * sign_(dy));
-	// WORKAROUND ANDREI STYLE
+	/* WORKAROUND ANDREI STYLE */
 	if (h > DIST_MAX && dy < 0)
 		theta = 0;
-	//
 	double alpha = theta - angle;
 	normalize_angle(alpha);
 
