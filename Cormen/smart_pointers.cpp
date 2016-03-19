@@ -20,7 +20,7 @@ class shared_ptr_count {
 	// amount of references to object otherwise
 
  public:
- 	/* Default ctor */
+	/* Default ctor */
 	shared_ptr_count() noexcept
 	: ref_count(nullptr)
 	{
@@ -120,7 +120,7 @@ class shared_ptr {
 	}
 
 	/* Destructor */
-	~shared_ptr() noexcept {
+	~shared_ptr() {
 		cout << "~shared_ptr :: Destructor" << endl;
 		release();
 	}
@@ -176,7 +176,7 @@ class shared_ptr {
 	}
 
  private:
- 	/* Acquire pointer */
+	/* Acquire pointer */
 	void acquire(T* p) noexcept(false) {  // may throw bad_alloc
 		cout << "shared_ptr :: Acquire(p = "; if (p) cout << p << " = " << *p; else cout << "nullptr"; cout << ")" << endl;
 		spc.acquire(p);  // may throw bad_alloc
@@ -200,7 +200,7 @@ class weak_ptr {
 	friend class shared_ptr<T>;
 
  public:
- 	/* Default ctor */
+	/* Default ctor */
 	weak_ptr() noexcept
 	: data(nullptr), spc()
 	{
@@ -224,7 +224,7 @@ class weak_ptr {
 	}
 
 	/* Destructor */
-	~weak_ptr() noexcept {
+	~weak_ptr() {
 		cout << "~weak_ptr :: Destructor" << endl;
 	}
 
@@ -274,7 +274,8 @@ class weak_ptr {
 		return spc.use_count();
 	}
 
-	/* Operations of underlying pointer */
+	/* Operations of underlying pointer aren`t allowed */
+	// Only for debug!
 	T& operator* () const noexcept {
 		return *data;
 	}
@@ -315,7 +316,7 @@ class unique_ptr {
 	}
 
 	/* Destructor */
-	~unique_ptr() noexcept {
+	~unique_ptr() {
 		cout << "~unique_ptr :: Destructor" << endl;
 		destroy();
 	}
@@ -370,7 +371,7 @@ class unique_ptr {
 	}
 
  private:
- 	/* Release and destroy underlying pointer */
+	/* Release and destroy underlying pointer */
 	void destroy() noexcept {
 		cout << "unique_ptr :: Destroy" << endl;
 		delete data;
