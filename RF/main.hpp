@@ -21,7 +21,8 @@ using namespace std::chrono;
 using std::cout;
 using std::endl;
 using std::string;
-using clock_used = high_resolution_clock;  // steady_clock
+using clock_used = system_clock;
+// using clock_used = high_resolution_clock;  // steady_clock
 
 extern const double SCREEN_WIDTH;
 extern const double SCREEN_HEIGHT;

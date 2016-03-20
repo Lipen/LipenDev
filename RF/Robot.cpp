@@ -134,6 +134,25 @@ void Robot::collide(Robot &other) {
 	}
 }
 
+double Robot::when_collide(Robot &other, double dt) {
+	double px = x, py = y,
+	double qx = other.x, qy = other.y;
+	double vx_rel = vx + other.vx, vy_rel = vy + other.vy
+	double r_sum = radius + other.radius;
+
+	double t1 = (-px*vx_rel - py*vy_rel + qx*vx_rel + qy*vy_rel - sqrt(-px**2*vy_rel**2 + 2*px*py*vx_rel*vy_rel + 2*px*qx*vy_rel**2 - 2*px*qy*vx_rel*vy_rel - py**2*vx_rel**2 - 2*py*qx*vx_rel*vy_rel + 2*py*qy*vx_rel**2 - qx**2*vy_rel**2 + 2*qx*qy*vx_rel*vy_rel - qy**2*vx_rel**2 + r_sum**2*vx_rel**2 + r_sum**2*vy_rel**2))/(dt*(vx_rel**2 + vy_rel**2));
+
+	if (t1 >= 0)
+		return t1;
+
+	double t2 = (-px*vx_rel - py*vy_rel + qx*vx_rel + qy*vy_rel + sqrt(-px**2*vy_rel**2 + 2*px*py*vx_rel*vy_rel + 2*px*qx*vy_rel**2 - 2*px*qy*vx_rel*vy_rel - py**2*vx_rel**2 - 2*py*qx*vx_rel*vy_rel + 2*py*qy*vx_rel**2 - qx**2*vy_rel**2 + 2*qx*qy*vx_rel*vy_rel - qy**2*vx_rel**2 + r_sum**2*vx_rel**2 + r_sum**2*vy_rel**2))/(dt*(vx_rel**2 + vy_rel**2));
+
+	if (t2 >= 0)
+		return t2
+
+	return dt+1;  // return something big enough
+}
+
 void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	/* Calculate point before ball to move to */
 	double kappa = atan2(Gy - y1, Gx - x1);

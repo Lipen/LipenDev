@@ -431,24 +431,65 @@ void modeller() {
 	auto time_modeller = clock_used::now();
 
 	while (RUNNING) {
-		double dt = duration<double, std::micro>(clock_used::now() - time_modeller).count() / 1000000.;
-		time_modeller = clock_used::now();
-		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(5) << dt*1000 << " ms" << endl;
+		double time_left = DT_MODELLER / 1000.;
+		int runs = 0;
 
-		// Kick the ball
-		for (auto&& item : robots)
-			if (item.second.kick)
-				item.second.punch();
+		while (time_left > 0 && runs < 100) {
+			double t_min = time_left;
+			Robot *robot_i, *robot_j;
 
-		// Update them all
-		for (auto&& item : robots)
-			item.second.apply_u(dt);
-		ball.update(dt);
+			for (auto i = robots.begin(); i != robots.end(); ++i) {
+				for (auto j = std::next(i); j != robots.end(); ++j) {
+					double t = i->second.when_collide(j->second, time_left);
+					if (t < t_min) {
+						t_min = t;
+						robot_i = &i->second;
+						robot_j = &j->second;
+					}
+				}
+			}
 
-		// Detect collisitions AFTER applying u
-		detect_collisions();
+			if (t_min < time_left) {
+				// Simulate t_min seconds
+				for (auto&& item : robots) {
+					item.second.apply_u(t_min)
+				}
 
-		std::this_thread::sleep_for(duration<double, std::milli>(DT_MODELLER));
+				// TODO: Interact robot_i and robot_j
+
+				time_left -= t_min;
+				++runs;
+			}
+			else {
+				// Simulate time_left seconds unprecisely
+
+				time_left = 0.0;
+				break;
+			}
+		}
+
+		if (time_left > 0) {
+			// Simulate time_left seconds unprecisely
+		}
+
+		// double dt = duration<double, std::micro>(clock_used::now() - time_modeller).count() / 1000000.;
+		// time_modeller = clock_used::now();
+		// // cout << "Modeller :: dt = " << std::fixed << std::setprecision(5) << dt*1000 << " ms" << endl;
+
+		// // Kick the ball
+		// for (auto&& item : robots)
+		// 	if (item.second.kick)
+		// 		item.second.punch();
+
+		// // Update them all
+		// for (auto&& item : robots)
+		// 	item.second.apply_u(dt);
+		// ball.update(dt);
+
+		// // Detect collisitions AFTER applying u
+		// detect_collisions();
+
+		// std::this_thread::sleep_for(duration<double, std::milli>(DT_MODELLER));
 	}
 }
 

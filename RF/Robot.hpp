@@ -24,6 +24,7 @@ class Robot {
 	void punch();
 	void render();
 	void collide(Robot &other);
+	double when_collide(Robot &other, double dt);
 	void apply_strategy_attack(double x1, double y1, double Gx, double Gy = 0);
 	void apply_strategy_goalkeeper(double x1, double y1);
 	void apply_strategy_gradient(double x1, double y1);
