@@ -35,6 +35,7 @@ class control_block {
 		cout << "control_block :: Copy ctor("; if (ref_count) cout << ref_count << " = " << *ref_count; else cout << "nullptr"; cout << ")" << endl;
 	}
 
+	/* Destructor */
 	~control_block() {
 		cout << "~control_block :: Destructor" << endl;
 		delete ref_count;
@@ -57,7 +58,6 @@ class control_block {
 	template<typename U>
 	void acquire(U* p) noexcept(false) {  // may throw bad_alloc
 		cout << "control_block :: Acquire(";if (p) cout << p << " = " << *p; else cout << "nullptr"; cout << ")" << endl;
-
 		if (p != nullptr) {
 			if (ref_count == nullptr) {
 				ref_count = new long(1);  // TODO: check for std::bad_alloc
@@ -80,16 +80,16 @@ class control_block {
 		cout << "control_block :: Release(";if (p) cout << p << " = " << *p; else cout << "nullptr"; cout << ")" << endl;
 		if (ref_count != nullptr) {
 			--(*ref_count);
+
 			if (*ref_count == 0) {
 				delete p;
-				delete ref_count;
-				cout << "\tdeleted" << endl;
 				p = nullptr;
+				delete ref_count;
 				ref_count = nullptr;
-				cout << "\tnullified" << endl;
 
-				if (weak_count <= 0)
+				if (weak_count <= 0) {
 					delete this;
+				}
 			}
 		}
 	}
@@ -97,10 +97,9 @@ class control_block {
 	/* Release weak pointer */
 	void release_weak() noexcept {
 		cout << "control_block :: Release weak (weak_count now = " << (weak_count-1) << ")" << endl;
-		--weak_count;
-
-		if (weak_count <= 0)
+		if (--weak_count <= 0) {
 			delete this;
+		}
 	}
 };
 
@@ -115,8 +114,7 @@ class shared_ptr {
  public:
 	/* Default ctor */
 	shared_ptr(void) noexcept
-	: data(nullptr)
-	, ctrl_block(nullptr)
+	: data(nullptr) , ctrl_block(nullptr)
 	{
 		cout << "shared_ptr :: Default ctor" << endl;
 	}
@@ -164,13 +162,8 @@ class shared_ptr {
 	/* Swap method for copy-and-swap idiom */
 	void swap(shared_ptr &rhs) noexcept {
 		cout << "shared_ptr :: Swap" << endl;
-			// cout << "\tdata was " << data << endl;
-			// cout << "\tctrl_block was " << ctrl_block << endl;
 		std::swap(data, rhs.data);
 		std::swap(ctrl_block, rhs.ctrl_block);
-		// ctrl_block.swap(rhs.ctrl_block);
-			// cout << "\tdata became " << data << endl;
-			// cout << "\tctrl_block became " << ctrl_block << endl;
 	}
 
 	/* Reset */
@@ -188,11 +181,9 @@ class shared_ptr {
 
 	/* Operations of reference counter */
 	operator bool() const noexcept {
-		// return (ctrl_block) ? ctrl_block->use_count() > 0 : false;
 		return get() != nullptr;
 	}
 	bool unique() const noexcept {
-		// return (ctrl_block) ? ctrl_block->use_count() == 1 : false;
 		return use_count() == 1;
 	}
 	long use_count() const noexcept {
@@ -214,12 +205,7 @@ class shared_ptr {
 	/* Acquire pointer */
 	void acquire(T* p) noexcept(false) {  // may throw bad_alloc
 		cout << "shared_ptr :: Acquire(p = "; if (p) cout << p << " = " << *p; else cout << "nullptr"; cout << ")" << endl;
-		// if (p) {
-			ctrl_block->acquire(p);  // may throw bad_alloc
-		// }
-		// else {
-		// 	cout << "\tnothing to acquire" << endl;
-		// }
+		ctrl_block->acquire(p);  // may throw bad_alloc
 		data = p;
 	}
 
@@ -304,13 +290,11 @@ class weak_ptr {
 		cout << "weak_ptr :: Swap" << endl;
 		std::swap(data, rhs.data);
 		std::swap(ctrl_block, rhs.ctrl_block);
-		// ctrl_block.swap(rhs.ctrl_block);
 	}
 
 	/* Reset */
 	void reset() noexcept {
 		cout << "weak_ptr :: Reset" << endl;
-		// weak_ptr<T>().swap(*this);
 		data = nullptr;
 		// TODO: null check?
 		ctrl_block->release_weak();
@@ -325,7 +309,6 @@ class weak_ptr {
 
 	/* Operations of reference counter */
 	bool expired() const noexcept {
-		// return (ctrl_block) ? ctrl_block->use_count() == 0 : false;
 		return use_count() == 0;
 	}
 	long use_count() const noexcept {
