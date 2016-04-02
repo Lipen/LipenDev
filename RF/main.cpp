@@ -436,7 +436,8 @@ void modeller() {
 
 		while (time_left > 0 && runs < 100) {
 			double t_min = time_left;
-			Robot *robot_i, *robot_j;
+			Robot* robot_i = nullptr;
+			Robot* robot_j = nullptr;
 
 			for (auto i = robots.begin(); i != robots.end(); ++i) {
 				for (auto j = std::next(i); j != robots.end(); ++j) {
@@ -455,7 +456,10 @@ void modeller() {
 					item.second.apply_u(t_min)
 				}
 
-				// TODO: Interact robot_i and robot_j
+				// TODO: Interact robot_i with robot_j (or with ball...)
+				if (robot_i != nullptr && robot_j != nullptr) {
+					//
+				}
 
 				time_left -= t_min;
 				++runs;
