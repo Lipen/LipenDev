@@ -312,6 +312,8 @@ void strategier() {
 		robots[5].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
 		robots[6].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
 
+		robots[3].apply_just_circle();
+
 		// cout << robots[4] << endl;
 
 		// for (int i = 0; i < 10; ++i) {
@@ -452,7 +454,7 @@ void modeller() {
 	}
 }
 
-void loaded() {
+void loader() {
 	while (RUNNING) {
 		read_data("data");
 
@@ -465,6 +467,28 @@ void saver() {
 		write_control("control");
 
 		std::this_thread::sleep_for(duration<double, std::milli>(DT_SAVER));
+	}
+}
+
+void grapher() {
+	system("mkdir graphs");
+	system("rm -f graphs/*.graph");
+
+	while (RUNNING) {
+		for (auto&& item : robots) {
+			if (!item.second.THE_DATA.empty()) {
+				std::stringstream filename;
+				filename << "graphs/Robot_" << item.first << ".graph";
+				std::ofstream fo(filename.str(), std::ofstream::app);
+
+				double angle, angle_need, alpha;
+				std::tie(angle, angle_need, alpha) = item.second.THE_DATA.front();
+				fo << angle << ' ' << angle_need << ' ' << alpha << '\n';
+				item.second.THE_DATA.pop();
+
+				fo.close();
+			}
+		}
 	}
 }
 
@@ -514,6 +538,7 @@ int main(int argc, char* argv[]) {
 	std::thread th_model(modeller);
 	// std::thread th_load(loader);
 	// std::thread th_save(saver);
+	std::thread th_graph(grapher);
 
 	cout << "Main now reading events..." << endl;
 	SDL_Event e;
@@ -542,6 +567,7 @@ int main(int argc, char* argv[]) {
 	th_model.join();
 	// th_load.join();
 	// th_save.join();
+	th_graph.join();
 
 	cout << "Releasing SDL" << endl;
 	release_sdl();

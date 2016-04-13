@@ -177,12 +177,23 @@ void Robot::apply_strategy_attack(double x1, double y1, double Gx, double Gy) {
 	__r = get_dist(x2, y2, a, b);
 
 	double len = normalized_angle(atan2(y1 - b, x1 - a) - atan2(y - b, x - a), PI) * __r;
-	double P = 100;
 	// double ISCANDER = logistic_linear(len, 0.2, 300);  // Slower as closer
 	double ISCANDER = logistic_sigmoid(len, 200, 150);
 	double base_u = 80 * ISCANDER;
-	double ul = base_u - P * alpha;
-	double ur = base_u + P * alpha;
+
+	double P = 100;
+	double I = 0.1;
+	double D = 1;
+	double i_max = 1;
+	double i_min = -i_max;
+	i_state += constrain(alpha * DT_STRATEGIER, i_min, i_max);
+	double pid = P*alpha + D*(alpha-d_state)/DT_STRATEGIER + I*i_state;
+	d_state = alpha;
+
+	THE_DATA.push(std::make_tuple(angle, angle_need, alpha));
+
+	double ul = base_u - pid;
+	double ur = base_u + pid;
 
 	// Do not forget to set u
 	set_u(ul, ur);
@@ -210,7 +221,7 @@ void Robot::apply_strategy_svyat_style(double x1, double y1) {
 	double DIST_MAX = 100;
 	double h = x - GATE_LEFT_X;
 	double d = get_dist(x, y, GATE_LEFT_X, y1);
-	double y_desired = constrain(y1, GATE_LEFT_TOP, GATE_LEFT_BOT);
+	double y_desired = constrain(y1, GATE_LEFT_BOT, GATE_LEFT_TOP);
 	double dy = y_desired - y;
 
 	double theta = (h > DIST_MAX) ? PI : (h < -DIST_MAX) ? 0 : (HALF_PI + HALF_PI * h/DIST_MAX * sign_(dy));
@@ -225,6 +236,26 @@ void Robot::apply_strategy_svyat_style(double x1, double y1) {
 	// if (h < DIST_MAX && h > -DIST_MAX)  base_u *= sign(dy);
 	double ul = base_u - P*alpha;
 	double ur = base_u + P*alpha;
+
+	set_u(ul, ur);
+}
+
+void Robot::apply_just_circle() {
+	double base_speed = ROBOT_BASE_SPEED;
+	double base = ROBOT_BASE;
+	double base_u = 0.1 * ROBOT_BASE_SPEED;  // linear control
+	double r = 300;
+
+	__a = x + r * cos(angle + HALF_PI);
+	__b = y + r * sin(angle + HALF_PI);
+	__r = r;
+
+	double u = base_speed * base / 2 / r;
+	double ul = base_u - u;
+	double ur = base_u + u;
+
+	double alpha = base_speed/r - angvel;
+	THE_DATA.push(std::make_tuple(angvel, base_speed/r, alpha));
 
 	set_u(ul, ur);
 }

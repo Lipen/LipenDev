@@ -6,10 +6,13 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
 #include <ctime>
 #include <chrono>
 #include <cmath>
 #include <vector>
+#include <queue>
+#include <tuple>
 #include <map>
 #include <iterator>
 #include "mingw.thread.h"
@@ -58,7 +61,7 @@ extern const double GATE_RIGHT_BOT;
 extern volatile bool RUNNING;
 extern const int DT_MODELLER;
 extern const int DT_DRAWER;
-extern const int DT_STATEGIER;
+extern const int DT_STRATEGIER;
 extern const int DT_LOADER;
 extern const int DT_SAVER;
 
@@ -125,8 +128,8 @@ int sign_(T x) {
 }
 
 template<typename T, typename U>
-T constrain(const T& x, U&& a, U&& b) {
-	return (x > a) ? a : (x < b) ? b : x;
+T constrain(const T& x, U&& a, U&& b) {  // a=min, b=max
+	return (x < a) ? a : (x > b) ? b : x;
 }
 
 #endif // MAIN_HPP

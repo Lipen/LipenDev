@@ -15,6 +15,8 @@ class Robot {
 	bool kick = false;
 	bool is_blue = true;
 	double __a = 0, __b = 0, __r = 0;
+	double d_state = 0, i_state = 0;
+	std::queue<std::tuple<double, double, double>> THE_DATA;
 
 	Robot();
 	Robot(double x, double y, double angle = 0.0);
@@ -28,6 +30,8 @@ class Robot {
 	void apply_strategy_goalkeeper(double x1, double y1);
 	void apply_strategy_gradient(double x1, double y1);
 	void apply_strategy_svyat_style(double x1, double y1);
+
+	void apply_just_circle();
 
 	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
 		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << "]";
