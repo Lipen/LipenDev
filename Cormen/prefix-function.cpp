@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+// TAGS: prefix function, Knuth, Morris, Pratt, Knuth-Morris-Pratt, Knuth-Pratt-Morris algorithm
 
 using std::cout;
 using std::cin;
@@ -35,6 +36,7 @@ std::vector<int> prefix_function_trivial(string s) {
 }
 
 
+// Knuth-Morris-Pratt
 std::vector<int> prefix_function(string s) {
 	int n = s.size();
 	std::vector<int> pi(n);
