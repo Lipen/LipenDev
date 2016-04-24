@@ -1,24 +1,13 @@
 /* Copyright (c) 2016, Lipen */
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <chrono>
-#include <cmath>
-#include "mingw.thread.h"
-#include "mingw.mutex.h"
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include "main.hpp"
+#include "Robot.hpp"
+#include "Ball.hpp"
+#include "LTexture.hpp"
 
-using namespace std::chrono;
-using std::cout;
-using std::endl;
-using std::string;
-using clock_used = high_resolution_clock;  // steady_clock
 
 const double SCREEN_WIDTH = 800;
 const double SCREEN_HEIGHT = 600;
+
 const double MAP_WIDTH = 3000;
 const double MAP_HEIGHT = 2250;
 const double MAP_EDGE_RIGHT = 1400;  // ~ MAP_WIDTH/2 minus something
@@ -27,47 +16,50 @@ const double MAP_EDGE_TOP = 1050;  // ~ MAP_HEIGHT/2 minus something
 const double MAP_EDGE_BOT = -MAP_EDGE_TOP;
 
 const double BALL_MASS = 10;
-const double BALL_RADIUS = 30;
+const double BALL_RADIUS = 23;
 const double BALL_FRICTION = 0.995;
+const double BALL_MAXSPEED = 2000;
 
-const double ROBOT_MASS = 1000;
-const double ROBOT_RADIUS = 70;
+const double ROBOT_MASS = 2000;
+const double ROBOT_RADIUS = 75;  // 81
 const double ROBOT_BASE = 50;
 const double ROBOT_BASE_SPEED = 800;
-const double ROBOT_BASE_ANGULAR_SPEED = 0.1;
-const double ROBOT_THRESHOLD_MIN = 100;
-const double ROBOT_THRESHOLD_MAX = 700;
+const double ROBOT_BASE_ANGULAR_SPEED = 0.15;
+const double ROBOT_THRESHOLD_MIN = 100;		// 100
+const double ROBOT_THRESHOLD_MAX = 1000;	// 700
 const double ROBOT_THRESHOLD_SLOPE = 1./(ROBOT_THRESHOLD_MAX-ROBOT_THRESHOLD_MIN);
 const double ROBOT_THRESHOLD_INTER = ROBOT_THRESHOLD_SLOPE * ROBOT_THRESHOLD_MIN;
 
+const double GATE_LEFT_X = MAP_EDGE_LEFT + 70;
+const double GATE_RIGHT_X = MAP_EDGE_RIGHT - 70;
+const double GATE_LEFT_TOP = 300;
+const double GATE_LEFT_BOT = -300;
+const double GATE_RIGHT_TOP = 300;
+const double GATE_RIGHT_BOT = -300;
+
 volatile bool RUNNING = true;
-const double PID_P = 100;
-const int DT_MODELLER = 10;   // 10
-const int DT_DRAWER = 20;     // 40
-const int DT_STATEGIER = 50;  // 50
+const int DT_MODELLER = 10;  	// 10
+const int DT_DRAWER = 40;  		// 40
+const int DT_STRATEGIER = 50;  	// 50
+const int DT_LOADER = 100;  	//
+const int DT_SAVER = 100;  		//
 
 const double PI = 3.14159265358979323846;
 const double TWO_PI = 6.28318530717958647693;
 const double HALF_PI = 1.57079632679489661923;
 
-const auto time_start = clock_used::now();
+const clock_used::time_point time_start = clock_used::now();
 std::mutex mutex_control;
 std::mutex mutex_data;
 
 SDL_Window* gWindow = NULL;
 SDL_Renderer* gRenderer = NULL;
 
-class LTexture;
-extern LTexture gBallTexture;
-extern LTexture gRobotTexture;
+std::map<int, Robot> robots;
+Ball ball;
+LTexture gBallTexture;
+LTexture gRobotTexture;
 
-
-template<typename T, typename U>
-double get_dist_squared(const T &a, const U &b) {
-	double ax = a.x, ay = a.y, bx = b.x, by = b.y;
-	double dx = ax - bx, dy = ay - by;
-	return dx*dx + dy*dy;
-}
 
 double get_dist_squared(double x1, double y1, double x2, double y2) {
 	double dx = x1 - x2;
@@ -75,463 +67,161 @@ double get_dist_squared(double x1, double y1, double x2, double y2) {
 	return dx*dx + dy*dy;
 }
 
-template<typename T, typename U>
-double get_dist(const T &a, const U &b) {
-	return sqrt(get_dist_squared(a, b));
+/*NO INLINE FFS*/double get_dist(double x1, double y1, double x2, double y2) {
+	return sqrt(get_dist_squared(x1, y1, x2, y2));
 }
 
-double get_dist(double x1, double y1, double x2, double y2) {
-	double dx = x1 - x2;
-	double dy = y1 - y2;
-	return sqrt(dx*dx + dy*dy);
+double get_dist_to_line(double x, double y, double x1, double y1, double x2, double y2) {
+	return std::abs((x1-x2)*(y2-y) - (x2-x)*(y1-y2)) / sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
+int map2scrX(double x) {
+	return (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
+}
+int map2scrY(double y) {
+	return (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
+}
+
+double scr2mapX(int i) {
+	return i * MAP_WIDTH / SCREEN_WIDTH - MAP_WIDTH/2;
+}
+double scr2mapY(int j) {
+	return -j * MAP_HEIGHT / SCREEN_HEIGHT + MAP_HEIGHT/2;
+}
+
+int random(int a, int b) {
+	return (rand() % (b+1-a)) + a;
+}
+
+double logistic_linear(double x, double intersect_left, double threshold_right, double threshold_left/* = 0.0*/) {
+	if (x > threshold_right) {
+		return 1;
+	}
+	else if (x < threshold_left) {
+		return 0;
+	}
+	double slope = (1 - intersect_left) / (threshold_right - threshold_left);
+	return slope*x + 1 - slope*threshold_right;
+}
+
+double logistic_sigmoid(double x, double slope, double shift/* = 0.0*/) {
+	return tanh( (x - shift) / slope )/2+.5;
 }
 
 void draw_circle(double x, double y, double r) {
-	int n = 90;  // 30
-	SDL_Point* points = new SDL_Point[n+1];
+	int n = TWO_PI / (0.3 * MAP_WIDTH/SCREEN_WIDTH) * r;  // 0.3
+	std::vector<SDL_Point> v;
 
 	for (int i = 0; i <= n; ++i) {
-		int a = x + r * cos(i * TWO_PI / n);  // i * 360/n * PI / 180
+		int a = x + r * cos(i * TWO_PI / n);
 		int b = y + r * sin(i * TWO_PI / n);
-		points[i] = { a, b };
+
+		if (a >= MAP_EDGE_LEFT && a <= MAP_EDGE_RIGHT && b >= MAP_EDGE_BOT && b <= MAP_EDGE_TOP)  v.push_back({map2scrX(a), map2scrY(b)});
 	}
 
-	SDL_RenderDrawLines(gRenderer, points, n);
-	// SDL_RenderDrawPoints(gRenderer, points, n);
+	SDL_Point* points = new SDL_Point[v.size()];
+	for (size_t i = 0; i < v.size(); ++i) {
+		points[i] = v[i];
+	}
+
+	// SDL_RenderDrawLines(gRenderer, points, v.size());
+	SDL_RenderDrawPoints(gRenderer, points, v.size());
 
 	delete points;
 }
 
-void normalize_angle(double &angle, double center = 0.0) {
+void normalize_angle(double &angle, double center/* = 0.0*/) {
 	angle -= TWO_PI * floor( (angle + PI - center) / TWO_PI );
 }
 
-template<typename T>
-int sign(T x) {
-	if (x > 0)
-		return 1;
-	else if (x < 0)
-		return -1;
-	return 0;
+double normalized_angle(double angle, double center/* = 0.0*/) {
+	return angle - TWO_PI * floor( (angle + PI - center) / TWO_PI );
+}
+
+void calc_gradient_at(double x, double y, double x1, double y1, double* Fx_, double* Fy_, double* U_) {
+	/* F = -grad(U) */
+	// TODO: Move to 'CONSTANTS' block
+	double KSI = 30;
+	double NYA = 20000;
+
+	double d = get_dist(x, y, x1, y1);
+
+	double method;
+	double U;
+	if (d > 500) {
+		// method = -500 * KSI / d;
+		// U = 500 * KSI * d;
+		method = -KSI / d;
+		U = KSI * d;
+	}
+	else {
+		method = -KSI;
+		U = KSI/2 * d*d;
+	}
+
+	double Fx = method * (x - x1);
+	double Fy = method * (y - y1);
+
+
+	for (auto&& item : robots) {
+		// Distance from robot to obstacle:
+		double rho = get_dist(x, y, item.second.x, item.second.y);
+
+		if (rho < 160 && rho > 1) {
+			double method2 = NYA / rho;
+			// double method2 = NYA * (1/rho - 1/100)/(rho*rho*rho);
+			Fx += method2 * (x - item.second.x);
+			Fy += method2 * (y - item.second.y);
+			U += NYA/2 * rho;
+			// U += NYA/2 * (1/rho - 1/100);
+			// U += NYA/2 * (1/rho - 1/100)*(1/rho - 1/100);
+		}
+	}
+
+	double F = sqrt(Fx*Fx + Fy*Fy);
+
+	*Fx_ = Fx;
+	*Fy_ = Fy;
+	*U_ = U;
 }
 
 
-class LTexture {
-	SDL_Texture* texture;
-	int width, height;
-
- public:
-	LTexture(): texture(NULL), width(0), height(0) {}
-
-	~LTexture() {
-		free();
-	}
-
-	void free() {
-		// Free texture if it exists
-		if (texture != NULL) {
-			SDL_DestroyTexture(texture);
-			texture = NULL;
-			width = 0;
-			height = 0;
-		}
-	}
-
-	bool load_from_file(string path) {
-		// Get rid of preexisting texture
-		free();
-
-		// The final texture
-		SDL_Texture* new_texture = NULL;
-
-		// Load image at specified path
-		SDL_Surface* loaded_surface = IMG_Load(path.c_str());
-		if (loaded_surface == NULL) {
-			cout << "Bad load image(\"" << path << "\"): " << IMG_GetError() << endl;
-		}
-		else {
-			// Color key image
-			// SDL_SetColorKey(loaded_surface, SDL_TRUE, SDL_MapRGB(loaded_surface->format, 0xFF, 0, 0xFF));
-
-			// Create texture from surface pixels
-	        new_texture = SDL_CreateTextureFromSurface(gRenderer, loaded_surface);
-			if (new_texture == NULL) {
-				cout << "Bad texture create (\"" << path << "\"): " << SDL_GetError() << endl;
-			}
-			else {
-				// Get image dimensions
-				width = loaded_surface->w;
-				height = loaded_surface->h;
-			}
-
-			// Get rid of old loaded surface
-			SDL_FreeSurface(loaded_surface);
-		}
-
-		// Return success
-		texture = new_texture;
-		return texture != NULL;
-	}
-
-	void setColor(Uint8 red, Uint8 green, Uint8 blue) {
-		// Modulate texture rgb
-		SDL_SetTextureColorMod(texture, red, green, blue);
-	}
-
-	void setBlendMode(SDL_BlendMode blending) {
-		// Set blending function
-		SDL_SetTextureBlendMode(texture, blending);
-	}
-
-	void setAlpha(Uint8 alpha) {
-		// Modulate texture alpha
-		SDL_SetTextureAlphaMod(texture, alpha);
-	}
-
-	int getWidth() {
-		return width;
-	}
-
-	int getHeight() {
-		return height;
-	}
-
-	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE) {
-		// cout << "Render at (" << x << ", " << y << ") [RAW COORDS]" << endl;
-
-		// Set rendering space and render to screen
-		SDL_Rect render_quad = { x-width/2, y-width/2, width, height };
-
-		// Set clip rendering dimensions
-		if (clip != NULL) {
-			render_quad.w = clip->w;
-			render_quad.h = clip->h;
-		}
-
-		// Render to screen
-		SDL_RenderCopyEx(gRenderer, texture, clip, &render_quad, angle, center, flip);
-	}
-};
-
-LTexture gBallTexture;
-LTexture gRobotTexture;
-
-
-class Robot {
- public:
-	volatile double x, y;
-	double angle;
-	volatile double u_left = 0, u_right = 0;
-	volatile double vx = 0, vy = 0;
-	volatile double radius = ROBOT_RADIUS;
-
-	volatile double __a = 0, __b = 0, __r = 0;
-
-	Robot(double x, double y, double angle)
-	: x(x), y(y), angle(angle)
-	{}
-
-	void set_u(double ul, double ur) {
-		u_left = (ul > 100) ? 100 : (ul < -100) ? -100 : ul;
-		u_right = (ur > 100) ? 100 : (ul < -100) ? -100 : ur;
-	}
-
-	void apply_u(double dt) {
-		double base_speed = ROBOT_BASE_SPEED;
-		double base_ang_speed = ROBOT_BASE_ANGULAR_SPEED;
-		double base = ROBOT_BASE;
-
-		double ul = u_left / 100.;
-		double ur = u_right / 100.;
-		double v = (ul + ur) / 2. * base_speed;
-		double w = (ur - ul) * base_speed / base * base_ang_speed;
-
-		vx = v * dt * cos(angle);
-		vy = v * dt * sin(angle);
-
-		x += vx;
-		y += vy;
-
-		if (x > MAP_EDGE_RIGHT) {
-			x = 2*MAP_EDGE_RIGHT - x;
-		}
-		if (x < MAP_EDGE_LEFT) {
-			x = 2*MAP_EDGE_LEFT - x;
-		}
-		if (y > MAP_EDGE_TOP) {
-			y = 2*MAP_EDGE_TOP - y;
-		}
-		if (y < MAP_EDGE_BOT) {
-			y = 2*MAP_EDGE_BOT - y;
-		}
-
-		angle += w * dt;
-		normalize_angle(angle);
-	}
-
-	void render() {
-		double x_ = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-		double y_ = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-
-		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
-		draw_circle(x_, y_, radius * SCREEN_WIDTH / MAP_WIDTH);
-
-		/* THAT TRICKY CIRCLES */
-		double a_ = (__a + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-		double b_ = (-__b + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0xE0, 0xFF);
-		draw_circle(a_, b_, __r * SCREEN_WIDTH / MAP_WIDTH);
-		/**/
-
-		gRobotTexture.render(x_, y_, NULL, angle * -180. / PI + 90);
-	}
-
-	void collide(Robot &other) {
-		double ds = get_dist_squared(*this, other);
-		double rs = radius + other.radius;
-
-		if (ds <= 1e-9) {
-			cout << "HMMMM ... " << *this << " (" << this << ") AND " << other << "(" << &other << ")" << endl;
-			system("ini");
-		}
-
-		if (ds < rs*rs) {
-			double semi = sqrt(ds) / 2;
-			// double semi = (ds - other.radius*other.radius + radius*radius) / (2 * sqrt(ds) + 0.00001);  // Distance from this to radical line
-			double alpha = atan2(other.y - y + 1e-6, other.x - x);  // Between this and other robot
-
-			double dr_this = radius - semi;  // Distance to shift away from collision semipoint
-			x -= dr_this * cos(alpha);
-			y -= dr_this * sin(alpha);
-
-			double dr_other = other.radius - (sqrt(ds) - semi);
-			other.x += dr_other * cos(alpha);
-			other.y += dr_other * sin(alpha);
-
-			if (dr_this <= 0.0 || dr_other <= 0 || semi <= 1e-9) {
-				cout << "COLLISION :: Shifted this for " << dr_this << ", other for " << dr_other << "\tSEMI = " << semi << ", dist = " << sqrt(ds) << ", ds = " << ds << ", alpha = " << alpha << endl;
-				cout << "THIS: " << *this << endl;
-				cout << "OTHER: " << other << endl;
-			}
-		}
-	}
-
-	void apply_strategy_attack(double x1, double y1 /*Ball* &ball*/) {
-		/* DBG */
-		double kappa = atan2(0 - y1, MAP_EDGE_LEFT - x1);
-		double rho_remmm = 70;
-		x1 -= rho_remmm * cos(kappa);
-		y1 -= rho_remmm * sin(kappa);
-		/* DBG */
-
-		// double x1 = ball->get_x(), y1 = ball->get_y();
-		double x2 = x, y2 = y;
-		double k = (0 - y1) / (MAP_EDGE_LEFT - x1);  // Slope of ball direction
-
-		/* (a, b) is a trajectory center */
-		double a = ( x1*x1*-k + 2*x1*y1 - 2*x1*y2 + y1*y1*k - 2*y1*y2*k + x2*x2*k + y2*y2*k ) / ( 2 * (-x1*k + y1 + x2*k - y2) );
-		double b = (x1 - a) / k + y1;
-
-		double chi = atan2(b-y2, a-x2);  // Between robot and circle center
-		double tg = chi + sign((x2-x1)*(0-y1) - (y2-y1)*(MAP_EDGE_LEFT-x1)) * HALF_PI;  // Transfer to proper tangent
-		normalize_angle(tg);  // ?
-		double theta = atan2(y1 - y2, x1 - x2);  // Between robot and ball
-		double d = get_dist(x2, y2, x1, y1);     // Between robot and ball
-		double da = theta - tg;
-		double gamma = (d > ROBOT_THRESHOLD_MAX) ? 1 : (d < ROBOT_THRESHOLD_MIN) ? 0 : ROBOT_THRESHOLD_SLOPE * d + ROBOT_THRESHOLD_INTER;
-
-		double alpha = tg + da * gamma - angle;  // Delta alpha for p-regulator
-		normalize_angle(alpha);
-
-		// cout << "k = " << k << ", a = " << a << ", b=" << b << endl;
-		__a = a;
-		__b = b;
-		__r = sqrt((x2-a)*(x2-a) + (y2-b)*(y2-b));
-
-		double base_u = 70;
-		double ul = base_u - PID_P * alpha;
-		double ur = base_u + PID_P * alpha;
-
-		// Do not forget to set u
-		set_u(ul, ur);
-	}
-
-	friend std::ostream& operator<< (std::ostream &o, const Robot &r) {
-		return o << "[Robot: x=" << std::fixed << std::setprecision(1) << r.x << ", y=" << r.y << ", ang=" << std::setprecision(3) << r.angle << ", r=" << r.radius << "]";
-	}
-};
-
-
-class Ball {
- public:
-	volatile double x, y, vx, vy, ax, ay;
-	volatile double radius = BALL_RADIUS;
-
-	Ball(double x, double y, double vx, double vy, double ax, double ay)
-	: x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay)
-	{}
-
-	double get_x() {
-		return x;
-	}
-	double get_y() {
-		return y;
-	}
-
-	void update(double dt) {
-		vx += ax * dt;
-		vy += ay * dt;
-		vx *= BALL_FRICTION;  // Friction
-		vy *= BALL_FRICTION;
-		x += vx * dt;
-		y += vy * dt;
-
-		if (x > MAP_EDGE_RIGHT) {
-			x = 2*MAP_EDGE_RIGHT - x;
-			vx *= -1;
-		}
-		if (x < MAP_EDGE_LEFT) {
-			x = 2*MAP_EDGE_LEFT - x;
-			vx *= -1;
-		}
-		if (y > MAP_EDGE_TOP) {
-			y = 2*MAP_EDGE_TOP - y;
-			vy *= -1;
-		}
-		if (y < MAP_EDGE_BOT) {
-			y = 2*MAP_EDGE_BOT - y;
-			vy *= -1;
-		}
-	}
-
-	void render() {
-		double a = (x + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH;
-		double b = (-y + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT;
-
-		gBallTexture.render(a, b);
-	}
-
-	void collide(const Robot &other) {
-		double ds = get_dist_squared(*this, other);  // DistanceSquared
-		double rs = radius + other.radius;  // RaduisesSum
-
-		if (ds < rs*rs) {
-			// cout << "COLLISION WITH BALL" << endl;
-			double dx = other.x - x;
-			double dy = other.y - y;
-			double alpha = atan2(dy, dx);  // Between ball and robot
-			double beta = atan2(vy, vx);   // Angle of ball`s velocity
-			double da = alpha - beta;
-
-			double vnx = vx * cos(da);  // Norm
-			double vny = vy * cos(da);
-			double vtx = vx * sin(da);  // Tangent
-			double vty = vy * sin(da);
-
-			/* u2 = (2m1v1 + v2(m2-m1)) / (m1+m2) */  // Norm
-			double ux = (2*ROBOT_MASS*other.vx + vnx*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
-			double uy = (2*ROBOT_MASS*other.vy + vny*(BALL_MASS - ROBOT_MASS)) / (ROBOT_MASS + BALL_MASS);
-			vx = ux + vtx;
-			vy = uy + vty;
-
-			double rho;
-			if (ds < radius*radius)
-				rho = 2*other.radius - sqrt(ds);
-			else
-				rho = rs;
-			// cout << "RS = " << rs << ", robot.R = " << other.radius << ", dist = " << sqrt(ds) << ", rho = " << rho << endl;
-			x = other.x + rho * cos(alpha + PI);
-			y = other.y + rho * sin(alpha + PI);
-		}
-	}
-
-	friend std::ostream& operator<< (std::ostream &o, const Ball &b) {
-		return o << "[Ball: x = " << std::fixed << std::setprecision(1) << b.x << ", y = " << b.y << "; v = " << std::setprecision(2) << b.vx << " / " << b.vy << "; a = " << b.ax << " / " << b.ay << "]";
-	}
-};
-
-
-void read_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
+void read_data(const char* filename) {
 	std::lock_guard<std::mutex> locker(mutex_data);
-	std::ifstream fi(filename);
+	FILE* f = fopen(filename, "r");
 
 	int n;
-	fi >> n;
+	fscanf(f, "%d", &n);  // Robots amount
 
-	double x, y, vx, vy, ax, ay;  // Ball`s parameters
-	fi >> x >> y >> vx >> vy >> ax >> ay;
-	ball = new Ball(x, y, vx, vy, ax, ay);
+	fscanf(f, "%lf %lf", &ball.x, &ball.y);  // Ball`s parameters
 
 	for (int i = 0; i < n; ++i) {
-		double x, y, angle, _a, _b, _r;
-		fi >> x >> y >> angle/**/ >> _a >> _b >> _r;
-		robots.emplace_back(x, y, angle);
-		/* THAT TRICKY CIRCLES: */
-		robots[i].__a = _a;
-		robots[i].__b = _b;
-		robots[i].__r = _r;
+		int id;
+		fscanf(f, "%d", &id);
+
+		Robot& r = robots[id];
+		fscanf(f, "%lf %lf %lf", &r.x, &r.y, &r.angle);
 	}
 
-	fi.close();
+	fclose(f);
 }
 
-void read_control(string filename, std::vector<Robot> &robots) {
+void write_control(const char* filename) {
 	std::lock_guard<std::mutex> locker(mutex_control);
-	std::ifstream fi(filename);
+	FILE* f = fopen(filename, "w");
 
-	for (auto&& r : robots) {
-		double ul, ur;
-		fi >> ul >> ur;
-		r.set_u(ul, ur);
+	for (auto&& item : robots) {
+		fprintf(f, "%d %lf %lf\n", item.first, item.second.u_left, item.second.u_right);
 	}
 
-	fi.close();
+	fclose(f);
 }
 
-void write_data(string filename, std::vector<Robot> &robots, Ball* &ball) {
-	std::lock_guard<std::mutex> locker(mutex_data);
-	std::ofstream fo(filename);
-
-	fo << robots.size() << '\n';
-	fo << ball->x << ' ' << ball->y << ' ' << ball->vx << ' ' << ball->vy << ' ' << ball->ax << ' ' << ball->ay << '\n';
-
-	for (auto&& r : robots) {
-		fo << r.x << ' ' << r.y << ' ' << r.angle /**/<<' '<<r.__a<<' '<<r.__b<<' '<<r.__r/**/ << '\n';
-	}
-
-	fo.close();
-}
-
-void write_control(string filename, std::vector<Robot> &robots) {
-	std::lock_guard<std::mutex> locker(mutex_control);
-	std::ofstream fo(filename);
-
-	for (auto&& r: robots) {
-		fo << r.u_left << ' ' << r.u_right << '\n';
-	}
-
-	fo.close();
-}
-
-char get_symbol_from_angle(double angle) {
-	if (angle <= PI/4 && angle >= -PI/4)
-		return '>';
-	if (angle >= PI/4 && angle <= 3*PI/4)
-		return '^';
-	if (angle <= -PI/4 && angle >= -3*PI/4)
-		return 'v';
-	if ((angle >= 3*PI/4 && angle <= PI) || (angle <= -3*PI/4 && angle >= -PI))
-		return '<';
-
-	return '?';
-}
-
-void detect_collisions(std::vector<Robot> &robots, Ball* &ball) {
-	for (size_t i = 0; i < robots.size(); ++i) {
-		ball->collide(robots[i]);
-
-		for (size_t j = i+1; j < robots.size(); ++j) {
-			robots[i].collide(robots[j]);
+void detect_collisions() {
+	for (auto i = robots.begin(); i != robots.end(); ++i) {
+		ball.collide(i->second);
+		for (auto j = std::next(i); j != robots.end(); ++j) {
+			i->second.collide(j->second);
 		}
 	}
 }
@@ -607,57 +297,129 @@ int load_media() {
 }
 
 
-void modeller() {
-	auto time_modeller = clock_used::now();
-
+void strategier() {
 	while (RUNNING) {
-		double dt = duration<double, std::nano>(clock_used::now() - time_modeller).count() / 1000000000.;
-		time_modeller = clock_used::now();
-		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(1) << dt*1000 << " ms" << endl;
+		// for (auto&& item : robots) {
+		// 	item.second.apply_strategy_attack(ball.x, ball.y);
+		// }
 
-		std::vector<Robot> robots;
-		Ball* ball = nullptr;
-		read_data("data", robots, ball);
-		read_control("control", robots);
+		// robots[0].apply_strategy_attack(ball.x, ball.y);
+		// robots[3].apply_strategy_attack(ball.x, ball.y);
+		// robots[0].apply_strategy_gradient(ball.x, ball.y);
+		robots[1].apply_strategy_svyat_style(ball.x, ball.y);
+		robots[2].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
+		robots[4].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
+		robots[5].apply_strategy_attack(ball.x, ball.y, GATE_RIGHT_X);
+		robots[6].apply_strategy_attack(ball.x, ball.y, GATE_LEFT_X);
 
-		for (auto&& r : robots)
-			r.apply_u(dt);
-		ball->update(dt);
+		robots[3].apply_just_circle();
 
-		// Detect collisitions AFTER applying u
-		detect_collisions(robots, ball);
+		// cout << robots[4] << endl;
 
-		write_data("data", robots, ball);
+		// for (int i = 0; i < 10; ++i) {
+		// 	robots[100+i].apply_strategy_gradient(ball.x, ball.y);
+		// }
 
-		std::this_thread::sleep_for(duration<double, std::milli>(DT_MODELLER));
+		std::this_thread::sleep_for(milliseconds(DT_STRATEGIER));
 	}
 }
 
 void drawer() {
 	while (RUNNING) {
-		std::vector<Robot> robots;
-		Ball* ball = nullptr;
-		read_data("data", robots, ball);
-
 		// Clear screen
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xF0, 0xFF);
 		SDL_RenderClear(gRenderer);
 
+		/* DBG - COLORED VECTOR FIELD */
+		// double x1 = ball.x;
+		// double y1 = ball.y;
+
+		// int STEP = 2;
+
+		// for (int i = 0; i <= SCREEN_WIDTH; i += STEP) {
+		// 	double x = scr2mapX(i);
+
+		// 	for (int j = 0; j <= SCREEN_HEIGHT; j += STEP) {
+		// 		double y = scr2mapY(j);
+
+		// 		double Fx, Fy, U;
+		// 		calc_gradient_at(x, y, x1, y1, &Fx, &Fy, &U);
+		// 		double F = sqrt(Fx*Fx + Fy*Fy);
+
+		// 		double uu = U / 500000. * 255;
+		// 		// double uu = F / 2000. * 255;
+		// 		int r = 255;
+		// 		int g = (uu > 255) ? 255 : (uu < 0) ? 0 : uu;
+		// 		int b = 0;
+
+		// 		SDL_SetRenderDrawColor(gRenderer, r, g, b, 0xFF);
+		// 		SDL_RenderDrawPoint(gRenderer, i, j);
+		// 	}
+		// }
+		/* DBG END */
+
+		/* DBG - COLOR PUNCH AREA */
+		int STEP2 = 4;
+		for (int i = 0; i <= SCREEN_WIDTH; i += STEP2) {
+			double x = scr2mapX(i);
+
+			for (int j = 0; j <= SCREEN_HEIGHT; j += STEP2) {
+				double y = scr2mapY(j);
+
+				double w = 120;
+				double h = sqrt(ROBOT_RADIUS*ROBOT_RADIUS - w*w/4.);
+				double l = 50;
+				bool b = false;
+
+				for (auto&& item : robots) {
+					if (item.second.kick) {
+						double phi = -item.second.angle;
+						double x_ = (x-item.second.x)*cos(phi) - (y-item.second.y)*sin(phi);
+						double y_ = (x-item.second.x)*sin(phi) + (y-item.second.y)*cos(phi);
+
+						if (h <= x_ && x_ <= h+l && -w/2 <= y_ && y_ <= w/2) {
+							b = true;
+							break;
+						}
+					}
+				}
+
+				if (b) {
+					SDL_SetRenderDrawColor(gRenderer, 0x00, 0xBB, 0x20, 0xFF);
+					SDL_RenderDrawPoint(gRenderer, i, j);
+				}
+			}
+		}
+		/* DBG END */
+
 		// Render green map edges
 		SDL_Rect map_edges = {
-			(int)((MAP_EDGE_LEFT + MAP_WIDTH/2) * SCREEN_WIDTH / MAP_WIDTH),
-			(int)((MAP_EDGE_TOP + MAP_HEIGHT/2) * SCREEN_HEIGHT / MAP_HEIGHT),
+			map2scrX(MAP_EDGE_LEFT),
+			map2scrY(MAP_EDGE_TOP),
 			(int)((MAP_EDGE_RIGHT - MAP_EDGE_LEFT) * SCREEN_WIDTH / MAP_WIDTH),
-			(int)((MAP_EDGE_BOT - MAP_EDGE_TOP) * SCREEN_HEIGHT / MAP_HEIGHT)
+			(int)((MAP_EDGE_TOP - MAP_EDGE_BOT) * SCREEN_HEIGHT / MAP_HEIGHT)
 		};
 		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xC0, 0x00, 0xFF);
 		SDL_RenderDrawRect(gRenderer, &map_edges);
 
-		for (auto&& r : robots) {
-			r.render();
-		}
+		// Render gate line
+		SDL_SetRenderDrawColor(gRenderer, 0x00, 0xA0, 0xFF, 0xFF);
+		SDL_RenderDrawLine(gRenderer,
+			map2scrX(GATE_LEFT_X), map2scrY(GATE_LEFT_TOP),
+			map2scrX(GATE_LEFT_X), map2scrY(GATE_LEFT_BOT)
+		);
+		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x83, 0x05, 0xFF);
+		SDL_RenderDrawLine(gRenderer,
+			map2scrX(GATE_RIGHT_X), map2scrY(GATE_RIGHT_TOP),
+			map2scrX(GATE_RIGHT_X), map2scrY(GATE_RIGHT_BOT)
+		);
 
-		ball->render();
+		// Render robots
+		for (auto&& item : robots) {
+			item.second.render();
+		}
+		// Render ball
+		ball.render();
 
 		// Update screen
 		SDL_RenderPresent(gRenderer);
@@ -667,27 +429,73 @@ void drawer() {
 	}
 }
 
-void strategier() {
+void modeller() {
+	auto time_modeller = clock_used::now();
+
 	while (RUNNING) {
-		std::vector<Robot> robots;
-		Ball* ball = nullptr;
-		read_data("data", robots, ball);
+		double dt = duration<double, std::micro>(clock_used::now() - time_modeller).count() / 1000000.;
+		time_modeller = clock_used::now();
+		// cout << "Modeller :: dt = " << std::fixed << std::setprecision(5) << dt*1000 << " ms" << endl;
 
-		// TODO: Strategy
-		for (auto&& r : robots) {
-			r.apply_strategy_attack(ball->x, ball->y);
+		// Kick the ball
+		for (auto&& item : robots)
+			if (item.second.kick)
+				item.second.punch();
+
+		// Update them all
+		for (auto&& item : robots)
+			item.second.apply_u(dt);
+		ball.update(dt);
+
+		// Detect collisitions AFTER applying u
+		detect_collisions();
+
+		std::this_thread::sleep_for(duration<double, std::milli>(DT_MODELLER));
+	}
+}
+
+void loader() {
+	while (RUNNING) {
+		read_data("data");
+
+		std::this_thread::sleep_for(duration<double, std::milli>(DT_LOADER));
+	}
+}
+
+void saver() {
+	while (RUNNING) {
+		write_control("control");
+
+		std::this_thread::sleep_for(duration<double, std::milli>(DT_SAVER));
+	}
+}
+
+void grapher() {
+	system("mkdir graphs");
+	system("rm -f graphs/*.graph");
+
+	while (RUNNING) {
+		for (auto&& item : robots) {
+			if (!item.second.THE_DATA.empty()) {
+				std::stringstream filename;
+				filename << "graphs/Robot_" << item.first << ".graph";
+				std::ofstream fo(filename.str(), std::ofstream::app);
+
+				double angle, angle_need, alpha;
+				std::tie(angle, angle_need, alpha) = item.second.THE_DATA.front();
+				fo << angle << ' ' << angle_need << ' ' << alpha << '\n';
+				item.second.THE_DATA.pop();
+
+				fo.close();
+			}
 		}
-
-		write_control("control", robots);
-		/* REMOVE?: */
-		write_data("data", robots, ball);
-
-		std::this_thread::sleep_for(milliseconds(DT_STATEGIER));
 	}
 }
 
 
 int main(int argc, char* argv[]) {
+	srand(time(0));
+
 	if (argc > 1) {
 		cout << "Arguments:\n";
 		for (int i = 1; i < argc; ++i) {
@@ -700,9 +508,37 @@ int main(int argc, char* argv[]) {
 	if (load_media())
 		return -2;
 
+	/* DEBUG */
+	robots[0] = {500, 0};  // Gradient FTW
+	robots[3] = {-500, 500};  // Standby
+	robots[1] = {MAP_EDGE_LEFT+1250, 500, 1.5};  // GC
+
+	robots[2] = {400, -200};  // Blue forward
+	robots[2].kick = true;
+
+	robots[4] = {-500, -500};  // Yellow forward
+	robots[4].kick = true;
+	robots[4].is_blue = false;
+
+	robots[5] = {200, 300};
+	robots[5].kick = true;
+
+	robots[6] = {900, -100};
+	robots[6].kick = true;
+	robots[6].is_blue = false;
+
+	// for (int i = 0; i < 10; ++i) {
+	// 	robots[100+i] = {random(MAP_EDGE_LEFT+100, MAP_EDGE_RIGHT-100), random(MAP_EDGE_BOT+100, MAP_EDGE_TOP-100)};
+	// }
+	cout << "TOTAL ROBOTS AMOUNT = " << robots.size() << endl;
+	/* DEBUG */
+
 	std::thread th_strata(strategier);
 	std::thread th_draw(drawer);
 	std::thread th_model(modeller);
+	// std::thread th_load(loader);
+	// std::thread th_save(saver);
+	std::thread th_graph(grapher);
 
 	cout << "Main now reading events..." << endl;
 	SDL_Event e;
@@ -729,6 +565,9 @@ int main(int argc, char* argv[]) {
 	th_strata.join();
 	th_draw.join();
 	th_model.join();
+	// th_load.join();
+	// th_save.join();
+	th_graph.join();
 
 	cout << "Releasing SDL" << endl;
 	release_sdl();
