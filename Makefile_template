@@ -1,19 +1,20 @@
 CC = g++
-CV = -std=gnu++11
-OPTLVL = -O2
+CV = -std=gnu++14
+OPTLVL = -O3
 # DEBUG = -DDEBUG
-# INCLUDE = -Ilib
+# INCLUDE = -I..
+# LIBPATH = -L..
 # RUNDEPS = input.txt output.txt
 
 EXECUTABLE = exe_name
-# Sources to compile:
 SOURCES = source_name.cpp
+
 OBJS = $(SOURCES:.cpp=.o)
 
 # Compiler flags:
 CFLAGS = $(CV) -c -Wall -Wextra $(OPTLVL) $(DEBUG) $(INCLUDE)
 # Linker flags:
-LDFLAGS =
+LDFLAGS = $(LIBPATH)
 
 all: compile run
 
@@ -25,13 +26,13 @@ run: $(RUNDEPS)
 
 $(EXECUTABLE): $(OBJS)
 	@echo -n "Linking: "
-	$(CC) $(LDFLAGS) $(OBJS) -o $@
+	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 .SUFFIXES: .cpp .o
 
 .cpp.o:
 	@echo -n "Compiling: "
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $< -o $@ $(CFLAGS)
 
 clean:
 	@echo -n "Cleaning up: "
