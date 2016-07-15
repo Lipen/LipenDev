@@ -1,0 +1,3 @@
+### Kalimdor
+
+Simple algorithms / implementations
