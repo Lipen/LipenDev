@@ -8,7 +8,7 @@ from abc import abstractmethod
 
 DATE = '{:%Y-%m-%d}'.format(datetime.datetime.now())
 LOCAL_BACKUP_DIR = 'C:/Data/OneDrive/BACKUPS'
-HDD_DISK = 'G'  # just letter
+HDD_DISK = 'E'  # just letter
 
 
 class DataItem(Mapping):
@@ -207,11 +207,11 @@ def backup_hdd(args):
              dest='Dropbox',
              flags='/MIR /XA:SHT /NDL /MT'),
         Item('Screenshots',
-             src='C:/Data/Screenshots',
-             dest='Screenshots'),
+             src='C:/Data/Misc/Screenshots',
+             dest='Misc/Screenshots'),
         Item('Shortcuts',
-             src='C:/Data/Shortcuts',
-             dest='Shortcuts',
+             src='C:/Data/Misc/Shortcuts',
+             dest='Misc/Shortcuts',
              flags='/MIR'),
         Item('Warcraft III',
              src='C:/Data/Games/Warcraft III',
@@ -233,9 +233,9 @@ def backup_hdd(args):
             item.backup()
 
         if args.verbose:
-            print('=================\nLocal backup done.')
+            print('=================\nHDD backup done.')
         elif not args.quiet:
-            print('Local backup done.')
+            print('HDD backup done.')
     else:
         if args.verbose:
             print('Today is {}\n  Starting dry-run on backup to disk {}'.format(DATE, HDD_DISK) + '\n' + ' '.join('-' * 40))
@@ -249,9 +249,9 @@ def backup_hdd(args):
                 print('> Dry backing up {}'.format(item.name))
 
         if args.verbose:
-            print('= = = = = = = = = = = = =\nLocal dry-run backup done.')
+            print('= = = = = = = = = = = = =\nHDD dry-run backup done.')
         elif not args.quiet:
-            print('Local dry-run backup done.')
+            print('HDD dry-run backup done.')
 
 
 def set_default_subparser(self, name, args=None):
