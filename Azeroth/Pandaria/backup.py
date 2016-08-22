@@ -8,7 +8,7 @@ from abc import abstractmethod
 
 DATE = '{:%Y-%m-%d}'.format(datetime.datetime.now())
 LOCAL_BACKUP_DIR = 'C:/Data/OneDrive/BACKUPS'
-HDD_DISK = 'E'  # just letter
+HDD_DISK = 'G'  # just letter
 
 
 class DataItem(Mapping):
@@ -124,23 +124,23 @@ def backup_local(args):
     data = [
         Item('Sublime Text Installed Packages',
              src='C:/Users/Lipen/AppData/Roaming/Sublime Text 3/Installed Packages/*',
-             dest='Sublime Text/Installed Packages ' + DATE),
+             dest='Sublime Text/Installed Packages/Installed Packages {}'.format(DATE)),
         Item('Sublime Text Local',
              src='C:/Users/Lipen/AppData/Roaming/Sublime Text 3/Local/*',
-             dest='Sublime Text/Local'),
+             dest='Sublime Text/Local/Local {}'.format(DATE)),
         Item('Sublime Text Packages',
              src='C:/Users/Lipen/AppData/Roaming/Sublime Text 3/Packages/*',
-             dest='Sublime Text/Packages'),
+             dest='Sublime Text/Packages/Packages {}'.format(DATE)),
         Item('dev',
              src='C:/Data/Programming/dev/*',
-             dest='dev ' + DATE),
+             dest='dev/dev {}'.format(DATE)),
         Item('Programming',
              src='C:/Data/Programming/*',
-             dest='Programming',
+             dest='Programming/Programming {}'.format(DATE),
              extra='-x!dev'),
         Item('AIMP',
              src='C:/Users/Lipen/AppData/Roaming/AIMP/*',
-             dest='AIMP'),
+             dest='AIMP/AIMP {}'.format(DATE)),
     ]
 
     if not args.dryrun:
@@ -195,7 +195,7 @@ def backup_hdd(args):
              dest='Media/Music',
              flags='/MIR /NDL /MT'),
         Item('Photos',
-             src='C:/Data/Mega/Photos',
+             src='C:/Data/MEGA/Photos',
              dest='Photos',
              flags='/E /NDL /MT'),
         Item('OneDrive',
