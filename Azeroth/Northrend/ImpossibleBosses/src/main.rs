@@ -1,15 +1,18 @@
 extern crate sfml;
-pub mod player;
-pub mod particle;
-pub mod util_traits;
 
-use sfml::graphics::{Color, RenderWindow, RenderTarget};
-use sfml::window::{Event, ContextSettings, Key, VideoMode, MouseButton};
-use sfml::system::{Clock, Vector2f};
 use std::env;
-use player::Player;
-use particle::Particle;
-#[allow(unused_imports)]
+
+use sfml::graphics::*;
+use sfml::system::*;
+use sfml::window::*;
+
+pub mod player;
+use player::*;
+pub mod particle;
+use particle::*;
+pub mod resource_manager;
+use resource_manager::*;
+pub mod util_traits;
 use util_traits::*;
 
 
@@ -36,15 +39,15 @@ fn main() {
         .unwrap();
     // window.set_vertical_sync_enabled(true);
 
+    // Initialize texture manager and load textures
+    let mut texture_manager = TextureManager::new();
+    texture_manager.load(TextureIdentifiers::PlayerSpritesheet,
+                         "assets/spritesheet.png");
+
     // Create player
-    let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(50., 80.));
-    // Set up animations
-    // player.animations.emplace_animation("walking",
-    //                                     "assets/spritesheet.png",
-    //                                     vec![AnimationFrame::new(32, 64, 32, 32),
-    //                                          AnimationFrame::new(64, 64, 32, 32),
-    //                                          AnimationFrame::new(32, 64, 32, 32),
-    //                                          AnimationFrame::new(0, 64, 32, 32)]);
+    let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(32., 32.));
+    player.shape.set_texture(texture_manager.get(TextureIdentifiers::PlayerSpritesheet),
+                             false);
 
     // Initialize particles vector
     let mut particles: Vec<Particle> = vec![];
@@ -61,41 +64,23 @@ fn main() {
                 Event::KeyPressed { code, .. } => {
                     match code {
                         Key::Escape => return,
-                        Key::W => {
-                            player.moving_up = true;
-                        }
-                        Key::A => {
-                            player.moving_left = true;
-                        }
-                        Key::S => {
-                            player.moving_down = true;
-                        }
-                        Key::D => {
-                            player.moving_right = true;
+                        Key::Space => {
+                            println!("[d] player.shape.get_position():\n\t{:?}",
+                                     player.shape.get_position());
+                            println!("[d] player.shape.get_texture_rect():\n\t{:?}",
+                                     player.shape.get_texture_rect());
                         }
                         _ => {}
                     }
                 }
-                Event::KeyReleased { code, .. } => {
-                    match code {
-                        Key::W => {
-                            player.moving_up = false;
-                        }
-                        Key::A => {
-                            player.moving_left = false;
-                        }
-                        Key::S => {
-                            player.moving_down = false;
-                        }
-                        Key::D => {
-                            player.moving_right = false;
-                        }
-                        _ => {}
-                    }
-                }
+                // Event::KeyReleased { code, .. } => {
+                //     match code {
+                //         _ => {}
+                //     }
+                // }
                 Event::MouseButtonPressed { button, x, y } => {
                     if let MouseButton::Left = button {
-                        let mut particle = Particle::new(player.position, 10., 3.);
+                        let mut particle = Particle::new(player.shape.get_position(), 10., 3.);
                         let dpos = Vector2f::new(x as f32, y as f32) - particle.position;
                         let unit = dpos / (dpos.x * dpos.x + dpos.y * dpos.y).sqrt();
 
@@ -105,8 +90,15 @@ fn main() {
                         particles.push(particle);
                         println!("Particle spawned!");
                     }
+
+                    if let MouseButton::Right = button {
+                        player.order(Order::Move {
+                            x: x as f32,
+                            y: y as f32,
+                        });
+                    }
                 }
-                Event::MouseButtonReleased { button, x, y } => {}
+                // Event::MouseButtonReleased { button, x, y } => {}
                 _ => {}
             }
         }

@@ -1,6 +1,7 @@
 use sfml::graphics::{Color, CircleShape, RenderTarget, RenderStates, Shape, Transformable,
                      Drawable};
 use sfml::system::{Clock, Vector2f};
+
 use util_traits::*;
 
 
@@ -14,7 +15,7 @@ pub struct Particle<'a> {
 }
 
 impl<'a> Particle<'a> {
-    pub fn new(position: Vector2f, radius: f32, lifetime: f32) -> Particle<'a> {
+    pub fn new(position: Vector2f, radius: f32, lifetime: f32) -> Self {
         let mut shape = CircleShape::new().unwrap();
         shape.set_position(&position);
         shape.set_radius(radius - 2.);
