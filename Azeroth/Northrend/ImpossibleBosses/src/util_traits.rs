@@ -19,7 +19,7 @@ impl VectorExtension for Vector2f {
     }
 
     fn len(&self) -> f32 {
-    	(self.x*self.x + self.y*self.y).sqrt() as f32
+        (self.x * self.x + self.y * self.y).sqrt() as f32
     }
 }
 

@@ -38,7 +38,7 @@ impl<I: Eq + Hash, R: Resource> ResourceManager<I, R> {
 
 #[derive(PartialEq, Eq, Hash)]
 pub enum TextureIdentifiers {
-    PlayerSpritesheet,
+    Wizard,
 }
 
 pub type TextureManager = ResourceManager<TextureIdentifiers, Texture>;

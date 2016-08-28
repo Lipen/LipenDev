@@ -12,11 +12,10 @@ pub struct Player<'a> {
     rect: IntRect,
     pub shape: RectangleShape<'a>,
     pub order: Order,
-    pub clock: Clock,
+    clock: Clock,
     time: f32,
     frame: i32,
-    animrow: i32,
-    // TODO: `stats` field, containing player`s characteristics
+    animrow: i32, // TODO: `stats` field, containing player`s characteristics
 }
 
 impl<'a> Player<'a> {
@@ -43,52 +42,62 @@ impl<'a> Player<'a> {
 
 impl<'a> Updatable for Player<'a> {
     fn update(&mut self, dt: f32) {
+        // 1: update animation
+        // 2: update position
+        // 3: move
+        // 4: update texture rect
+
+        // TODO: Replace own clock with use or `dt` argument
+        self.time += self.clock.restart().as_seconds();
+        let maxframes = 16;
+        let frametime: f32 = 1.067 / maxframes as f32;
+        if self.time > frametime {
+            self.time -= frametime;
+            self.frame += 1;
+            if self.frame >= maxframes {
+                self.frame = 0;
+            }
+        }
+
         match self.order {
-            // First, update movement and animation
-            // secondary, update texture rect
             Order::Stop => {
-                //
+                // staying...
+                self.animrow = 0;
             }
             Order::Move { x, y } => {
                 let dtarget = Vector2f::new(x, y) - self.shape.get_position();
+                let unit = dtarget / dtarget.len();
+                self.velocity = 200. * unit;
                 let dpos = self.velocity * dt;
 
                 if dpos.len() < dtarget.len() {
                     self.shape.move_(&dpos);
-
-                    self.time += self.clock.restart().as_seconds();
-                    let frametime: f32 = 0.2;
-                    let maxframes = 2;
-                    if self.time > frametime {
-                        self.time -= frametime;
-                        self.frame += 1;
-                        if self.frame > maxframes {
-                            self.frame = 0;
-                        }
-                    }
-
-                    self.rect = IntRect::new(self.size.x as i32 * self.frame,
-                                             self.size.y as i32 * self.animrow,
-                                             self.size.x as i32,
-                                             self.size.y as i32);
                 } else {
-                    println!("STOPPING!");
-                    self.order(Order::Stop);
-
                     self.shape.set_position2f(x, y);
+                    self.order(Order::Stop);
+                }
 
-                    self.rect = IntRect::new(self.size.x as i32,
-                                             0,
-                                             self.size.x as i32,
-                                             self.size.y as i32);
+                let angle = (dtarget.y).atan2(dtarget.x);
+                if 1.22 < angle && angle < 1.92 {
+                    // ~70-110 degrees from +x to +y axis => move down
+                    self.animrow = 0;
+                } else if -1.22 <= angle && angle <= 1.22 {
+                    // from -70 to +70 degrees => move right
+                    self.animrow = 2;
+                } else if -1.92 < angle && angle < -1.22 {
+                    // from -70 to -110 degree => move up
+                    self.animrow = 3;
+                } else {
+                    // move left
+                    self.animrow = 1;
                 }
             }
         };
 
-        // self.shape.set_texture_rect(&match self.order {
-        //     Order::Stop => IntRect::new(32, 0, 32, 32),
-        //     Order::Move { .. } => IntRect::new(32 * self.frame, 32 * self.animrow, 32, 32),
-        // });
+        self.rect = IntRect::new(self.size.x as i32 * self.frame,
+                                 self.size.y as i32 * self.animrow,
+                                 self.size.x as i32,
+                                 self.size.y as i32);
         self.shape.set_texture_rect(&self.rect);
     }
 }
@@ -98,17 +107,15 @@ impl<'a> Orderable for Player<'a> {
         self.order = order;
 
         match order {
-            Order::Stop => {}
-            Order::Move { x, y } => {
-                let dpos = Vector2f::new(x, y) - self.shape.get_position();
-                let unit = dpos / dpos.len();
-                self.velocity = 200. * unit;
-
+            Order::Stop => {
                 self.clock.restart();
                 self.time = 0.;
                 self.frame = 0;
-                // TODO: choose animrow according to movement direction
-                self.animrow = 0;
+            }
+            Order::Move { .. } => {
+                self.clock.restart();
+                self.time = 0.;
+                self.frame = 0;
             }
         }
     }

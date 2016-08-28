@@ -34,20 +34,18 @@ fn main() {
     // Create the window of the application
     let mut window = RenderWindow::new(VideoMode::new_init(game_width, game_height, 32),
                                        "Impossible bosses",
-                                       Default::default(),
+                                       window_style::CLOSE,
                                        ContextSettings::new().antialiasing(aa_level))
         .unwrap();
     // window.set_vertical_sync_enabled(true);
 
     // Initialize texture manager and load textures
     let mut texture_manager = TextureManager::new();
-    texture_manager.load(TextureIdentifiers::PlayerSpritesheet,
-                         "assets/spritesheet.png");
+    texture_manager.load(TextureIdentifiers::Wizard, "assets/wizard.png");
 
     // Create player
-    let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(32., 32.));
-    player.shape.set_texture(texture_manager.get(TextureIdentifiers::PlayerSpritesheet),
-                             false);
+    let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(64., 64.));
+    player.shape.set_texture(texture_manager.get(TextureIdentifiers::Wizard), false);
 
     // Initialize particles vector
     let mut particles: Vec<Particle> = vec![];
