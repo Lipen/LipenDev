@@ -1,10 +1,16 @@
+use std::collections::HashMap;
+
 use sfml::graphics::{RenderTarget, RenderStates, Drawable, RectangleShape, Transformable, Shape,
                      IntRect};
-use sfml::system::{Clock, Vector2f};
+use sfml::system::Vector2f;
 
+use animation::{Animation, AnimationIdentifier};
 use util_traits::*;
 
 
+// TODO: `stats` field, containing player`s characteristics
+// TODO: animation_map - maybe store Animation in a Box?
+// TODO: impl Transformable for Player
 pub struct Player<'a> {
     pub speed: f32,
     pub velocity: Vector2f,
@@ -12,10 +18,8 @@ pub struct Player<'a> {
     rect: IntRect,
     pub shape: RectangleShape<'a>,
     pub order: Order,
-    clock: Clock,
-    time: f32,
-    frame: i32,
-    animrow: i32, // TODO: `stats` field, containing player`s characteristics
+    pub animation_map: HashMap<AnimationIdentifier, Animation>,
+    pub animation_cur: AnimationIdentifier,
 }
 
 impl<'a> Player<'a> {
@@ -32,38 +36,18 @@ impl<'a> Player<'a> {
             shape: shape,
             rect: IntRect::new(size.x as i32, 0, size.x as i32, size.y as i32),
             order: Order::Stop,
-            clock: Clock::new(),
-            time: 0.,
-            frame: 0,
-            animrow: 0,
+            animation_map: HashMap::new(),
+            animation_cur: AnimationIdentifier::Stay,
         }
     }
 }
 
 impl<'a> Updatable for Player<'a> {
     fn update(&mut self, dt: f32) {
-        // 1: update animation
-        // 2: update position
-        // 3: move
-        // 4: update texture rect
 
-        // TODO: Replace own clock with use or `dt` argument
-        self.time += self.clock.restart().as_seconds();
-        let maxframes = 16;
-        let frametime: f32 = 1.067 / maxframes as f32;
-        if self.time > frametime {
-            self.time -= frametime;
-            self.frame += 1;
-            if self.frame >= maxframes {
-                self.frame = 0;
-            }
-        }
 
-        match self.order {
-            Order::Stop => {
-                // staying...
-                self.animrow = 0;
-            }
+        let animation_identifier = match self.order {
+            Order::Stop => AnimationIdentifier::Stay,
             Order::Move { x, y } => {
                 let dtarget = Vector2f::new(x, y) - self.shape.get_position();
                 let unit = dtarget / dtarget.len();
@@ -77,47 +61,61 @@ impl<'a> Updatable for Player<'a> {
                     self.order(Order::Stop);
                 }
 
+                // TODO: Make choice more robust - what if some animations are absent? They should be replaced with existing. But now it just panics on `unwrapping None`!
                 let angle = (dtarget.y).atan2(dtarget.x);
                 if 1.22 < angle && angle < 1.92 {
                     // ~70-110 degrees from +x to +y axis => move down
-                    self.animrow = 0;
+                    AnimationIdentifier::MoveDown
                 } else if -1.22 <= angle && angle <= 1.22 {
                     // from -70 to +70 degrees => move right
-                    self.animrow = 2;
+                    AnimationIdentifier::MoveRight
                 } else if -1.92 < angle && angle < -1.22 {
                     // from -70 to -110 degree => move up
-                    self.animrow = 3;
+                    AnimationIdentifier::MoveUp
                 } else {
-                    // move left
-                    self.animrow = 1;
+                    AnimationIdentifier::MoveLeft
                 }
             }
         };
 
-        self.rect = IntRect::new(self.size.x as i32 * self.frame,
-                                 self.size.y as i32 * self.animrow,
-                                 self.size.x as i32,
-                                 self.size.y as i32);
-        self.shape.set_texture_rect(&self.rect);
+        // Reset new animation (only if new (== changed))
+        if self.animation_cur != animation_identifier {
+            self.animation_map.get_mut(&animation_identifier).unwrap().reset();
+            self.animation_cur = animation_identifier;
+        }
+
+        self.animate();
     }
 }
 
 impl<'a> Orderable for Player<'a> {
     fn order(&mut self, order: Order) {
-        self.order = order;
-
         match order {
             Order::Stop => {
-                self.clock.restart();
-                self.time = 0.;
-                self.frame = 0;
+                self.order = order;
             }
-            Order::Move { .. } => {
-                self.clock.restart();
-                self.time = 0.;
-                self.frame = 0;
+            Order::Move {x, y} => {
+                let dtarget = Vector2f::new(x, y) - self.shape.get_position();
+                // Dead-zone of 1 pixel
+                if dtarget.len() >= 1. {
+                    self.order = order;
+                }
             }
         }
+    }
+}
+
+impl<'a> Animatable for Player<'a> {
+    fn animate(&mut self) {
+        let mut animation = self.animation_map.get_mut(&self.animation_cur).unwrap();
+
+        animation.update();
+
+        self.rect = IntRect::new(self.size.x as i32 * animation.frame_cur,
+                                 self.size.y as i32 * animation.animrow,
+                                 self.size.x as i32,
+                                 self.size.y as i32);
+        self.shape.set_texture_rect(&self.rect);
     }
 }
 

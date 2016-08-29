@@ -37,8 +37,9 @@ impl<I: Eq + Hash, R: Resource> ResourceManager<I, R> {
 }
 
 #[derive(PartialEq, Eq, Hash)]
-pub enum TextureIdentifiers {
+pub enum TextureIdentifier {
     Wizard,
+    Andromalius,
 }
 
-pub type TextureManager = ResourceManager<TextureIdentifiers, Texture>;
+pub type TextureManager = ResourceManager<TextureIdentifier, Texture>;

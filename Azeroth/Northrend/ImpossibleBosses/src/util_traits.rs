@@ -1,10 +1,5 @@
 use sfml::system::Vector2f;
 
-
-pub trait Updatable {
-    fn update(&mut self, dt: f32);
-}
-
 pub trait VectorExtension {
     fn rotate(&mut self, angle: f32);
     fn len(&self) -> f32;
@@ -34,4 +29,12 @@ pub enum Order {
 
 pub trait Orderable {
     fn order(&mut self, order: Order);
+}
+
+pub trait Updatable {
+    fn update(&mut self, dt: f32);
+}
+
+pub trait Animatable {
+    fn animate(&mut self);
 }

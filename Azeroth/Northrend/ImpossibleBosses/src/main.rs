@@ -12,6 +12,8 @@ pub mod particle;
 use particle::*;
 pub mod resource_manager;
 use resource_manager::*;
+pub mod animation;
+use animation::*;
 pub mod util_traits;
 use util_traits::*;
 
@@ -41,11 +43,26 @@ fn main() {
 
     // Initialize texture manager and load textures
     let mut texture_manager = TextureManager::new();
-    texture_manager.load(TextureIdentifiers::Wizard, "assets/wizard.png");
+    texture_manager.load(TextureIdentifier::Wizard, "assets/wizard.png");
+    texture_manager.load(TextureIdentifier::Andromalius, "assets/andromalius.png");
 
-    // Create player
+    // Create player and setup its animations
     let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(64., 64.));
-    player.shape.set_texture(texture_manager.get(TextureIdentifiers::Wizard), false);
+    player.shape.set_texture(texture_manager.get(TextureIdentifier::Wizard), false);
+    player.shape.set_origin(&Vector2f::new(32., 61.));
+    player.animation_map.insert(AnimationIdentifier::Stay, Animation::new(0, 16, 0.1));
+    player.animation_map.insert(AnimationIdentifier::MoveLeft, Animation::new(1, 16, 0.08));
+    player.animation_map.insert(AnimationIdentifier::MoveRight, Animation::new(2, 16, 0.08));
+    player.animation_map.insert(AnimationIdentifier::MoveUp, Animation::new(3, 16, 0.08));
+    player.animation_map.insert(AnimationIdentifier::MoveDown, Animation::new(0, 16, 0.08));
+
+    // Create enemy
+    let mut andromalius = Player::new(Vector2f::new(500., 100.), 100., Vector2f::new(57., 88.));
+    andromalius.shape.set_texture(texture_manager.get(TextureIdentifier::Andromalius), false);
+    andromalius.shape.set_origin(&Vector2f::new(57. / 2., 80.));
+    andromalius.animation_map.insert(AnimationIdentifier::Stay, Animation::new(3, 8, 0.2));
+    andromalius.animation_map.insert(AnimationIdentifier::MoveLeft, Animation::new(4, 8, 0.15));
+    andromalius.animation_map.insert(AnimationIdentifier::MoveRight, Animation::new(0, 8, 0.15));
 
     // Initialize particles vector
     let mut particles: Vec<Particle> = vec![];
@@ -90,10 +107,17 @@ fn main() {
                     }
 
                     if let MouseButton::Right = button {
-                        player.order(Order::Move {
-                            x: x as f32,
-                            y: y as f32,
-                        });
+                        if Key::LControl.is_pressed() {
+                            andromalius.order(Order::Move {
+                                x: x as f32,
+                                y: y as f32,
+                            })
+                        } else {
+                            player.order(Order::Move {
+                                x: x as f32,
+                                y: y as f32,
+                            });
+                        }
                     }
                 }
                 // Event::MouseButtonReleased { button, x, y } => {}
@@ -105,6 +129,7 @@ fn main() {
 
         // TODO: call Game.update() or something similar
         player.update(time_delta);
+        andromalius.update(time_delta);
 
         for mut p in &mut particles {
             p.update(time_delta);
@@ -116,6 +141,7 @@ fn main() {
         // TODO: call Game.draw(&window) or something similar
         window.clear(&Color::new_rgb(200, 200, 200));
         window.draw(&player);
+        window.draw(&andromalius);
 
         // p: &Particle
         for p in &particles {
