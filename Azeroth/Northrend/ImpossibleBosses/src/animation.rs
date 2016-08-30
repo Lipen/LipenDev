@@ -8,6 +8,7 @@ pub enum AnimationIdentifier {
     MoveDown,
     MoveRight,
     Stay,
+    Move,
 }
 
 pub struct Animation {

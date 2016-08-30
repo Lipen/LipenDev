@@ -1,11 +1,9 @@
 [package]
 name = "impossible-bosses"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Lipen <lipen00@gmail.com>"]
-
-# [dependencies]
-# sfml = "0.11.2"
 
 [dependencies.sfml]
 path = "C:/Data/Programming/Rust/rust-sfml"
 # git = "https://github.com/jeremyletang/rust-sfml"
+# version = "0.11.2"

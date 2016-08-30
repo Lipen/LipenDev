@@ -45,6 +45,7 @@ fn main() {
     let mut texture_manager = TextureManager::new();
     texture_manager.load(TextureIdentifier::Wizard, "assets/wizard.png");
     texture_manager.load(TextureIdentifier::Andromalius, "assets/andromalius.png");
+    texture_manager.load(TextureIdentifier::Particle, "assets/particle.png");
 
     // Create player and setup its animations
     let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(64., 64.));
@@ -95,12 +96,17 @@ fn main() {
                 // }
                 Event::MouseButtonPressed { button, x, y } => {
                     if let MouseButton::Left = button {
-                        let mut particle = Particle::new(player.shape.get_position(), 10., 3.);
-                        let dpos = Vector2f::new(x as f32, y as f32) - particle.position;
-                        let unit = dpos / (dpos.x * dpos.x + dpos.y * dpos.y).sqrt();
-
-                        particle.velocity = 200. * unit;
-                        particle.acceleration = -30. * unit;
+                        let mut particle = Particle::new(player.shape.get_position(),
+                                                         300.,
+                                                         Vector2f::new(128., 128.),
+                                                         3.);
+                        particle.shape.set_texture(texture_manager.get(TextureIdentifier::Particle), false);
+                        particle.shape.set_scale2f(0.25, 0.25);
+                        particle.animation_map.insert(AnimationIdentifier::Move, Animation::new(0, 26, 0.1));
+                        particle.order(Order::Move {
+                            x: x as f32,
+                            y: y as f32,
+                        });
 
                         particles.push(particle);
                         println!("Particle spawned!");
@@ -136,7 +142,7 @@ fn main() {
         }
 
         // Remove expired particles:
-        particles.retain(|ref p| p.clock.get_elapsed_time().as_seconds() < p.lifetime);
+        particles.retain(|ref p| p.lifeclock.get_elapsed_time().as_seconds() < p.lifetime);
 
         // TODO: call Game.draw(&window) or something similar
         window.clear(&Color::new_rgb(200, 200, 200));

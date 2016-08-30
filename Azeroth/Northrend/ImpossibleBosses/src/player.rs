@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use sfml::graphics::{RenderTarget, RenderStates, Drawable, RectangleShape, Transformable, Shape,
-                     IntRect};
+use sfml::graphics::{Drawable, IntRect, RectangleShape, RenderStates, RenderTarget, Shape, Transformable};
 use sfml::system::Vector2f;
 
 use animation::{Animation, AnimationIdentifier};
@@ -15,7 +14,6 @@ pub struct Player<'a> {
     pub speed: f32,
     pub velocity: Vector2f,
     pub size: Vector2f,
-    rect: IntRect,
     pub shape: RectangleShape<'a>,
     pub order: Order,
     pub animation_map: HashMap<AnimationIdentifier, Animation>,
@@ -34,7 +32,6 @@ impl<'a> Player<'a> {
             velocity: Vector2f::new(0., 0.),
             size: size,
             shape: shape,
-            rect: IntRect::new(size.x as i32, 0, size.x as i32, size.y as i32),
             order: Order::Stop,
             animation_map: HashMap::new(),
             animation_cur: AnimationIdentifier::Stay,
@@ -44,8 +41,6 @@ impl<'a> Player<'a> {
 
 impl<'a> Updatable for Player<'a> {
     fn update(&mut self, dt: f32) {
-
-
         let animation_identifier = match self.order {
             Order::Stop => AnimationIdentifier::Stay,
             Order::Move { x, y } => {
@@ -94,7 +89,7 @@ impl<'a> Orderable for Player<'a> {
             Order::Stop => {
                 self.order = order;
             }
-            Order::Move {x, y} => {
+            Order::Move { x, y } => {
                 let dtarget = Vector2f::new(x, y) - self.shape.get_position();
                 // Dead-zone of 1 pixel
                 if dtarget.len() >= 1. {
@@ -111,11 +106,11 @@ impl<'a> Animatable for Player<'a> {
 
         animation.update();
 
-        self.rect = IntRect::new(self.size.x as i32 * animation.frame_cur,
-                                 self.size.y as i32 * animation.animrow,
-                                 self.size.x as i32,
-                                 self.size.y as i32);
-        self.shape.set_texture_rect(&self.rect);
+        let rect = IntRect::new(self.size.x as i32 * animation.frame_cur,
+                                self.size.y as i32 * animation.animrow,
+                                self.size.x as i32,
+                                self.size.y as i32);
+        self.shape.set_texture_rect(&rect);
     }
 }
 

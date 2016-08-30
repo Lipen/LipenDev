@@ -40,6 +40,7 @@ impl<I: Eq + Hash, R: Resource> ResourceManager<I, R> {
 pub enum TextureIdentifier {
     Wizard,
     Andromalius,
+    Particle,
 }
 
 pub type TextureManager = ResourceManager<TextureIdentifier, Texture>;
