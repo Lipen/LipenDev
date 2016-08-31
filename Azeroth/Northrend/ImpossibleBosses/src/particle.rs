@@ -40,6 +40,34 @@ impl<'a> Particle<'a> {
     }
 }
 
+impl<'a> HasSize for Particle<'a> {
+    fn get_size(&self) -> &Vector2f {
+        &self.size
+    }
+}
+
+impl<'a> HasShape<'a> for Particle<'a> {
+    type Output = RectangleShape<'a>;
+
+    fn get_shape(&self) -> &Self::Output {
+        &self.shape
+    }
+
+    fn get_shape_mut(&mut self) -> &mut Self::Output {
+        &mut self.shape
+    }
+}
+
+impl<'a> HasAnimation for Particle<'a> {
+    fn get_animation(&self) -> &Animation {
+        self.animation_map.get(&self.animation_cur).unwrap()
+    }
+
+    fn get_animation_mut(&mut self) -> &mut Animation {
+        self.animation_map.get_mut(&self.animation_cur).unwrap()
+    }
+}
+
 impl<'a> Updatable for Particle<'a> {
     fn update(&mut self, dt: f32) {
         let animation_identifier = match self.order {
@@ -80,19 +108,7 @@ impl<'a> Orderable for Particle<'a> {
     }
 }
 
-impl<'a> Animatable for Particle<'a> {
-    fn animate(&mut self) {
-        let mut animation = self.animation_map.get_mut(&self.animation_cur).unwrap();
-
-        animation.update();
-
-        let rect = IntRect::new(self.size.x as i32 * animation.frame_cur,
-                                self.size.y as i32 * animation.animrow,
-                                self.size.x as i32,
-                                self.size.y as i32);
-        self.shape.set_texture_rect(&rect);
-    }
-}
+impl<'a> Animatable<'a> for Particle<'a> {}
 
 impl<'a> Drawable for Particle<'a> {
     fn draw<RT: RenderTarget>(&self, target: &mut RT, rs: &mut RenderStates) {

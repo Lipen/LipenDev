@@ -53,8 +53,8 @@ fn main() {
 
     // Create player and setup its animations
     let mut player = Player::new(Vector2f::new(300., 400.), 200., Vector2f::new(64., 64.));
-    player.shape.set_texture(texture_manager.get(TextureIdentifier::Wizard), false);
-    player.shape.set_origin(&Vector2f::new(32., 61.));
+    player.set_texture(texture_manager.get(TextureIdentifier::Wizard), false);
+    player.set_origin(&Vector2f::new(32., 61.));
     player.animation_map.insert(AnimationIdentifier::Stay, Animation::new(0, 16, 0.1));
     player.animation_map.insert(AnimationIdentifier::MoveLeft, Animation::new(1, 16, 0.08));
     player.animation_map.insert(AnimationIdentifier::MoveRight, Animation::new(2, 16, 0.08));
@@ -63,8 +63,8 @@ fn main() {
 
     // Create enemy
     let mut andromalius = Player::new(Vector2f::new(500., 100.), 100., Vector2f::new(57., 88.));
-    andromalius.shape.set_texture(texture_manager.get(TextureIdentifier::Andromalius), false);
-    andromalius.shape.set_origin(&Vector2f::new(57. / 2., 80.));
+    andromalius.set_texture(texture_manager.get(TextureIdentifier::Andromalius), false);
+    andromalius.set_origin(&Vector2f::new(57. / 2., 80.));
     andromalius.animation_map.insert(AnimationIdentifier::Stay, Animation::new(3, 8, 0.2));
     andromalius.animation_map.insert(AnimationIdentifier::MoveLeft, Animation::new(4, 8, 0.15));
     andromalius.animation_map.insert(AnimationIdentifier::MoveRight, Animation::new(0, 8, 0.15));
@@ -85,10 +85,7 @@ fn main() {
                     match code {
                         Key::Escape => return,
                         Key::Space => {
-                            println!("[d] player.shape.get_position():\n\t{:?}",
-                                     player.shape.get_position());
-                            println!("[d] player.shape.get_texture_rect():\n\t{:?}",
-                                     player.shape.get_texture_rect());
+                            println!("[d] player.get_position():\n\t{:?}", player.get_position());
                         }
                         _ => {}
                     }
@@ -100,10 +97,7 @@ fn main() {
                 // }
                 Event::MouseButtonPressed { button, x, y } => {
                     if let MouseButton::Left = button {
-                        let mut particle = Particle::new(player.shape.get_position(),
-                                                         300.,
-                                                         Vector2f::new(128., 128.),
-                                                         3.);
+                        let mut particle = Particle::new(player.get_position(), 300., Vector2f::new(128., 128.), 3.);
                         particle.shape.set_texture(texture_manager.get(TextureIdentifier::Particle), false);
                         particle.shape.set_scale2f(0.25, 0.25);
                         particle.animation_map.insert(AnimationIdentifier::Move, Animation::new(0, 26, 0.1));
