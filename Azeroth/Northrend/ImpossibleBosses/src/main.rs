@@ -14,6 +14,10 @@ pub mod resource_manager;
 use resource_manager::*;
 pub mod animation;
 use animation::*;
+pub mod bar;
+use bar::*;
+pub mod stats;
+use stats::*;
 pub mod util_traits;
 use util_traits::*;
 
@@ -107,6 +111,8 @@ fn main() {
                             x: x as f32,
                             y: y as f32,
                         });
+
+                        player.stats.health *= 0.95;
 
                         particles.push(particle);
                         println!("Particle spawned!");

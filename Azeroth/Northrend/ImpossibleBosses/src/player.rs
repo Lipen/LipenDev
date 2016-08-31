@@ -4,6 +4,8 @@ use sfml::graphics::{Drawable, IntRect, RectangleShape, RenderStates, RenderTarg
 use sfml::system::Vector2f;
 
 use animation::{Animation, AnimationIdentifier};
+use bar::HealthBar;
+use stats::Stats;
 use util_traits::*;
 
 
@@ -18,6 +20,8 @@ pub struct Player<'a> {
     pub order: Order,
     pub animation_map: HashMap<AnimationIdentifier, Animation>,
     pub animation_cur: AnimationIdentifier,
+    pub stats: Stats,
+    pub healthbar: HealthBar<'a>,
 }
 
 impl<'a> Player<'a> {
@@ -35,6 +39,8 @@ impl<'a> Player<'a> {
             order: Order::Stop,
             animation_map: HashMap::new(),
             animation_cur: AnimationIdentifier::Stay,
+            stats: Stats::new(100., 100.),
+            healthbar: HealthBar::new(position+Vector2f::new(0., 12.), Vector2f::new(64., 8.)),
         }
     }
 }
@@ -80,6 +86,9 @@ impl<'a> Updatable for Player<'a> {
         }
 
         self.animate();
+
+        self.healthbar.set_position(&(self.shape.get_position() + Vector2f::new(0., 12.)));
+        self.healthbar.set_percent(self.stats.health / self.stats.maxhealth);
     }
 }
 
@@ -116,6 +125,8 @@ impl<'a> Animatable for Player<'a> {
 
 impl<'a> Drawable for Player<'a> {
     fn draw<RT: RenderTarget>(&self, target: &mut RT, rs: &mut RenderStates) {
-        target.draw_with_renderstates(&self.shape, rs);
+        // target.draw_with_renderstates(&self.shape, rs);
+        self.shape.draw(target, rs);
+        self.healthbar.draw(target, rs);
     }
 }
