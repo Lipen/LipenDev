@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use sfml::graphics::{Drawable, IntRect, RectangleShape, RenderStates, RenderTarget, Shape, Transformable};
+use sfml::graphics::{Color, Drawable, FloatRect, IntRect, RectangleShape, RenderStates, RenderTarget, Shape, Texture, Transform, Transformable};
 use sfml::system::{Clock, Vector2f};
 
 use animation::{Animation, AnimationIdentifier};
@@ -11,9 +11,9 @@ pub struct Particle<'a> {
     pub speed: f32,
     pub velocity: Vector2f,
     pub size: Vector2f,
-    pub shape: RectangleShape<'a>,
+    shape: RectangleShape<'a>,
     pub order: Order,
-    pub animation_map: HashMap<AnimationIdentifier, Animation>,
+    animation_map: HashMap<AnimationIdentifier, Animation>,
     pub animation_cur: AnimationIdentifier,
     pub lifetime: f32,
     pub lifeclock: Clock,
@@ -68,16 +68,21 @@ impl<'a> HasAnimation for Particle<'a> {
     }
 }
 
+impl<'a> HasAnimationMap for Particle<'a> {
+    fn get_animationmap(&self) -> &HashMap<AnimationIdentifier, Animation> {
+        &self.animation_map
+    }
+    fn get_animationmap_mut(&mut self) -> &mut HashMap<AnimationIdentifier, Animation> {
+        &mut self.animation_map
+    }
+}
+
 impl<'a> Updatable for Particle<'a> {
     fn update(&mut self, dt: f32) {
-        let animation_identifier = match self.order {
-            Order::Stop => AnimationIdentifier::Move,
-            Order::Move { .. } => {
-                let dpos = self.velocity * dt;
-                self.shape.move_(&dpos);
-                AnimationIdentifier::Move
-            }
-        };
+        let animation_identifier = AnimationIdentifier::Move;
+
+        let dpos = self.velocity * dt;
+        self.shape.move_(&dpos);
 
         // Reset new animation (only if new (== changed))
         if self.animation_cur != animation_identifier {
@@ -101,7 +106,7 @@ impl<'a> Orderable for Particle<'a> {
                 if dtarget.len() >= 1. {
                     self.order = order;
                     let unit = dtarget / dtarget.len();
-                    self.velocity = 200. * unit;
+                    self.velocity = self.speed * unit;
                 }
             }
         }
@@ -113,5 +118,110 @@ impl<'a> Animatable<'a> for Particle<'a> {}
 impl<'a> Drawable for Particle<'a> {
     fn draw<RT: RenderTarget>(&self, target: &mut RT, rs: &mut RenderStates) {
         target.draw_with_renderstates(&self.shape, rs);
+    }
+}
+
+impl<'a> Transformable for Particle<'a> {
+    fn set_position(&mut self, position: &Vector2f) {
+        self.shape.set_position(&position);
+    }
+    fn set_position2f(&mut self, x: f32, y: f32) {
+        self.shape.set_position2f(x, y);
+    }
+    fn set_rotation(&mut self, angle: f32) {
+        self.shape.set_rotation(angle);
+    }
+    fn set_scale(&mut self, scale: &Vector2f) {
+        self.shape.set_scale(&scale);
+    }
+    fn set_scale2f(&mut self, scale_x: f32, scale_y: f32) {
+        self.shape.set_scale2f(scale_x, scale_y);
+    }
+    fn set_origin(&mut self, origin: &Vector2f) {
+        self.shape.set_origin(&origin);
+    }
+    fn set_origin2f(&mut self, x: f32, y: f32) {
+        self.shape.set_origin2f(x, y);
+    }
+    fn get_position(&self) -> Vector2f {
+        self.shape.get_position()
+    }
+    fn get_rotation(&self) -> f32 {
+        self.shape.get_rotation()
+    }
+    fn get_scale(&self) -> Vector2f {
+        self.shape.get_scale()
+    }
+    fn get_origin(&self) -> Vector2f {
+        self.shape.get_origin()
+    }
+    fn move_(&mut self, offset: &Vector2f) {
+        self.shape.move_(&offset);
+    }
+    fn move2f(&mut self, offset_x: f32, offset_y: f32) {
+        self.shape.move2f(offset_x, offset_y);
+    }
+    fn rotate(&mut self, angle: f32) {
+        self.shape.rotate(angle);
+    }
+    fn scale(&mut self, factors: &Vector2f) {
+        self.shape.scale(&factors);
+    }
+    fn scale2f(&mut self, factor_x: f32, factor_y: f32) {
+        self.shape.scale2f(factor_x, factor_y);
+    }
+    fn get_transform(&self) -> Transform {
+        self.shape.get_transform()
+    }
+    fn get_inverse_transform(&self) -> Transform {
+        self.shape.get_inverse_transform()
+    }
+}
+
+impl<'a> Shape<'a> for Particle<'a> {
+    fn set_texture(&mut self, texture: &'a Texture, reset_rect: bool) {
+        self.shape.set_texture(&texture, reset_rect);
+    }
+    fn disable_texture(&mut self) {
+        self.shape.disable_texture();
+    }
+    fn set_texture_rect(&mut self, rect: &IntRect) {
+        self.shape.set_texture_rect(&rect);
+    }
+    fn set_fill_color(&mut self, color: &Color) {
+        self.shape.set_fill_color(&color);
+    }
+    fn set_outline_color(&mut self, color: &Color) {
+        self.shape.set_outline_color(&color);
+    }
+    fn set_outline_thickness(&mut self, thickness: f32) {
+        self.shape.set_outline_thickness(thickness);
+    }
+    fn get_texture(&self) -> Option<&'a Texture> {
+        self.shape.get_texture()
+    }
+    fn get_texture_rect(&self) -> IntRect {
+        self.shape.get_texture_rect()
+    }
+    fn get_fill_color(&self) -> Color {
+        self.shape.get_fill_color()
+    }
+    fn get_outline_color(&self) -> Color {
+        self.shape.get_outline_color()
+    }
+    fn get_outline_thickness(&self) -> f32 {
+        self.shape.get_outline_thickness()
+    }
+    fn get_point_count(&self) -> u32 {
+        self.shape.get_point_count()
+    }
+    fn get_point(&self, index: u32) -> Vector2f {
+        self.shape.get_point(index)
+    }
+    fn get_local_bounds(&self) -> FloatRect {
+        self.shape.get_local_bounds()
+    }
+    fn get_global_bounds(&self) -> FloatRect {
+        self.shape.get_global_bounds()
     }
 }

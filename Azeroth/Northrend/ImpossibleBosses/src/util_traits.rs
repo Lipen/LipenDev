@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use sfml::graphics::{IntRect, Shape};
 use sfml::system::Vector2f;
 
-use animation::Animation;
+use animation::{Animation, AnimationIdentifier};
 
 
 pub trait VectorExtension {
@@ -46,6 +48,11 @@ pub trait HasAnimation {
     fn get_animation_mut(&mut self) -> &mut Animation;
 }
 
+pub trait HasAnimationMap {
+    fn get_animationmap(&self) -> &HashMap<AnimationIdentifier, Animation>;
+    fn get_animationmap_mut(&mut self) -> &mut HashMap<AnimationIdentifier, Animation>;
+}
+
 pub trait Orderable {
     fn order(&mut self, order: Order);
 }
@@ -54,25 +61,17 @@ pub trait Updatable {
     fn update(&mut self, dt: f32);
 }
 
-pub trait Animatable<'a>: HasAnimation + HasShape<'a> + HasSize {
+pub trait Animatable<'a>
+    : HasAnimation + HasAnimationMap + HasShape<'a> + HasSize {
+    fn add_animation_frame(&mut self, identifier: AnimationIdentifier, animrow: i32, frame_max: i32, frame_time: f32) {
+        self.get_animationmap_mut().insert(identifier, Animation::new(animrow, frame_max, frame_time));
+    }
+
     fn animate(&mut self) {
         self.get_animation_mut().update();
         let &Vector2f { x: w, y: h } = self.get_size();
-        let &Animation{frame_cur, animrow, ..} = self.get_animation();
-        // TODO: make an update_texture_rect_4f method
-        let rect = IntRect::new(w as i32 * frame_cur,
-                                h as i32 * animrow,
-                                w as i32,
-                                h as i32);
+        let &Animation { frame_cur, animrow, .. } = self.get_animation();
+        let rect = IntRect::new(w as i32 * frame_cur, h as i32 * animrow, w as i32, h as i32);
         self.get_shape_mut().set_texture_rect(&rect);
-
-        // self.get_animation_mut().update();
-        // let &Vector2f { x: w, y: h } = self.get_size();
-        // // TODO: make an update_texture_rect_4f method
-        // let rect = IntRect::new(w as i32 * self.get_animation().frame_cur,
-        //                         h as i32 * self.get_animation().animrow,
-        //                         w as i32,
-        //                         h as i32);
-        // self.get_shape_mut().set_texture_rect(&rect);
     }
 }

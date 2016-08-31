@@ -13,11 +13,10 @@ use util_traits::*;
 // TODO: make animation_map private, add add_animation_frame method
 pub struct Player<'a> {
     pub speed: f32,
-    pub velocity: Vector2f,
     pub size: Vector2f,
     shape: RectangleShape<'a>,
     pub order: Order,
-    pub animation_map: HashMap<AnimationIdentifier, Animation>,
+    animation_map: HashMap<AnimationIdentifier, Animation>,
     pub animation_cur: AnimationIdentifier,
     pub stats: Stats,
     pub healthbar: HealthBar<'a>,
@@ -32,7 +31,6 @@ impl<'a> Player<'a> {
 
         Player {
             speed: speed,
-            velocity: Vector2f::new(0., 0.),
             size: size,
             shape: shape,
             order: Order::Stop,
@@ -72,15 +70,24 @@ impl<'a> HasAnimation for Player<'a> {
     }
 }
 
+impl<'a> HasAnimationMap for Player<'a> {
+    fn get_animationmap(&self) -> &HashMap<AnimationIdentifier, Animation> {
+        &self.animation_map
+    }
+    fn get_animationmap_mut(&mut self) -> &mut HashMap<AnimationIdentifier, Animation> {
+        &mut self.animation_map
+    }
+}
+
 impl<'a> Updatable for Player<'a> {
     fn update(&mut self, dt: f32) {
         let animation_identifier = match self.order {
             Order::Stop => AnimationIdentifier::Stay,
             Order::Move { x, y } => {
-                let dtarget = Vector2f::new(x, y) - self.shape.get_position();
+                let dtarget = Vector2f::new(x, y) - self.get_position();
                 let unit = dtarget / dtarget.len();
-                self.velocity = self.speed * unit;
-                let dpos = self.velocity * dt;
+                let velocity = self.speed * unit;
+                let dpos = velocity * dt;
 
                 if dpos.len() < dtarget.len() {
                     self.move_(&dpos);
@@ -114,8 +121,7 @@ impl<'a> Updatable for Player<'a> {
 
         self.animate();
 
-        // TODO: call healthbar.update method with neccessary parameters
-        self.healthbar.set_percent(self.stats.health / self.stats.maxhealth);
+        self.healthbar.set_rate(self.stats.health / self.stats.maxhealth);
     }
 }
 

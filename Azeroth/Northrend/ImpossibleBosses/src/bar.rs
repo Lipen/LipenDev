@@ -8,7 +8,7 @@ pub struct HealthBar<'a> {
     pub size: Vector2f,
     pub shape_back: RectangleShape<'a>,
     pub shape_front: RectangleShape<'a>,
-    pub percent: f32,
+    rate: f32,
 }
 
 impl<'a> HealthBar<'a> {
@@ -28,7 +28,7 @@ impl<'a> HealthBar<'a> {
             size: size,
             shape_back: shape_back,
             shape_front: shape_front,
-            percent: 100.,
+            rate: 1.,
         }
     }
 
@@ -38,9 +38,13 @@ impl<'a> HealthBar<'a> {
         self.shape_front.set_position(&pos);
     }
 
-    pub fn set_percent(&mut self, percent: f32) {
-        let newsize = Vector2f::new(self.size.x * percent, self.size.y);
+    pub fn set_rate(&mut self, rate: f32) {
+        let newsize = Vector2f::new(self.size.x * rate, self.size.y);
         self.shape_front.set_size(&newsize);
+    }
+
+    pub fn get_rate(&self) -> f32 {
+        self.rate
     }
 }
 
