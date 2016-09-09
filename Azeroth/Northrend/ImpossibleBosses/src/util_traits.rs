@@ -9,6 +9,9 @@ use animation::{Animation, AnimationIdentifier};
 pub trait VectorExtension {
     fn rotate(&mut self, angle: f32);
     fn len(&self) -> f32;
+    fn len_sqr(&self) -> f32;
+    fn dot(&self, other: &Vector2f) -> f32;
+    fn neg(self) -> Vector2f;
 }
 
 impl VectorExtension for Vector2f {
@@ -20,7 +23,19 @@ impl VectorExtension for Vector2f {
     }
 
     fn len(&self) -> f32 {
-        (self.x * self.x + self.y * self.y).sqrt() as f32
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    fn len_sqr(&self) -> f32 {
+        (self.x * self.x + self.y * self.y)
+    }
+
+    fn dot(&self, other: &Vector2f) -> f32 {
+        self.x * other.x + self.y * other.y
+    }
+
+    fn neg(self) -> Vector2f {
+        Vector2f::new(-self.x, -self.y)
     }
 }
 

@@ -10,7 +10,7 @@ use util_traits::*;
 pub struct Particle<'a> {
     pub speed: f32,
     pub velocity: Vector2f,
-    pub size: Vector2f,
+    size: Vector2f,
     shape: RectangleShape<'a>,
     pub order: Order,
     animation_map: HashMap<AnimationIdentifier, Animation>,
@@ -36,6 +36,20 @@ impl<'a> Particle<'a> {
             animation_cur: AnimationIdentifier::Stay,
             lifetime: lifetime,
             lifeclock: Clock::new(),
+        }
+    }
+
+    pub fn collide_with(&mut self, mut other: &mut Particle) {
+        let dr = self.get_position() - other.get_position();
+        let dist_sqr = dr.len_sqr();
+
+        if dist_sqr <= 16f32.powi(2) {
+            println!("Collision on dist = {}", dr.len());
+            let dv = self.velocity - other.velocity;
+            let alpha = -dv.dot(&dr) / dist_sqr;
+            let deltav = alpha * dr;
+            self.velocity = self.velocity + deltav;
+            other.velocity = other.velocity - deltav;
         }
     }
 }
@@ -82,7 +96,25 @@ impl<'a> Updatable for Particle<'a> {
         let animation_identifier = AnimationIdentifier::Move;
 
         let dpos = self.velocity * dt;
-        self.shape.move_(&dpos);
+        self.move_(&dpos);
+
+        let Vector2f{x, y} = self.get_position();
+        if x > 800. {
+            self.set_position2f(800., y);
+            self.velocity.x *= -1.;
+        } else if x < 0. {
+            self.set_position2f(0., y);
+            self.velocity.x *= -1.;
+        }
+
+        let Vector2f{x, y} = self.get_position();
+        if y > 600. {
+            self.set_position2f(x, 600.);
+            self.velocity.y *= -1.;
+        } else if y < 0. {
+            self.set_position2f(x, 0.);
+            self.velocity.y *= -1.;
+        }
 
         // Reset new animation (only if new (== changed))
         if self.animation_cur != animation_identifier {

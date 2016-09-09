@@ -32,14 +32,15 @@ impl<'a> HealthBar<'a> {
         }
     }
 
-    pub fn set_position(&mut self, position: &Vector2f) {
-        let pos = Vector2f::new(position.x - self.size.x / 2., position.y);
-        self.shape_back.set_position(&pos);
-        self.shape_front.set_position(&pos);
-    }
-
     pub fn set_rate(&mut self, rate: f32) {
-        let newsize = Vector2f::new(self.size.x * rate, self.size.y);
+        self.rate = if rate < 0. {
+            0.
+        } else if rate > 1. {
+            1.
+        } else {
+            rate
+        };
+        let newsize = Vector2f::new(self.size.x * self.rate, self.size.y);
         self.shape_front.set_size(&newsize);
     }
 
@@ -64,12 +65,13 @@ impl<'a> Drawable for HealthBar<'a> {
 
 impl<'a> Transformable for HealthBar<'a> {
     fn set_position(&mut self, position: &Vector2f) {
-        self.shape_back.set_position(&position);
-        self.shape_front.set_position(&position);
+        let pos = Vector2f::new(position.x - self.size.x / 2., position.y);
+        self.shape_back.set_position(&pos);
+        self.shape_front.set_position(&pos);
     }
     fn set_position2f(&mut self, x: f32, y: f32) {
-        self.shape_back.set_position2f(x, y);
-        self.shape_front.set_position2f(x, y);
+        self.shape_back.set_position2f(x - self.size.x / 2., y);
+        self.shape_front.set_position2f(x - self.size.x / 2., y);
     }
     fn set_rotation(&mut self, angle: f32) {
         self.shape_back.set_rotation(angle);
@@ -92,6 +94,7 @@ impl<'a> Transformable for HealthBar<'a> {
         self.shape_front.set_origin2f(x, y);
     }
     fn get_position(&self) -> Vector2f {
+        // FIXME: Return actual position or shifted? (Shifted = pos + size.x/2)
         self.shape_back.get_position()
     }
     fn get_rotation(&self) -> f32 {

@@ -4,16 +4,17 @@ use sfml::graphics::{Color, Drawable, FloatRect, IntRect, RectangleShape, Render
 use sfml::system::Vector2f;
 
 use animation::{Animation, AnimationIdentifier};
+use particle::Particle;
 use bar::HealthBar;
 use stats::Stats;
 use util_traits::*;
 
 
 // TODO: animation_map - maybe store Animation in a Box?
-// TODO: make animation_map private, add add_animation_frame method
+// TODO: add hitbox (AABB to start with)
 pub struct Player<'a> {
     pub speed: f32,
-    pub size: Vector2f,
+    size: Vector2f,
     shape: RectangleShape<'a>,
     pub order: Order,
     animation_map: HashMap<AnimationIdentifier, Animation>,
@@ -37,7 +38,18 @@ impl<'a> Player<'a> {
             animation_map: HashMap::new(),
             animation_cur: AnimationIdentifier::Stay,
             stats: Stats::new(100., 100.),
-            healthbar: HealthBar::new(position + Vector2f::new(0., 12.), Vector2f::new(64., 8.)),
+            healthbar: HealthBar::new(Vector2f::new(position.x, position.y + 12.), Vector2f::new(64., 8.)),
+        }
+    }
+
+    pub fn collide_with(&mut self, mut particle: &mut Particle) {
+        let dr = self.get_position() - particle.get_position();
+        let dist_sqr = dr.len_sqr();
+
+        if dist_sqr <= 32f32.powi(2) {
+            println!("Boom! dist = {}", dr.len());
+            self.stats.health -= 5.;
+            particle.lifetime = 0.;
         }
     }
 }
@@ -146,7 +158,6 @@ impl<'a> Animatable<'a> for Player<'a> {}
 
 impl<'a> Drawable for Player<'a> {
     fn draw<RT: RenderTarget>(&self, target: &mut RT, rs: &mut RenderStates) {
-        // target.draw_with_renderstates(&self.shape, rs);
         self.shape.draw(target, rs);
         self.healthbar.draw(target, rs);
     }
@@ -155,11 +166,11 @@ impl<'a> Drawable for Player<'a> {
 impl<'a> Transformable for Player<'a> {
     fn set_position(&mut self, position: &Vector2f) {
         self.shape.set_position(&position);
-        self.healthbar.set_position2f(position.x - self.size.x / 2., position.y + 12.);
+        self.healthbar.set_position2f(position.x, position.y + 12.);
     }
     fn set_position2f(&mut self, x: f32, y: f32) {
         self.shape.set_position2f(x, y);
-        self.healthbar.set_position2f(x - self.size.x / 2., y + 12.);
+        self.healthbar.set_position2f(x, y + 12.);
     }
     fn set_rotation(&mut self, angle: f32) {
         self.shape.set_rotation(angle);

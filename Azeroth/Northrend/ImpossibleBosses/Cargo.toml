@@ -1,6 +1,6 @@
 [package]
 name = "impossible-bosses"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Lipen <lipen00@gmail.com>"]
 
 [dependencies.sfml]
