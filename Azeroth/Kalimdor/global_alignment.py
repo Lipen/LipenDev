@@ -1,53 +1,130 @@
 # TAGS: Needleman-Wunsch algorithm, global alignment, dna, sequence, dynamic programming
 
-s1 = 'GCATGCU'
-s2 = 'GATTACA'
-assert len(s1) == len(s2), "please use strings with the same size :c"
-n = len(s1)
-
 
 def score(a, b):
-    if a == b:
-        return 1
-    else:
-        return -1
+    # coef_match = 1
+    # coef_mismatch = -1
+    # return coef_match if a == b else coef_mismatch
+    BLOSUM62_raw = '''
+4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4
+-1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4
+-2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4
+-2 -2  1  6 -3  0  2 -1 -1 -3 -4 -1 -3 -3 -1  0 -1 -4 -3 -3  4  1 -1 -4
+ 0 -3 -3 -3  9 -3 -4 -3 -3 -1 -1 -3 -1 -2 -3 -1 -1 -2 -2 -1 -3 -3 -2 -4
+-1  1  0  0 -3  5  2 -2  0 -3 -2  1  0 -3 -1  0 -1 -2 -1 -2  0  3 -1 -4
+-1  0  0  2 -4  2  5 -2  0 -3 -3  1 -2 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+ 0 -2  0 -1 -3 -2 -2  6 -2 -4 -4 -2 -3 -3 -2  0 -2 -2 -3 -3 -1 -2 -1 -4
+-2  0  1 -1 -3  0  0 -2  8 -3 -3 -1 -2 -1 -2 -1 -2 -2  2 -3  0  0 -1 -4
+-1 -3 -3 -3 -1 -3 -3 -4 -3  4  2 -3  1  0 -3 -2 -1 -3 -1  3 -3 -3 -1 -4
+-1 -2 -3 -4 -1 -2 -3 -4 -3  2  4 -2  2  0 -3 -2 -1 -2 -1  1 -4 -3 -1 -4
+-1  2  0 -1 -3  1  1 -2 -1 -3 -2  5 -1 -3 -1  0 -1 -3 -2 -2  0  1 -1 -4
+-1 -1 -2 -3 -1  0 -2 -3 -2  1  2 -1  5  0 -2 -1 -1 -1 -1  1 -3 -1 -1 -4
+-2 -3 -3 -3 -2 -3 -3 -3 -1  0  0 -3  0  6 -4 -2 -2  1  3 -1 -3 -3 -1 -4
+-1 -2 -2 -1 -3 -1 -1 -2 -2 -3 -3 -1 -2 -4  7 -1 -1 -4 -3 -2 -2 -1 -2 -4
+ 1 -1  1  0 -1  0  0  0 -1 -2 -2  0 -1 -2 -1  4  1 -3 -2 -2  0  0  0 -4
+ 0 -1  0 -1 -1 -1 -1 -2 -2 -1 -1 -1 -1 -2 -1  1  5 -2 -2  0 -1 -1  0 -4
+-3 -3 -4 -4 -2 -2 -3 -2 -2 -3 -2 -3 -1  1 -4 -3 -2 11  2 -3 -4 -3 -2 -4
+-2 -2 -2 -3 -2 -1 -2 -3  2 -1 -1 -2 -1  3 -3 -2 -2  2  7 -1 -3 -2 -1 -4
+ 0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4 -3 -2 -1 -4
+-2 -1  3  4 -3  0  1 -1  0 -3 -4  0 -3 -3 -2  0 -1 -4 -3 -3  4  1 -1 -4
+-1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
+ 0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
+-4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1'''
+    BLOSUM62 = [list(map(int, row.split())) for row in BLOSUM62_raw.strip().split('\n')]
+    LETTERS = 'ARNDCQEGHILKMFPSTWYVBZX*'
+    x = LETTERS.find(a)
+    y = LETTERS.find(b)
 
-grid = [list(-i for i in range(n + 1))]
-for i in range(1, n + 1):
-    grid.append([-i] + [0 for _ in range(n)])
-# for row in grid:
-#     print(' '.join(map(lambda x: '{: 2}'.format(x), row)))
+    return BLOSUM62[x][y]
 
-# Fill in the Table
-for i in range(1, n + 1):
-    for j in range(1, n + 1):
-        grid[i][j] = max(grid[i - 1][j] - 1, grid[i][j - 1] - 1, grid[i - 1][j - 1] + score(s1[j - 1], s2[i - 1]))
 
-print('Filled grid:')
-print('  '.join('  ' + s1))
-for i, row in enumerate(grid):
-    print((' ' + s2)[i] + ' ' + ' '.join(map('{: 2}'.format, row)))
+def align(s1, s2):
+    n = len(s1)
+    m = len(s2)
 
-# Backtrace:
-s1_aligned = ''
-s2_aligned = ''
-i = n
-j = n
-while i > 0 and j > 0:
-    gap1, gap2, mmatch = grid[i][j - 1], grid[i - 1][j], grid[i - 1][j - 1]
+    coef_delete = -1
+    coef_insert = -1
 
-    if mmatch >= gap1 and mmatch >= gap2:
-        s1_aligned = s1[j - 1] + s1_aligned
-        s2_aligned = s2[i - 1] + s2_aligned
-        i -= 1
-        j -= 1
-    elif gap1 >= gap2 and gap1 >= mmatch:
-        s1_aligned = '-' + s1_aligned
-        s2_aligned = s2[i - 1] + s2_aligned
-        j -= 1
-    else:
-        s1_aligned = s1[j - 1] + s1_aligned
-        s2_aligned = '-' + s2_aligned
-        i -= 1
+    grid = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
+    traceback = [['' for _ in range(n + 1)] for _ in range(m + 1)]
+    #  i-> 0   1  2  3  4  5  6  7@n
+    # j    $   G  C  A  T  G  C  U
+    # 0 $  0  -1 -2 -3 -4 -5 -6 -7
+    #        _____________________
+    # 1 G -1|  1  0 -1 -2 -3 -4 -5
+    # 2 A -2|  0  0  1  0 -1 -2 -3
+    #   ... |
+    # m A -7| -5 -3 -1 -2 -2  0  0@answer
+    for i in range(1, n + 1):
+        grid[0][i] = -i
+        traceback[0][i] = '-'
+    for j in range(1, m + 1):
+        grid[j][0] = -j
+        traceback[j][0] = '|'
 
-print('Aligned sequences:\n\t{}\n\t{}'.format(s1_aligned, s2_aligned))
+    # Fill in the table
+    for j in range(1, m + 1):
+        c2 = s2[j - 1]
+        for i in range(1, n + 1):
+            c1 = s1[i - 1]
+            score_match = (grid[j - 1][i - 1] + score(c1, c2), '\\')
+            score_delete = (grid[j][i - 1] + coef_delete, '-')
+            score_insert = (grid[j - 1][i] + coef_insert, '|')
+            scores = (score_match, score_delete, score_insert)
+
+            score_max, arror = max(scores, key=lambda x: x[0])
+            grid[j][i] = score_max
+            traceback[j][i] = arror
+
+    print('Filled grid:')
+    print('       ' + '  '.join(s1))
+    for i, row in enumerate(grid):
+        print((' ' + s2)[i] + ' ' + ''.join(map('{: 3}'.format, row)))
+    print('Filled traceback:')
+    print('   ' + ' '.join(s1))
+    for i, row in enumerate(traceback):
+        print((' ' + s2)[i] + ' ' + ' '.join(row))
+
+    # Align
+    s1_aligned = ''
+    s2_aligned = ''
+    i = n
+    j = m
+    while i > 0 or j > 0:
+        c = traceback[j][i]
+        if c == '|':
+            s1_aligned += '-'
+            s2_aligned += s2[j - 1]
+            j -= 1
+        elif c == '\\':
+            print('{} at (j,i) = {},{}. appending {} and {}'.format(c, j, i, s1[i - 1], s2[j - 1]))
+            s1_aligned += s1[i - 1]
+            s2_aligned += s2[j - 1]
+            i -= 1
+            j -= 1
+        elif c == '-':
+            s1_aligned += s1[i - 1]
+            s2_aligned += '-'
+            i -= 1
+        else:
+            raise "WTF"
+
+    return (s1_aligned[::-1], s2_aligned[::-1], grid[m][n])
+
+
+def main():
+    import random
+    n = 15
+    m = 12
+    # alphabet = 'ATGC'
+    alphabet = 'ARNDCQEGHILKMFPSTWYVBZX'
+    s1 = ''.join(random.choice(alphabet) for _ in range(n))
+    s2 = ''.join(random.choice(alphabet) for _ in range(m))
+    # s1 = 'GCATGCU'
+    # s2 = 'GATTACA'
+    s1_aligned, s2_aligned, score = align(s1, s2)
+
+    print('Aligned sequences:\n\t{}\n\t{}\nScore: {}'.format(s1_aligned, s2_aligned, score))
+
+if __name__ == '__main__':
+    main()
