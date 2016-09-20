@@ -1,11 +1,10 @@
 # TAGS: Needleman-Wunsch algorithm, global alignment, dna, sequence, dynamic programming
+use_blosum62 = True
 
 
 def score(a, b):
-    # coef_match = 1
-    # coef_mismatch = -1
-    # return coef_match if a == b else coef_mismatch
-    BLOSUM62_raw = '''
+    if use_blosum62:
+        BLOSUM62_raw = '''
 4 -1 -2 -2  0 -1 -1  0 -2 -1 -1 -1 -1 -2 -1  1  0 -3 -2  0 -2 -1  0 -4
 -1  5  0 -2 -3  1  0 -2  0 -3 -2  2 -1 -3 -2 -1 -1 -3 -2 -3 -1  0 -1 -4
 -2  0  6  1 -3  0  0  0  1 -3 -3  0 -2 -3 -2  1  0 -4 -2 -3  3  0 -1 -4
@@ -30,12 +29,16 @@ def score(a, b):
 -1  0  0  1 -3  3  4 -2  0 -3 -3  1 -1 -3 -1  0 -1 -3 -2 -2  1  4 -1 -4
  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4 -4  1'''
-    BLOSUM62 = [list(map(int, row.split())) for row in BLOSUM62_raw.strip().split('\n')]
-    LETTERS = 'ARNDCQEGHILKMFPSTWYVBZX*'
-    x = LETTERS.find(a)
-    y = LETTERS.find(b)
+        BLOSUM62 = [list(map(int, row.split())) for row in BLOSUM62_raw.strip().split('\n')]
+        LETTERS = 'ARNDCQEGHILKMFPSTWYVBZX*'
+        x = LETTERS.find(a)
+        y = LETTERS.find(b)
 
-    return BLOSUM62[x][y]
+        return BLOSUM62[x][y]
+    else:
+        coef_match = 1
+        coef_mismatch = -1
+        return coef_match if a == b else coef_mismatch
 
 
 def align(s1, s2):
@@ -47,6 +50,8 @@ def align(s1, s2):
 
     grid = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     traceback = [['' for _ in range(n + 1)] for _ in range(m + 1)]
+    # s1 = GCATGCU
+    # s2 = GATTACA
     #  i-> 0   1  2  3  4  5  6  7@n
     # j    $   G  C  A  T  G  C  U
     # 0 $  0  -1 -2 -3 -4 -5 -6 -7
@@ -62,7 +67,7 @@ def align(s1, s2):
         grid[j][0] = -j
         traceback[j][0] = '|'
 
-    # Fill in the table
+    # Fill the grid
     for j in range(1, m + 1):
         c2 = s2[j - 1]
         for i in range(1, n + 1):
@@ -85,7 +90,7 @@ def align(s1, s2):
     for i, row in enumerate(traceback):
         print((' ' + s2)[i] + ' ' + ' '.join(row))
 
-    # Align
+    # Align sequences using traceback matrix
     s1_aligned = ''
     s2_aligned = ''
     i = n
@@ -97,7 +102,6 @@ def align(s1, s2):
             s2_aligned += s2[j - 1]
             j -= 1
         elif c == '\\':
-            print('{} at (j,i) = {},{}. appending {} and {}'.format(c, j, i, s1[i - 1], s2[j - 1]))
             s1_aligned += s1[i - 1]
             s2_aligned += s2[j - 1]
             i -= 1
@@ -120,8 +124,8 @@ def main():
     alphabet = 'ARNDCQEGHILKMFPSTWYVBZX'
     s1 = ''.join(random.choice(alphabet) for _ in range(n))
     s2 = ''.join(random.choice(alphabet) for _ in range(m))
-    # s1 = 'GCATGCU'
-    # s2 = 'GATTACA'
+    # s1 = 'GCATGCUATTTAA'
+    # s2 = 'GATTACATTTAAA'
     s1_aligned, s2_aligned, score = align(s1, s2)
 
     print('Aligned sequences:\n\t{}\n\t{}\nScore: {}'.format(s1_aligned, s2_aligned, score))
