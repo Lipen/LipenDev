@@ -1,6 +1,9 @@
 # TAGS: Smith-Waterman algorithm, local alignment, dna, sequence, dynamic programming
+import sys
+
 use_blosum62 = False
 use_matrix = False
+colorize = sys.stdout.isatty()
 
 
 def score(a, b):
@@ -143,38 +146,52 @@ def align(s1, s2):
         else:
             raise "WTF"
 
-    s1_align = '\033[92m' + s1_align[::-1] + '\033[0m'
-    s2_align = '\033[92m' + s2_align[::-1] + '\033[0m'
-    s1_left = '\033[91m' + s1[:i - 1] + '\033[0m'
-    s2_left = '\033[91m' + s2[:j - 1] + '\033[0m'
-    s1_right = '\033[91m' + s1[end[0]:] + '\033[0m'
-    s2_right = '\033[91m' + s2[end[1]:] + '\033[0m'
+    s1_align = s1_align[::-1]
+    s2_align = s2_align[::-1]
+    s1_left = s1[:i - 1]
+    s2_left = s2[:j - 1]
+    s1_right = s1[end[0]:]
+    s2_right = s2[end[1]:]
     pad_left = max(len(s1_left), len(s2_left))
     pad_right = max(len(s1_right), len(s2_right))
-    s1_left_pad = '\033[94m' + '=' * (pad_left - len(s1_left)) + '\033[0m'
-    s2_left_pad = '\033[94m' + '=' * (pad_left - len(s2_left)) + '\033[0m'
-    s1_right_pad = '\033[94m' + '=' * (pad_right - len(s1_right)) + '\033[0m'
-    s2_right_pad = '\033[94m' + '=' * (pad_right - len(s2_right)) + '\033[0m'
+    s1_left_pad = '=' * (pad_left - len(s1_left))
+    s2_left_pad = '=' * (pad_left - len(s2_left))
+    s1_right_pad = '=' * (pad_right - len(s1_right))
+    s2_right_pad = '=' * (pad_right - len(s2_right))
+    s1_delim = '.'
+    s2_delim = '^'
 
-    s1_aligned = '{left_pad}{left}.{align}.{right}{right_pad}'.format(
-        left_pad=s1_left_pad,
-        left=s1_left,
+    if colorize:
+        s1_align = '\033[92m' + s1_align + '\033[0m'
+        s2_align = '\033[92m' + s2_align + '\033[0m'
+        s1_left = '\033[91m' + s1_left + '\033[0m'
+        s2_left = '\033[91m' + s2_left + '\033[0m'
+        s1_right = '\033[91m' + s1_right + '\033[0m'
+        s2_right = '\033[91m' + s2_right + '\033[0m'
+        s1_left_pad = '\033[94m' + s1_left_pad + '\033[0m'
+        s2_left_pad = '\033[94m' + s2_left_pad + '\033[0m'
+        s1_right_pad = '\033[94m' + s1_right_pad + '\033[0m'
+        s2_right_pad = '\033[94m' + s2_right_pad + '\033[0m'
+        s1_delim = '\033[93m' + s1_delim + '\033[0m'
+        s2_delim = '\033[93m' + s2_delim + '\033[0m'
+
+    s1_aligned = '{left}{delim}{align}{delim}{right}'.format(
+        left=s1_left_pad + s1_left,
         align=s1_align,
-        right=s1_right,
-        right_pad=s1_right_pad)
-    s2_aligned = '{left_pad}{left}^{align}^{right}{right_pad}'.format(
-        left_pad=s2_left_pad,
-        left=s2_left,
+        right=s1_right + s1_right_pad,
+        delim=s1_delim)
+    s2_aligned = '{left}{delim}{align}{delim}{right}'.format(
+        left=s2_left_pad + s2_left,
         align=s2_align,
-        right=s2_right,
-        right_pad=s2_right_pad)
+        right=s2_right + s2_right_pad,
+        delim=s2_delim)
 
     return (s1_aligned, s2_aligned, end[2])
 
 
 def main():
     import random
-    n = 10
+    n = 20
     m = 10
     if use_blosum62:
         alphabet = 'ARNDCQEGHILKMFPSTWYVBZX'
