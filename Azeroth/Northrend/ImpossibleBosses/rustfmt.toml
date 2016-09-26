@@ -1,0 +1,3 @@
+max_width = 300
+reorder_imports = true
+format_strings = false
