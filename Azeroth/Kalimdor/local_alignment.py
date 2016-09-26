@@ -116,7 +116,7 @@ def align(s1, s2):
     for j in range(1, m + 1):
         for i in range(1, n + 1):
             v = grid[j][i]
-            if v >= end[2]:
+            if v > end[2]:
                 end = (i, j, v)
     print('End at {} with value {}'.format((end[0], end[1]), end[2]))
 
