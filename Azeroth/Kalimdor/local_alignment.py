@@ -118,42 +118,56 @@ def align(s1, s2):
     print('End at {} with value {}'.format((end[0], end[1]), end[2]))
 
     # Local alignment
-    s1_aligned = ''
-    s2_aligned = ''
+    s1_align = ''
+    s2_align = ''
     i, j, *_ = end
     while i > 0 or j > 0:
         c = traceback[j][i]
         if c == '|':
-            s1_aligned += '-'
-            s2_aligned += s2[j - 1]
+            s1_align += '-'
+            s2_align += s2[j - 1]
             j -= 1
         elif c == '\\':
-            s1_aligned += s1[i - 1]
-            s2_aligned += s2[j - 1]
+            s1_align += s1[i - 1]
+            s2_align += s2[j - 1]
             i -= 1
             j -= 1
         elif c == '-':
-            s1_aligned += s1[i - 1]
-            s2_aligned += '-'
+            s1_align += s1[i - 1]
+            s2_align += '-'
             i -= 1
         elif c == '@':
-            s1_aligned += s1[i - 1]
-            s2_aligned += s2[j - 1]
+            s1_align += s1[i - 1]
+            s2_align += s2[j - 1]
             break
         else:
             raise "WTF"
 
-    s1_left = s1[:i - 1]
-    s2_left = s2[:j - 1]
-    s1_right = s1[end[0]:]
-    s2_right = s2[end[1]:]
+    s1_align = '\033[92m' + s1_align[::-1] + '\033[0m'
+    s2_align = '\033[92m' + s2_align[::-1] + '\033[0m'
+    s1_left = '\033[91m' + s1[:i - 1] + '\033[0m'
+    s2_left = '\033[91m' + s2[:j - 1] + '\033[0m'
+    s1_right = '\033[91m' + s1[end[0]:] + '\033[0m'
+    s2_right = '\033[91m' + s2[end[1]:] + '\033[0m'
     pad_left = max(len(s1_left), len(s2_left))
     pad_right = max(len(s1_right), len(s2_right))
+    s1_left_pad = '\033[94m' + '=' * (pad_left - len(s1_left)) + '\033[0m'
+    s2_left_pad = '\033[94m' + '=' * (pad_left - len(s2_left)) + '\033[0m'
+    s1_right_pad = '\033[94m' + '=' * (pad_right - len(s1_right)) + '\033[0m'
+    s2_right_pad = '\033[94m' + '=' * (pad_right - len(s2_right)) + '\033[0m'
 
-    s1_aligned = '{:{delim}>{}}.{}.{:{delim}<{}}'.format(
-        s1_left, pad_left, s1_aligned[::-1], s1_right, pad_right, delim='=')
-    s2_aligned = '{:{delim}>{}}^{}^{:{delim}<{}}'.format(
-        s2_left, pad_left, s2_aligned[::-1], s2_right, pad_right, delim='=')
+    s1_aligned = '{left_pad}{left}.{align}.{right}{right_pad}'.format(
+        left_pad=s1_left_pad,
+        left=s1_left,
+        align=s1_align,
+        right=s1_right,
+        right_pad=s1_right_pad)
+    s2_aligned = '{left_pad}{left}^{align}^{right}{right_pad}'.format(
+        left_pad=s2_left_pad,
+        left=s2_left,
+        align=s2_align,
+        right=s2_right,
+        right_pad=s2_right_pad)
 
     return (s1_aligned, s2_aligned, end[2])
 
