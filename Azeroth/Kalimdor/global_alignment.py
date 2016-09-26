@@ -60,8 +60,6 @@ def align(s1, s2):
     m = len(s2)
 
     coef_indel = -1
-    coef_delete = coef_indel
-    coef_insert = coef_indel
 
     grid = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     traceback = [['' for _ in range(n + 1)] for _ in range(m + 1)]
@@ -76,10 +74,10 @@ def align(s1, s2):
     #   ... |
     # m A -7| -5 -3 -1 -2 -2  0  0@answer
     for i in range(1, n + 1):
-        grid[0][i] = -i
+        grid[0][i] = i * coef_indel
         traceback[0][i] = '-'
     for j in range(1, m + 1):
-        grid[j][0] = -j
+        grid[j][0] = j * coef_indel
         traceback[j][0] = '|'
 
     # Fill the grid
@@ -88,8 +86,8 @@ def align(s1, s2):
         for i in range(1, n + 1):
             c1 = s1[i - 1]
             score_match = (grid[j - 1][i - 1] + score(c1, c2), '\\')
-            score_delete = (grid[j][i - 1] + coef_delete, '-')
-            score_insert = (grid[j - 1][i] + coef_insert, '|')
+            score_delete = (grid[j][i - 1] + coef_indel, '-')  # gap in s1
+            score_insert = (grid[j - 1][i] + coef_indel, '|')  # gap in s2
             scores = (score_match, score_delete, score_insert)
 
             score_max, arror = max(scores, key=lambda x: x[0])
