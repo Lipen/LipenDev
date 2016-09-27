@@ -62,9 +62,7 @@ def align(s1, s2):
     n = len(s1)
     m = len(s2)
 
-    coef_indel = -1
-    coef_delete = coef_indel
-    coef_insert = coef_indel
+    coef_indel = -1  # gap penalty (linear)
 
     grid = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     traceback = [['' for _ in range(n + 1)] for _ in range(m + 1)]
@@ -94,8 +92,8 @@ def align(s1, s2):
             # score_start = (0, '@')
             score_start = (max(0, score(c1, c2)), '@')
             score_match = (grid[j - 1][i - 1] + score(c1, c2), '\\')
-            score_delete = (grid[j][i - 1] + coef_delete, '-')
-            score_insert = (grid[j - 1][i] + coef_insert, '|')
+            score_delete = (grid[j][i - 1] + coef_indel, '-')
+            score_insert = (grid[j - 1][i] + coef_indel, '|')
             scores = (score_start, score_match, score_delete, score_insert)
 
             score_max, arror = max(scores, key=lambda x: x[0])
@@ -191,7 +189,7 @@ def align(s1, s2):
 
 def main():
     import random
-    n = 20
+    n = 10
     m = 10
     if use_blosum62:
         alphabet = 'ARNDCQEGHILKMFPSTWYVBZX'
@@ -203,8 +201,11 @@ def main():
     s2 = ''.join(random.choice(alphabet) for _ in range(m))
     # s1 = 'AAAAAAAAAAATGCATG'
     # s2 = 'ATGCCCCCCCCCC'
-    s1_aligned, s2_aligned, score = align(s1, s2)
+    s1 = "TATGGAGGAT"
+    s2 = "ACCTAGAACT"
+    print('Initial sequences:\n\t{}\n\t{}'.format(s1, s2))
 
+    s1_aligned, s2_aligned, score = align(s1, s2)
     print('Aligned sequences:\n\t{}\n\t{}\nScore: {}'.format(s1_aligned, s2_aligned, score))
 
 if __name__ == '__main__':

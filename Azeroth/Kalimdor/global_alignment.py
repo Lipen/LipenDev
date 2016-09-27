@@ -59,7 +59,7 @@ def align(s1, s2):
     n = len(s1)
     m = len(s2)
 
-    coef_indel = -1
+    coef_indel = -1  # gap penalty (linear)
 
     grid = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     traceback = [['' for _ in range(n + 1)] for _ in range(m + 1)]
@@ -141,8 +141,9 @@ def main():
         alphabet = 'ATGC'
     s1 = ''.join(random.choice(alphabet) for _ in range(n))
     s2 = ''.join(random.choice(alphabet) for _ in range(m))
-    s1_aligned, s2_aligned, score = align(s1, s2)
+    print('Initial sequences:\n\t{}\n\t{}'.format(s1, s2))
 
+    s1_aligned, s2_aligned, score = align(s1, s2)
     print('Aligned sequences:\n\t{}\n\t{}\nScore: {}'.format(s1_aligned, s2_aligned, score))
 
 if __name__ == '__main__':
