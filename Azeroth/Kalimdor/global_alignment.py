@@ -99,9 +99,9 @@ def align(s1, s2):
     for i, row in enumerate(grid):
         print((' ' + s2)[i] + ' ' + ''.join(map('{: 3}'.format, row)))
     print('Filled traceback:')
-    print('   ' + ' '.join(s1))
+    print('    ' + ' '.join(s1))
     for i, row in enumerate(traceback):
-        print((' ' + s2)[i] + ' ' + ' '.join(row))
+        print((' ' + s2)[i] + ' ' + ' '.join(map('{:1}'.format, row)))
 
     # Align sequences using traceback matrix
     s1_aligned = ''
