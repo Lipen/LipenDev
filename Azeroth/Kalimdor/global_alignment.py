@@ -1,6 +1,6 @@
 # TAGS: Needleman-Wunsch algorithm, global alignment, dna, sequence, dynamic programming
 use_blosum62 = False
-use_matrix = True
+use_matrix = False
 
 
 def score(a, b):
@@ -73,6 +73,9 @@ def align(s1, s2):
     # 2 A -2|  0  0  1  0 -1 -2 -3
     #   ... |
     # m A -7| -5 -3 -1 -2 -2  0  0@answer
+    # Aligned:
+    #   GCA-TGCU
+    #   G-ATTACA
     for i in range(1, n + 1):
         grid[0][i] = i * coef_indel
         traceback[0][i] = '-'
@@ -141,6 +144,8 @@ def main():
         alphabet = 'ATGC'
     s1 = ''.join(random.choice(alphabet) for _ in range(n))
     s2 = ''.join(random.choice(alphabet) for _ in range(m))
+    # s1 = 'GCATGCU'
+    # s2 = 'GATTACA'
     print('Initial sequences:\n\t{}\n\t{}'.format(s1, s2))
 
     s1_aligned, s2_aligned, score = align(s1, s2)
