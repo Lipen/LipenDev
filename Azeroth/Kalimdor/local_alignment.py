@@ -89,8 +89,8 @@ def align(s1, s2):
         c2 = s2[j - 1]
         for i in range(1, n + 1):
             c1 = s1[i - 1]
-            # score_start = (0, '@')
-            score_start = (max(0, score(c1, c2)), '@')
+            score_start = (0, '@')
+            # score_start = (max(0, score(c1, c2)), '@')
             score_match = (grid[j - 1][i - 1] + score(c1, c2), '\\')
             score_delete = (grid[j][i - 1] + coef_indel, '-')
             score_insert = (grid[j - 1][i] + coef_indel, '|')
@@ -146,8 +146,8 @@ def align(s1, s2):
 
     s1_align = s1_align[::-1]
     s2_align = s2_align[::-1]
-    s1_left = s1[:i - 1]
-    s2_left = s2[:j - 1]
+    s1_left = s1[:i][:-1]  # need prefix 0..i-2, so cut 0..i-1 first,
+    s2_left = s2[:j][:-1]  # then cut one more char (order is important!)
     s1_right = s1[end[0]:]
     s2_right = s2[end[1]:]
     pad_left = max(len(s1_left), len(s2_left))
@@ -201,8 +201,8 @@ def main():
     s2 = ''.join(random.choice(alphabet) for _ in range(m))
     # s1 = 'AAAAAAAAAAATGCATG'
     # s2 = 'ATGCCCCCCCCCC'
-    s1 = "TATGGAGGAT"
-    s2 = "ACCTAGAACT"
+    # s1 = "TATGGAGGAT"
+    # s2 = "ACCTAGAACT"
     print('Initial sequences:\n\t{}\n\t{}'.format(s1, s2))
 
     s1_aligned, s2_aligned, score = align(s1, s2)
