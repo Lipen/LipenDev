@@ -1,5 +1,7 @@
 # Overview of article<br>"Improved Integration Time Estimation<br>of Endogenous Retroviruses<br>with Phylogenetic Data"
 
+***
+
 ## Table of Content
 * [Links](#links)
 * [Glossary](#glossary)
@@ -8,12 +10,14 @@
 	+ [Found ERVs by far](#found-ervs)
 	+ [HOWTO RetroTector](#using-retrotector)
 
+***
 
 ### Links
-* [Link to the article][Article]
+* [Link to the article][Article_link] :: [Article local copy][Article_local]
 * [Gypsy][GYDB_LTR] - База данных ретроэлементов
 * [RetroTector][RT] :: [#howtouse](#using-retrotector)
 
+***
 
 ### Glossary
 * **LTR** -- [_Long Terminal Repeat_][LTR] -- [**Длинные концевые повторы**][LTR_ru]
@@ -33,6 +37,7 @@
 
 
 * **ERV**s -- [_Endogenous retroviruses_][ERV] -- **Эндо-ретровирусы**
+
   **Retroviridae** -- **[Ретровирусы][RV_ru]**
     + Ретровирусы можно идентифицировать по последовательности:
       `5'LTR, pbs, gag, pol, env, 3'LTR`
@@ -90,14 +95,20 @@
 * **NT** -- _**n**ucleo**t**ide_
 	+ Единица измерения длин одноцепочечных ДНК/РНК
 
+***
 
 ### Discussion
 Ясно, что использование одной и той же скорости (_rate_) для всей последовательности эндо-ретровируса для расчётов времени встраивания ведёт к упущениям некоторых важных факторов.
+
 Конечная оценка сильно зависит от изначального предположения, насколько быстро эволюционирует эндо-ретровирусная последовательность.
+
 Также ясно, что 5' и 3' концы LTR\`ов имеют разные эволюционные скорости -- 3' концы имеют скорости выше, чем 5'.
+
 В работах Zanotto время интеграции семейства эндо-ретровирусов ERV-K оценивается в 18.3 млн. лет. Эта оценка была сокращена до 7.8 млн. лет при рассмотрении ERV-K, содержащихся только в человеческом геноме. Последний результат согласуется с результатами, полученными в работе -- о изученных локусах ERV-K группы: ERV-K2 и ERV-K7. Однако, другие локусы ERV-K группы наследованы от более далёких предков, например ERV-K3 и ERV-K9.
+
 Такие сильные различия в полученных временах встраивания и эволюционных скоростях группы эндо-ретровирусов ERV-K препятствуют широкому обобщению их свойств.
 
+***
 
 ### Extra
 ##### Found ERVs
@@ -105,14 +116,17 @@
  + [RefSeq ERV3-1][]
  + [RefSeq ERVFRD-1][]
 
+***
+
 ##### Using RetroTector
 1. Исследуемую последовательность помещаем в файл (в fasta-заголовке лучше указывать только наименование), заливаем на [сайт][RT]
 2. Идём во вкладку "[View Results][RTresults]" слева. Созданная работа должна там появиться и начать выполняться. Вся инфа по ней - в столбике "Job"
-i. ???
-n. ~~PROFIT~~
+3. ???
+99. ~~PROFIT~~
 
 
-[Article]: http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0014745
+[Article_link]: http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0014745
+[Article_local]: journal.pone.0014745.pdf
 [GYDB_LTR]: http://gydb.org/index.php/LTR_retroelements
 [RT]: http://retrotector.neuro.uu.se/pub/queue.php?show=submit
 [RTresults]: http://retrotector.neuro.uu.se/pub/queue.php?show=queue&js=on&sort=started&filter=all
