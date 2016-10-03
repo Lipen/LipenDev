@@ -9,12 +9,13 @@
 * [Extra](#extra)
 	+ [Found ERVs by far](#found-ervs)
 	+ [HOWTO RetroTector](#using-retrotector)
+    + [Results](#results)
 
 ***
 
 ### Links
-* [Link to the article][Article_link] :: [Article local copy][Article_local]
-* [Gypsy][GYDB_LTR] - База данных ретроэлементов
+* [Link to the article][Article link] :: [Article local copy][Article local]
+* [Gypsy][GYDB LTR] - База данных ретроэлементов
 * [RetroTector][RT] :: [#howtouse](#using-retrotector)
 
 ***
@@ -22,18 +23,18 @@
 ### Glossary
 * **LTR** -- [_Long Terminal Repeat_][LTR] -- [**Длинные концевые повторы**][LTR_ru]
 	+ Структура _LTR_`а:
-		- Обычно начинается с `5'TG-...`
+		- Обычно начинается с `5'TG-...` (или на `CCTAA`)
 		- _U3_ регион длины 200-1200 nt, содержащий зону промоутеров
 		- Повторяющийся регион _R_
 		- _U5_ регион длины 75-250 nt, являющийся началом ретротранскрибированного (_retrotranscribed_) генома
-		- Обычно заканчивается `...CA-3'`
+		- Обычно заканчивается `...CA-3'` (или на `CCTAA`)
 	+ Структура ретроэлемента:
 		- `5'LTR - PBS - Retrotransposone - PPT - 3'LTR`
 		- `5' TG [U3 R U5> CA <PBS] Retrotransposone [PPT> TG [U3 R U5> AC 3'`
-		- ![LTRstructure][]
+		- ![LTR structure][]
 	+ **PBS** -- _Primer Binding Site_ -- последовательность длины 18 nt, комплементарная специфичной зоне 3' конца тРНК, и использующаяся как праймер для обратной транскриптазы для синтеза ДНК(-) цепочки, комплементарной _R-U5_ зоне _5'LTR_'а
 	+ **PPT** -- _Polypurine Tract_ -- последовательность из 10 A/G, ответственная за начало синтеза ДНК(+) цепочки
-	+ [**LTR process Interactive**][LTRprocess]
+	+ [**LTR process Interactive**][LTR process]
 
 
 * **ERV**s -- [_Endogenous retroviruses_][ERV] -- **Эндо-ретровирусы**
@@ -47,12 +48,12 @@
         - **pol** -- _polymerase_ -- Ревертаза (Обратная транскриптаза)
         - **env** -- _envelope_ -- белки оболочки & белки репродукции
 	+ Главное отличие от типичных ретроэлементов -- наличие _env_ гена:
-	  ![LTRautonomous][]
+	  ![LTR autonomous][]
 	+ Классы эндо-ретровирусов:
-	  <br><a href="ERVclasses.png"><img alt="ERV Classes" title="ERV Classes" src="ERVclasses.png" width="400" height="400" align="center"></img></a>
+	  <br><a href="assets/ERVclasses.png"><img alt="ERV Classes" title="ERV Classes" src="assets/ERVclasses.png" width="400" height="400" align="center"></img></a>
 
 * **TSD** -- _Target Site Duplications_ -- duplicated genomic sequences resulting from the mechanism of integration
-	![LTRandTIR][]
+	![LTR and TIR][]
 
 * **paralog**
     + Гомология вследствие **дупликации гена** в пределах одного организма
@@ -98,6 +99,8 @@
 ***
 
 ### Discussion
+(Перевод соответствующей части статьи)
+
 Ясно, что использование одной и той же скорости (_rate_) для всей последовательности эндо-ретровируса для расчётов времени встраивания ведёт к упущениям некоторых важных факторов.
 
 Конечная оценка сильно зависит от изначального предположения, насколько быстро эволюционирует эндо-ретровирусная последовательность.
@@ -113,37 +116,53 @@
 ### Extra
 ##### Found ERVs
  + Кажется, [ERV3-1 где-то здесь][ERV3-1].
- + [RefSeq ERV3-1][]
- + [RefSeq ERVFRD-1][]
+ + [ERV3-1 RefSeq][]
+ + [ERVFRD-1 RefSeq][]
 
 ***
 
 ##### Using RetroTector
 1. Исследуемую последовательность помещаем в файл (в fasta-заголовке лучше указывать только наименование), заливаем на [сайт][RT]
 2. Идём во вкладку "[View Results][RTresults]" слева. Созданная работа должна там появиться и начать выполняться. Вся инфа по ней - в столбике "Job"
-3. ???
+3. В файле `RetroVID_...`, по-видимому, хранятся найденные одиночные и парные _LTR_'ы (3LTR и 5LTR). Нам нужны заведомо парные. Берём индексы `first` и `second` для каждого _LTR_'а и достаём их последовательности из исходной.
 99. ~~PROFIT~~
 
+***
 
-[Article_link]: http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0014745
-[Article_local]: journal.pone.0014745.pdf
-[GYDB_LTR]: http://gydb.org/index.php/LTR_retroelements
+##### Somewhat called "results"
+* В статье есть позиции всех исследованных эндо-ретровирусов (вида `ERV3 [NT_007933.15; Chr7:64,450,201-64,460,983]`), но пока что удалось найти и пощупать на сайте UCSC только [ERV3-1][ERV3-1].
+* Достаём ДНК с области вокруг обозначенного гена (`chr7:64,990,000-65,040,000`) и оправляемся на сайт [RetroTector][RT]'а. ([fasta файл с ДНК][ERV3-1 sequence])
+* Среди результатов _RetroTector_'а находим файл [RetroVID][ERV3-1 RetroVID]. Ищем какую-нибудь пару _LTR_'ов, берём индексы их интервалов (`first` и `second` поля) и достаём по ним [последовательности повторов][ERV3-1 LTRs] из основной днк.
+* ~~Если пар _LTR_'ов не нашлось, то всё плохо~~
+* Можно заметить, что оба _LTR_'а начинаются на TG и оканчиваются на CA, как и должно быть.
+* Для дальнейшего анализа могут потребоваться [выровненные последовательности повторов][ERV3-1 LTRs aligned]. Выравнивание проводилось самописным алгоритмом с матрицей BLOSUM62.
+* Начинаем анализировать концы повторов в комбайнере MEGA7...
+* ~~to be continued~~
+
+
+[Article link]: http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0014745
+[Article local]: journal.pone.0014745.pdf
+[GYDB LTR]: http://gydb.org/index.php/LTR_retroelements
 [RT]: http://retrotector.neuro.uu.se/pub/queue.php?show=submit
-[RTresults]: http://retrotector.neuro.uu.se/pub/queue.php?show=queue&js=on&sort=started&filter=all
+[RT results]: http://retrotector.neuro.uu.se/pub/queue.php?show=queue&js=on&sort=started&filter=all
 [ERV]: https://en.wikipedia.org/wiki/Endogenous_retrovirus
 [RV_ru]: https://ru.wikipedia.org/wiki/Ретровирусы
 [LTR]: https://en.wikipedia.org/wiki/Long_terminal_repeat
 [LTR_ru]: https://ru.wikipedia.org/wiki/Длинные_концевые_повторы
-[LTRstructure]: LTRstructure.gif
-[LTRautonomous]: LTRautonomous.jpg
-[LTRprocess]: http://gydb.org/index.php/Ltr_process
-[RV]: Retroviridae.gif
+[LTR structure]: assets/LTRstructure.gif
+[LTR autonomous]: assets/LTRautonomous.jpg
+[LTR process]: http://gydb.org/index.php/Ltr_process
+[RV]: assets/Retroviridae.gif
 [MCMC]: https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo
 [MC]: https://en.wikipedia.org/wiki/Molecular_clock
 [MC_ru]: https://ru.wikipedia.org/wiki/Молекулярные_часы
 [SM_ru]: https://ru.wikipedia.org/wiki/Модель_замен
 [Taxon_ru]: https://en.wikipedia.org/wiki/Taxon
-[LTRandTIR]: LTRandTIR.png
-[ERV3-1]: http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&position=chr7%3A64988721-65007182&hgsid=530055471_QROmlPcrCiczZaAaMjUsdx33Hu0P
-[RefSeq ERVFRD-1]: http://genome.ucsc.edu/cgi-bin/hgc?c=chr6&l=11102721&r=11111959&o=11102488&t=11111838&g=refGene&i=NM_207582&db=hg38
-[RefSeq ERV3-1]: http://genome.ucsc.edu/cgi-bin/hgc?hgsid=530055471_QROmlPcrCiczZaAaMjUsdx33Hu0P&c=chr7&l=64960294&r=65037226&o=64990354&t=65006746&g=refGene&i=NM_001007253
+[LTR and TIR]: assets/LTRandTIR.png
+[ERV3-1]: http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&position=chr7%3A64990000-65039999&hgsid=530055471_QROmlPcrCiczZaAaMjUsdx33Hu0P
+[ERV3-1 RefSeq]: http://genome.ucsc.edu/cgi-bin/hgc?hgsid=530055471_QROmlPcrCiczZaAaMjUsdx33Hu0P&c=chr7&l=64960294&r=65037226&o=64990354&t=65006746&g=refGene&i=NM_001007253
+[ERV3-1 sequece]: seqs/seqERV3-1_neighborhood.fasta
+[ERV3-1 RetroVID]: res/ERV3-1_RetroVID.txt
+[ERV3-1 LTRs]: res/ERV3-1_LTRs.fasta
+[ERV3-1 LTRs aligned]: res/ERV3-1_LTRs_aligned.fasta
+[ERVFRD-1 RefSeq]: http://genome.ucsc.edu/cgi-bin/hgc?c=chr6&l=11102721&r=11111959&o=11102488&t=11111838&g=refGene&i=NM_207582&db=hg38

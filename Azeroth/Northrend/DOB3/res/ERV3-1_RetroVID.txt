@@ -1,0 +1,506 @@
+Executor: RetroVID
+DNAFile: erv3-1.txt
+Database: Ordinary
+P1_LTRpair::
+    PairFactor: 0.293
+    RepeatLength: 4
+    IntegrationSites: tata/tg<>ca/tata
+::
+P1_5LTR::
+  ScoreFactor: 0.144
+  VirusGenus: BC
+  First: 325
+  Last: 916
+  Hotspot: 0.5 1.0 530 aacaaa
+  U5NN: 0.61 2.0 882
+  GTModifier: 0.24 1.0
+  U3NN: 0.73 1.0 380
+  TATAA: 0.8 1.0 450
+  MEME50: 0.57 1.0 819
+  Motifs1: 1.6 4.0 407
+  Motifs2: 1.33 4.0 687
+  Transsites: 0.08 1.0
+  CpGModifier: 0.2 1.0
+  Spl8Modifier: 0.16 1.0
+  ShortDescription: aacaaa(530);U5NN:0.31(882);GT:0.24;U3NN:0.73(380);TATAA:0.8(450);MEME50:0.57(819);Mot1:0.4(407);Mot2:0.33(687);Trans:0.08;CpG:0.2;Spl8:0.16;
+::
+P1_3LTR::
+  ScoreFactor: 0.149
+  VirusGenus: CB
+  First: 9345
+  Last: 9937
+  Hotspot: 0.5 1.0 9550 aacaaa
+  U5NN: 0.67 2.0 9743
+  GTModifier: 0.21 1.0
+  U3NN: 0.84 1.0 9453
+  TATAA: 0.8 1.0 9470
+  MEME50: 0.59 1.0 9665
+  Motifs1: 1.4 4.0 9427
+  Motifs2: 1.67 4.0 9798
+  Transsites: 0.14 1.0
+  CpGModifier: 0.12 1.0
+  Spl8Modifier: 0.17 1.0
+  ShortDescription: aacaaa(9550);U5NN:0.34(9743);GT:0.21;U3NN:0.84(9453);TATAA:0.8(9470);MEME50:0.59(9665);Mot1:0.35(9427);Mot2:0.42(9798);Trans:0.14;CpG:0.12;Spl8:0.17;
+::
+SingleLTR_P1::
+  ScoreFactor: 0.193
+  VirusGenus: B
+  First: 43436
+  Last: 44420
+  Hotspot: 0.0 1.0 44242 -
+  U5NN: 0.74 2.0 44276
+  GTModifier: 0.19 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.78 1.0 43981
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.1 1.0
+  CpGModifier: 0.22 1.0
+  Spl8Modifier: 0.46 1.0
+  ShortDescription: AATAAA(-);U5NN:0.37(44276);GT:0.19;U3NN:0.88(43901);TATAA:0.78(43981);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.1;CpG:0.22;Spl8:0.46;_tgggatg/tg<>ca/tgggatg
+::
+SingleLTR_P2::
+  ScoreFactor: 0.187
+  VirusGenus: B
+  First: 43436
+  Last: 44420
+  Hotspot: 0.0 1.0 44272 -
+  U5NN: 0.46 2.0 44294
+  GTModifier: 0.17 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.78 1.0 43981
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.09 1.0
+  CpGModifier: 0.21 1.0
+  Spl8Modifier: 0.46 1.0
+  ShortDescription: AATAAA(-);U5NN:0.23(44294);GT:0.17;U3NN:0.88(43901);TATAA:0.78(43981);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.09;CpG:0.21;Spl8:0.46;_tgggatg/tg<>ca/tgggatg
+::
+SingleLTR_P3::
+  ScoreFactor: 0.205
+  VirusGenus: B
+  First: 43436
+  Last: 44420
+  Hotspot: 1.0 1.0 44365 AATAAA
+  U5NN: 0.36 2.0 44404
+  GTModifier: 0.09 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.08 1.0
+  CpGModifier: 0.18 1.0
+  Spl8Modifier: 0.46 1.0
+  ShortDescription: AATAAA(44365);U5NN:0.18(44404);GT:0.09;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.08;CpG:0.18;Spl8:0.46;_tgggatg/tg<>ca/tgggatg
+::
+SingleLTR_P4::
+  ScoreFactor: 0.205
+  VirusGenus: B
+  First: 43436
+  Last: 44420
+  Hotspot: 1.0 1.0 44373 AATAAA
+  U5NN: 0.36 2.0 44404
+  GTModifier: 0.09 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.09 1.0
+  CpGModifier: 0.18 1.0
+  Spl8Modifier: 0.46 1.0
+  ShortDescription: AATAAA(44373);U5NN:0.18(44404);GT:0.09;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.09;CpG:0.18;Spl8:0.46;_tgggatg/tg<>ca/tgggatg
+::
+SingleLTR_P5::
+  ScoreFactor: 0.205
+  VirusGenus: B
+  First: 43436
+  Last: 44420
+  Hotspot: 1.0 1.0 44377 AATAAA
+  U5NN: 0.36 2.0 44404
+  GTModifier: 0.09 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.09 1.0
+  CpGModifier: 0.18 1.0
+  Spl8Modifier: 0.46 1.0
+  ShortDescription: AATAAA(44377);U5NN:0.18(44404);GT:0.09;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.09;CpG:0.18;Spl8:0.46;_tgggatg/tg<>ca/tgggatg
+::
+SingleLTR_P6::
+  ScoreFactor: 0.212
+  VirusGenus: B
+  First: 43146
+  Last: 45150
+  Hotspot: 1.0 1.0 44381 AATAAA
+  U5NN: 0.69 2.0 44695
+  GTModifier: 0.15 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.09 1.0
+  CpGModifier: 0.17 1.0
+  Spl8Modifier: 0.36 1.0
+  ShortDescription: AATAAA(44381);U5NN:0.35(44695);GT:0.15;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.09;CpG:0.17;Spl8:0.36;_ttttttg/tg<>ca/ttttttg
+::
+SingleLTR_P7::
+  ScoreFactor: 0.212
+  VirusGenus: B
+  First: 43146
+  Last: 45150
+  Hotspot: 1.0 1.0 44387 AATAAA
+  U5NN: 0.69 2.0 44695
+  GTModifier: 0.15 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.09 1.0
+  CpGModifier: 0.17 1.0
+  Spl8Modifier: 0.36 1.0
+  ShortDescription: AATAAA(44387);U5NN:0.35(44695);GT:0.15;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.09;CpG:0.17;Spl8:0.36;_ttttttg/tg<>ca/ttttttg
+::
+SingleLTR_P8::
+  ScoreFactor: 0.212
+  VirusGenus: B
+  First: 43146
+  Last: 45150
+  Hotspot: 1.0 1.0 44393 AATAAA
+  U5NN: 0.69 2.0 44695
+  GTModifier: 0.15 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.1 1.0
+  CpGModifier: 0.17 1.0
+  Spl8Modifier: 0.36 1.0
+  ShortDescription: AATAAA(44393);U5NN:0.35(44695);GT:0.15;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.1;CpG:0.17;Spl8:0.36;_ttttttg/tg<>ca/ttttttg
+::
+SingleLTR_P9::
+  ScoreFactor: 0.212
+  VirusGenus: B
+  First: 43146
+  Last: 45150
+  Hotspot: 1.0 1.0 44397 AATAAA
+  U5NN: 0.69 2.0 44695
+  GTModifier: 0.15 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.1 1.0
+  CpGModifier: 0.17 1.0
+  Spl8Modifier: 0.36 1.0
+  ShortDescription: AATAAA(44397);U5NN:0.35(44695);GT:0.15;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.1;CpG:0.17;Spl8:0.36;_ttttttg/tg<>ca/ttttttg
+::
+SingleLTR_P10::
+  ScoreFactor: 0.212
+  VirusGenus: B
+  First: 43146
+  Last: 45150
+  Hotspot: 1.0 1.0 44401 AATAAA
+  U5NN: 0.69 2.0 44695
+  GTModifier: 0.15 1.0
+  U3NN: 0.88 1.0 43901
+  TATAA: 0.86 1.0 44363
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.83 4.0 44333
+  Transsites: 0.1 1.0
+  CpGModifier: 0.17 1.0
+  Spl8Modifier: 0.36 1.0
+  ShortDescription: AATAAA(44401);U5NN:0.35(44695);GT:0.15;U3NN:0.88(43901);TATAA:0.86(44363);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.46(44333);Trans:0.1;CpG:0.17;Spl8:0.36;_ttttttg/tg<>ca/ttttttg
+::
+SingleLTR_P11::
+  ScoreFactor: 0.183
+  VirusGenus: B
+  First: 43146
+  Last: 45150
+  Hotspot: 0.0 1.0 44691 -
+  U5NN: 0.54 2.0 45030
+  GTModifier: 0.21 1.0
+  U3NN: 0.93 1.0 44489
+  TATAA: 0.86 1.0 44399
+  MEME50: 0.86 1.0 44188
+  Motifs1: 3.39 4.0 44117
+  Motifs2: 1.44 4.0 45028
+  Transsites: 0.17 1.0
+  CpGModifier: 0.15 1.0
+  Spl8Modifier: 0.39 1.0
+  ShortDescription: AATAAA(-);U5NN:0.27(45030);GT:0.21;U3NN:0.93(44489);TATAA:0.86(44399);MEME50:0.86(44188);Mot1:0.85(44117);Mot2:0.36(45028);Trans:0.17;CpG:0.15;Spl8:0.39;_ttttttg/tg<>ca/ttttttg
+::
+S1_LTRpair::
+    PairFactor: 0.32
+    RepeatLength: 5
+    IntegrationSites: agtta/ta<>ca/acata
+::
+S1_5LTR::
+  ScoreFactor: 0.158
+  VirusGenus: C
+  First: 9958
+  Last: 9348
+  Hotspot: 1.0 1.0 9907 AGTAAA
+  U5NN: 0.62 2.0 9569
+  GTModifier: 0.9 1.0
+  U3NN: 0.52 1.0 9948
+  TATAA: 1.0 1.0 9925
+  MEME50: 0.57 1.0 9530
+  Motifs1: 0.8 4.0 9956
+  Motifs2: 1.66 4.0 9549
+  Transsites: 0.14 1.0
+  CpGModifier: 0.0 1.0
+  Spl8Modifier: 0.43 1.0
+  ShortDescription: AGTAAA(9907);U5NN:0.31(9569);GT:0.9;U3NN:0.52(9948);TATAA:1.0(9925);MEME50:0.57(9530);Mot1:0.2(9956);Mot2:0.42(9549);Trans:0.14;CpG:0.0;Spl8:0.43;
+::
+S1_3LTR::
+  ScoreFactor: 0.161
+  VirusGenus: C
+  First: 930
+  Last: 328
+  Hotspot: 1.0 1.0 886 AGTAAA
+  U5NN: 0.63 2.0 604
+  GTModifier: 0.94 1.0
+  U3NN: 0.78 1.0 929
+  TATAA: 1.0 1.0 904
+  MEME50: 0.55 1.0 367
+  Motifs1: 0.6 4.0 927
+  Motifs2: 1.43 4.0 701
+  Transsites: 0.4 1.0
+  CpGModifier: 0.0 1.0
+  Spl8Modifier: 0.48 1.0
+  ShortDescription: AGTAAA(886);U5NN:0.32(604);GT:0.94;U3NN:0.78(929);TATAA:1.0(904);MEME50:0.55(367);Mot1:0.15(927);Mot2:0.36(701);Trans:0.4;CpG:0.0;Spl8:0.48;
+::
+S2_LTRpair::
+    PairFactor: 0.331
+    RepeatLength: 4
+    IntegrationSites: tata/tg<>ca/tata
+::
+S2_5LTR::
+  ScoreFactor: 0.168
+  VirusGenus: BS
+  First: 9937
+  Last: 9345
+  Hotspot: 1.0 1.0 9398 AATAAA
+  U5NN: 0.38 2.0 9345
+  GTModifier: 0.45 1.0
+  U3NN: 0.88 1.0 9721
+  TATAA: 1.0 1.0 9473
+  MEME50: 0.57 1.0 9530
+  Motifs1: 1.54 4.0 9485
+  Motifs2: 1.78 4.0 9454
+  Transsites: 0.06 1.0
+  CpGModifier: 0.09 1.0
+  Spl8Modifier: 0.44 1.0
+  ShortDescription: AATAAA(9398);U5NN:0.19(9345);GT:0.45;U3NN:0.88(9721);TATAA:1.0(9473);MEME50:0.57(9530);Mot1:0.38(9485);Mot2:0.44(9454);Trans:0.06;CpG:0.09;Spl8:0.44;
+  Limiters: PPT:913
+::
+S2_3LTR::
+  ScoreFactor: 0.163
+  VirusGenus: BC
+  First: 913
+  Last: 325
+  Hotspot: 1.0 1.0 378 AATAAA
+  U5NN: 0.36 2.0 346
+  GTModifier: 0.33 1.0
+  U3NN: 0.92 1.0 734
+  TATAA: 1.0 1.0 453
+  MEME50: 0.55 1.0 367
+  Motifs1: 1.46 4.0 828
+  Motifs2: 1.56 4.0 434
+  Transsites: 0.14 1.0
+  CpGModifier: 0.11 1.0
+  Spl8Modifier: 0.49 1.0
+  ShortDescription: AATAAA(378);U5NN:0.18(346);GT:0.33;U3NN:0.92(734);TATAA:1.0(453);MEME50:0.55(367);Mot1:0.37(828);Mot2:0.39(434);Trans:0.14;CpG:0.11;Spl8:0.49;
+  Limiters: PPT:913
+::
+S3_LTRpair::
+    PairFactor: 0.331
+    RepeatLength: 4
+    IntegrationSites: tata/tg<>ca/tata
+::
+S3_5LTR::
+  ScoreFactor: 0.168
+  VirusGenus: BS
+  First: 9937
+  Last: 9345
+  Hotspot: 1.0 1.0 9398 AATAAA
+  U5NN: 0.38 2.0 9345
+  GTModifier: 0.45 1.0
+  U3NN: 0.88 1.0 9721
+  TATAA: 1.0 1.0 9473
+  MEME50: 0.57 1.0 9530
+  Motifs1: 1.54 4.0 9485
+  Motifs2: 1.78 4.0 9454
+  Transsites: 0.06 1.0
+  CpGModifier: 0.09 1.0
+  Spl8Modifier: 0.44 1.0
+  ShortDescription: AATAAA(9398);U5NN:0.19(9345);GT:0.45;U3NN:0.88(9721);TATAA:1.0(9473);MEME50:0.57(9530);Mot1:0.38(9485);Mot2:0.44(9454);Trans:0.06;CpG:0.09;Spl8:0.44;
+::
+S3_3LTR::
+  ScoreFactor: 0.163
+  VirusGenus: BC
+  First: 916
+  Last: 325
+  Hotspot: 1.0 1.0 378 AATAAA
+  U5NN: 0.36 2.0 346
+  GTModifier: 0.33 1.0
+  U3NN: 0.92 1.0 734
+  TATAA: 1.0 1.0 453
+  MEME50: 0.55 1.0 367
+  Motifs1: 1.46 4.0 828
+  Motifs2: 1.56 4.0 434
+  Transsites: 0.14 1.0
+  CpGModifier: 0.11 1.0
+  Spl8Modifier: 0.49 1.0
+  ShortDescription: AATAAA(378);U5NN:0.18(346);GT:0.33;U3NN:0.92(734);TATAA:1.0(453);MEME50:0.55(367);Mot1:0.37(828);Mot2:0.39(434);Trans:0.14;CpG:0.11;Spl8:0.49;
+::
+SingleLTR_S1::
+  ScoreFactor: 0.181
+  VirusGenus: CB
+  First: 47344
+  Last: 45557
+  Hotspot: 1.0 1.0 46956 AATAAA
+  U5NN: 0.78 2.0 46925
+  GTModifier: 0.5 1.0
+  U3NN: 0.92 1.0 47152
+  TATAA: 0.84 1.0 47202
+  MEME50: 0.56 1.0 46941
+  Motifs1: 1.85 4.0 47174
+  Motifs2: 1.8 4.0 46748
+  Transsites: 0.18 1.0
+  CpGModifier: 0.05 1.0
+  Spl8Modifier: 0.39 1.0
+  ShortDescription: AATAAA(46956);U5NN:0.39(46925);GT:0.5;U3NN:0.92(47152);TATAA:0.84(47202);MEME50:0.56(46941);Mot1:0.46(47174);Mot2:0.45(46748);Trans:0.18;CpG:0.05;Spl8:0.39;_tgaatt/tg<>ca/tgaatt
+::
+SingleLTR_S2::
+  ScoreFactor: 0.181
+  VirusGenus: CB
+  First: 47344
+  Last: 45557
+  Hotspot: 1.0 1.0 46949 AATAAA
+  U5NN: 0.78 2.0 46925
+  GTModifier: 0.5 1.0
+  U3NN: 0.92 1.0 47152
+  TATAA: 0.84 1.0 47202
+  MEME50: 0.56 1.0 46941
+  Motifs1: 1.85 4.0 47174
+  Motifs2: 1.8 4.0 46748
+  Transsites: 0.18 1.0
+  CpGModifier: 0.05 1.0
+  Spl8Modifier: 0.39 1.0
+  ShortDescription: AATAAA(46949);U5NN:0.39(46925);GT:0.5;U3NN:0.92(47152);TATAA:0.84(47202);MEME50:0.56(46941);Mot1:0.46(47174);Mot2:0.45(46748);Trans:0.18;CpG:0.05;Spl8:0.39;_tgaatt/tg<>ca/tgaatt
+::
+SingleLTR_S3::
+  ScoreFactor: 0.191
+  VirusGenus: C
+  First: 10674
+  Last: 9381
+  Hotspot: 1.0 1.0 9907 AGTAAA
+  U5NN: 0.62 2.0 9569
+  GTModifier: 0.9 1.0
+  U3NN: 0.88 1.0 10082
+  TATAA: 1.0 1.0 9925
+  MEME50: 0.57 1.0 9982
+  Motifs1: 2.15 4.0 10013
+  Motifs2: 1.66 4.0 9549
+  Transsites: 0.02 1.0
+  CpGModifier: 0.04 1.0
+  Spl8Modifier: 0.5 1.0
+  ShortDescription: AGTAAA(9907);U5NN:0.31(9569);GT:0.9;U3NN:0.88(10082);TATAA:1.0(9925);MEME50:0.57(9982);Mot1:0.54(10013);Mot2:0.42(9549);Trans:0.02;CpG:0.04;Spl8:0.5;_ccaagt/tg<>ca/ccaagt
+::
+SingleLTR_S4::
+  ScoreFactor: 0.197
+  VirusGenus: CB
+  First: 10528
+  Last: 8881
+  Hotspot: 1.0 1.0 9398 AATAAA
+  U5NN: 0.72 2.0 8903
+  GTModifier: 0.93 1.0
+  U3NN: 0.88 1.0 9721
+  TATAA: 1.0 1.0 9473
+  MEME50: 0.57 1.0 9982
+  Motifs1: 2.15 4.0 10013
+  Motifs2: 1.78 4.0 9454
+  Transsites: 0.06 1.0
+  CpGModifier: 0.09 1.0
+  Spl8Modifier: 0.44 1.0
+  ShortDescription: AATAAA(9398);U5NN:0.36(8903);GT:0.93;U3NN:0.88(9721);TATAA:1.0(9473);MEME50:0.57(9982);Mot1:0.54(10013);Mot2:0.44(9454);Trans:0.06;CpG:0.09;Spl8:0.44;_tgctg/tg<>ca/tgctg
+::
+SingleLTR_S5::
+  ScoreFactor: 0.182
+  VirusGenus: BC
+  First: 1682
+  Last: 385
+  Hotspot: 1.0 1.0 886 AGTAAA
+  U5NN: 0.63 2.0 604
+  GTModifier: 0.94 1.0
+  U3NN: 0.89 1.0 1585
+  TATAA: 1.0 1.0 940
+  MEME50: 0.64 1.0 1116
+  Motifs1: 1.8 4.0 1265
+  Motifs2: 1.43 4.0 701
+  Transsites: 0.06 1.0
+  CpGModifier: 0.08 1.0
+  Spl8Modifier: 0.4 1.0
+  ShortDescription: AGTAAA(886);U5NN:0.32(604);GT:0.94;U3NN:0.89(1585);TATAA:1.0(940);MEME50:0.64(1116);Mot1:0.45(1265);Mot2:0.36(701);Trans:0.06;CpG:0.08;Spl8:0.4;_cctaa/tg<>ca/cctaa
+::
+SingleLTR_S6::
+  ScoreFactor: 0.182
+  VirusGenus: C
+  First: 1990
+  Last: 164
+  Hotspot: 1.0 1.0 378 AATAAA
+  U5NN: 0.75 2.0 191
+  GTModifier: 0.69 1.0
+  U3NN: 0.92 1.0 734
+  TATAA: 1.0 1.0 453
+  MEME50: 0.64 1.0 1116
+  Motifs1: 1.46 4.0 828
+  Motifs2: 1.76 4.0 274
+  Transsites: 0.15 1.0
+  CpGModifier: 0.11 1.0
+  Spl8Modifier: 0.44 1.0
+  ShortDescription: AATAAA(378);U5NN:0.37(191);GT:0.69;U3NN:0.92(734);TATAA:1.0(453);MEME50:0.64(1116);Mot1:0.37(828);Mot2:0.44(274);Trans:0.15;CpG:0.11;Spl8:0.44;_tgtat/tg<>ca/tgtat
+::
+{ Created by LTRID with parameters
+{ Motifs2Weight: 4.0
+{ Motifs1Weight: 4.0
+{ U5NetWeight: 2.0
+{ SplitOctamerWeight: 1.0
+{ LINELTRTolerance: 10.0
+{ DNAFile: erv3-1.txt
+{ U3NetWeight: 1.0
+{ InputFile: 
+{ Debugging: No
+{ MEME50Weight: 1.0
+{ CpGWeight: 1.0
+{ TransSitesWeight: 1.0
+{ MaxPairsOutput: 50
+{ Database: Ordinary
+{ TATAAWeight: 1.0
+{ AATAAAWeight: 1.0
+{ DoSingleLTRs: Yes
+{ SingleLTRThreshold: 0.18
+{ ScriptPath: /var/data/cache/retrotector.neuro.uu.se/jobs/ef97dc175d1f21a3f3f5c14be24b7c2b/147552555501/result/erv3-1/LTRID_001Script_.txt
+{ ExponentStrength: 2.0
+{ LTRepTolerance: 7.0
+{ GTWeight: 1.0
+{   and plugins
+{ EnvTracer
+{ EnvProcessor
+{ Execution time was 4104 milliseconds
+{ Latecoming LTRCandidates: 14
+{ Belongs in erv3-1
+{ Created Mon Oct 03 20:12:40 UTC 2016 under RetroTector version 1.0.1
+{ using Database:Ordinary last modified Fri May 09 15:57:25 UTC 2008
