@@ -44,7 +44,7 @@
 	+ Главное отличие от типичных ретроэлементов -- наличие _env_ гена:
 	  ![LTRautonomous][]
 	+ Классы эндо-ретровирусов:
-	  <a href="ERVclasses.png"><img alt="ERV Classes" title="ERV Classes" src="ERVclasses.png" width="400" height="400"></img></a>
+	  <br><a href="ERVclasses.png"><img alt="ERV Classes" title="ERV Classes" src="ERVclasses.png" width="400" height="400" align="center"></img></a>
 
 * **TSD** -- _Target Site Duplications_ -- duplicated genomic sequences resulting from the mechanism of integration
 	![LTRandTIR][]
