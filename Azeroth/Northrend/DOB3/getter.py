@@ -4,9 +4,12 @@
 # path = 'seqs/seqERV3-1_pan.fasta'
 # pos_ltr5 = (579, 1190)
 # pos_ltr3 = (9604, 10206)
-path = 'seqs/seqERVIPF-10H.fasta'
-pos_ltr5 = (5377, 4938)
-pos_ltr3 = (1064, 619)
+# path = 'seqs/seqERVIPF-10H.fasta'
+# pos_ltr5 = (5377, 4938)
+# pos_ltr3 = (1064, 619)
+path = 'seqs/seqERV3-1_macaque_chr3.fasta'
+pos_ltr5 = (2194, 2803)
+pos_ltr3 = (11225, 11824)
 
 with open(path) as f:
     data = ''.join(line.strip() for line in f.readlines()[1:])

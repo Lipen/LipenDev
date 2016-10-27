@@ -1,2 +1,4 @@
->ERV3-1 PAN :: panPan1_dna range=JH650418:162001-182000 5'pad=0 3'pad=0 strand=+ repeatMasking=none
+>ERV3-1 Macaque chr8 :: rheMac2_dna range=chr8:129212481-129237509 5'pad=0 3'pad=0 strand=+ repeatMasking=none
+>ERV3-1 Macaque chr3 :: rheMac2_dna range=chr3:60397451-60421958 5'pad=0 3'pad=0 strand=+ repeatMasking=none
+>ERV3-1 Pan :: panPan1_dna range=JH650418:162001-182000 5'pad=0 3'pad=0 strand=+ repeatMasking=none
 >ERVIPF-10H :: hg19_dna range=chr15:80207780-80213351 5'pad=0 3'pad=0 strand=+ repeatMasking=none

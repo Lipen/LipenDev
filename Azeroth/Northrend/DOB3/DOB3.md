@@ -210,7 +210,7 @@
 [DM LogDet]: assets/DistanceMethods_LogDet_example.png
 [ERV3-1]: http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&position=chr7%3A64990000-65039999&hgsid=530055471_QROmlPcrCiczZaAaMjUsdx33Hu0P
 [ERV3-1 RefSeq]: http://genome.ucsc.edu/cgi-bin/hgc?hgsid=530055471_QROmlPcrCiczZaAaMjUsdx33Hu0P&c=chr7&l=64960294&r=65037226&o=64990354&t=65006746&g=refGene&i=NM_001007253
-[ERV3-1 sequece]: seqs/seqERV3-1_neighborhood.fasta
+[ERV3-1 sequence]: seqs/seqERV3-1_neighborhood.fasta
 [ERV3-1 RetroVID]: res/ERV3-1_RetroVID.txt
 [ERV3-1 LTRs]: res/ERV3-1_LTRs.fasta
 [ERV3-1 LTRs aligned]: res/ERV3-1_LTRs_aligned.fasta
