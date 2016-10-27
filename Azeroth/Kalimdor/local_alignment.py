@@ -66,16 +66,6 @@ def align(s1, s2):
 
     grid = [[0 for _ in range(n + 1)] for _ in range(m + 1)]
     traceback = [['' for _ in range(n + 1)] for _ in range(m + 1)]
-    # s1 = GCATGCU
-    # s2 = GATTACA
-    #  i-> 0   1  2  3  4  5  6  7@n
-    # j    $   G  C  A  T  G  C  U
-    # 0 $  0  -1 -2 -3 -4 -5 -6 -7
-    #        _____________________
-    # 1 G -1|  1  0 -1 -2 -3 -4 -5
-    # 2 A -2|  0  0  1  0 -1 -2 -3
-    #   ... |
-    # m A -7| -5 -3 -1 -2 -2  0  0@answer
     for i in range(1, n + 1):
         grid[0][i] = -i
         traceback[0][i] = '-'
