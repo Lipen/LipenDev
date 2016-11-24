@@ -1,14 +1,11 @@
 import os
 import sys
 import re
-import random
-import time
-import mutagen
 from multiprocessing import Pool
 from mutagen.easyid3 import EasyID3
 
 library = "C:/Data/Media/Music/VK"
-rex = r'^(.*) - (.*)$'
+rex = re.compile(r'^(.*) - (.*)$')
 
 
 class cd:
@@ -31,7 +28,7 @@ def work(path):
     # print('[{} / {}] {}'.format(files.index(path) + 1, len(files), filename))
 
     if ext == '.mp3':
-        m = re.match(rex, name)
+        m = rex.match(name)
 
         if m:
             try:
