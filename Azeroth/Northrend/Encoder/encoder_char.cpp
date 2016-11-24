@@ -15,6 +15,11 @@ string filename_original = "input.txt";
 string filename_encoded = "output.txt";
 
 
+Data* encode(string);
+void dump(const Data&, string);
+string decode(string);
+
+
 Data* encode(string filename) {
 	cout << "[*] Encoding..." << endl;
 	std::ifstream fi { filename };  // Input file
@@ -22,7 +27,7 @@ Data* encode(string filename) {
 	if (fi) {
 		Data* data = new Data;
 		size_t i = 0;  // Current position
-		char c;  // Current char
+		char c;  // Current character
 
 		while (fi.get(c)) {
 			if (data->find(c) != data->end()) {
@@ -50,7 +55,7 @@ void dump(const Data& data, string filename) {
 
 	if (fo) {
 		for (auto&& item : data) {
-			fo << item.first;  // Write char
+			fo << item.first;  // Write character
 			for (size_t p : item.second) {  // Write positions
 				fo << ' ' << p;
 			}
@@ -61,6 +66,7 @@ void dump(const Data& data, string filename) {
 		cout << "[+] File written (" << filename << ")" << endl;
 	} else {
 		cout << "[-] Couldn't write to " << filename << endl;
+		throw "Couldn't write to file";
 	}
 }
 
