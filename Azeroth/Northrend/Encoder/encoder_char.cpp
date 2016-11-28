@@ -12,7 +12,8 @@ using std::vector;
 using Data = std::map<char, vector<size_t>>;  // <char, vector of positions>
 
 string filename_original = "input.txt";
-string filename_encoded = "output.txt";
+string filename_encoded = "encoded.txt";
+string filename_decoded = "decoded.txt";
 
 
 Data* encode(string);
@@ -114,6 +115,10 @@ int main() {
 
 	cout << "[+] Restored file:" << endl;
 	cout << restored << endl;
+
+	std::ofstream fd { filename_decoded };
+	fd << restored;
+	fd.close();
 
 	cout << "[@] END." << endl;
 }
