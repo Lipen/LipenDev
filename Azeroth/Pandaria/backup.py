@@ -137,7 +137,7 @@ def backup_local(args):
         Item('Programming',
              src='C:/Data/Programming/*',
              dest='Programming/Programming {}'.format(DATE),
-             extra='-x!dev'),
+             extra='-xr"!"dev'),
         Item('AIMP',
              src='C:/Users/Lipen/AppData/Roaming/AIMP/*',
              dest='AIMP/AIMP {}'.format(DATE)),
